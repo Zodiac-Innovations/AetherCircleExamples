@@ -1,0 +1,55 @@
+name: Showcase
+options:
+  createIntermediateGroups: true
+  deploymentTarget:
+    visionOS: "2.0"
+fileGroups:
+  - Assets.xcassets
+  - Info.plist
+packages:
+  AetherCircle:
+    url: https://github.com/Zodiac-Innovations/AetherCircleDevelopment.git
+    branch: main
+targets:
+  Showcase:
+    type: application
+    platform: visionOS
+    info:
+      path: Info.plist
+      properties:
+        NSHumanReadableCopyright: "© 2026, Zodiac Innovations. All rights reserved."
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+    sources:
+      - path: Sources
+      - path: ../Shared/Swift
+        name: Shared
+        type: syncedFolder
+        buildPhase: sources
+      - path: ../Shared/Files
+        name: Files
+        type: syncedFolder
+        buildPhase: resources
+      - path: Assets.xcassets
+        name: Assets.xcassets
+        group: Resources
+        type: file
+        buildPhase: resources
+      - path: Info.plist
+        name: Info.plist
+        group: Resources
+        type: file
+        buildPhase: none
+    dependencies:
+      - package: AetherCircle
+        product: AetherCircleCore
+      - package: AetherCircle
+        product: AetherCircleAVP
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zodiacinnovations.showcase
+        PRODUCT_NAME: "Showcase"
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: "6.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
