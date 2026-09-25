@@ -17,7 +17,7 @@
 
 /* Begin PBXFileReference section */
 		6242AFB0B59F7CE9EA4C519D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		6FE6547B76E86EEB1CB1BC37 /* Hello AetherCircle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hello AetherCircle.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6FE6547B76E86EEB1CB1BC37 /* HelloAetherCircle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HelloAetherCircle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D3DAD1CEB9F18358CFDDDBF7 /* HelloAetherCircleAVPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloAetherCircleAVPApp.swift; sourceTree = "<group>"; };
 		D59A92800E95E55D58B20AA1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -84,7 +84,7 @@
 		C9A29C583A1AA5BFBEA8B382 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6FE6547B76E86EEB1CB1BC37 /* Hello AetherCircle.app */,
+				6FE6547B76E86EEB1CB1BC37 /* HelloAetherCircle.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -126,7 +126,7 @@
 				D6BDC8620CCA8B07ED64EEAA /* AetherCircleAVP */,
 			);
 			productName = HelloAetherCircle;
-			productReference = 6FE6547B76E86EEB1CB1BC37 /* Hello AetherCircle.app */;
+			productReference = 6FE6547B76E86EEB1CB1BC37 /* HelloAetherCircle.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -197,8 +197,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.zodiacinnovations.helloaethercircle;
-				PRODUCT_NAME = "Hello AetherCircle";
+				PRODUCT_BUNDLE_IDENTIFIER = com.test.helloaethercircle;
+				PRODUCT_NAME = HelloAetherCircle;
 				SDKROOT = xros;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 7;
@@ -336,8 +336,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.zodiacinnovations.helloaethercircle;
-				PRODUCT_NAME = "Hello AetherCircle";
+				PRODUCT_BUNDLE_IDENTIFIER = com.test.helloaethercircle;
+				PRODUCT_NAME = HelloAetherCircle;
 				SDKROOT = xros;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 7;

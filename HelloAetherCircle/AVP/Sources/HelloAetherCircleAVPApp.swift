@@ -9,7 +9,7 @@ struct HelloAetherCircleAVPApp: App {
         AetherCircleAVPScenes { world in
             HelloAetherCircleApplication(
                 world: world,
-                name: "Hello AetherCircle"
+                name: "HelloAetherCircle"
             )
         }
     }

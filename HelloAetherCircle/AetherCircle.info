@@ -1,7 +1,7 @@
 formatVersion=1
 name=HelloAetherCircle
-displayName=Hello AetherCircle
-key=com.zodiacinnovations
+displayName=HelloAetherCircle
+key=com.test
 version=0.1.0
 build=1
 copyright=© 2026. All rights reserved.

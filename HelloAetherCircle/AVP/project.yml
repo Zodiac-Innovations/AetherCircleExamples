@@ -47,8 +47,8 @@ targets:
         product: AetherCircleAVP
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.zodiacinnovations.helloaethercircle
-        PRODUCT_NAME: "Hello AetherCircle"
+        PRODUCT_BUNDLE_IDENTIFIER: com.test.helloaethercircle
+        PRODUCT_NAME: "HelloAetherCircle"
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 1
         SWIFT_VERSION: "6.0"
