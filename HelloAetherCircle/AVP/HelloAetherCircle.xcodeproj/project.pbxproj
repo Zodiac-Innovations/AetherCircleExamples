@@ -1,0 +1,395 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0C840C51DBF6FF0B996C27D1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6242AFB0B59F7CE9EA4C519D /* Assets.xcassets */; };
+		5A31B37F577A3351F2D7500B /* Files in Resources */ = {isa = PBXBuildFile; fileRef = 2061FBA8B607E922A328A07D /* Files */; };
+		617CE73B68C2AC33689A2C2E /* Swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3FDA2DC30700A8BF7C59E6 /* Swift */; };
+		82E187D5E4B69CBF753C6C4D /* AetherCircleAVP in Frameworks */ = {isa = PBXBuildFile; productRef = D6BDC8620CCA8B07ED64EEAA /* AetherCircleAVP */; };
+		BAC8FED7C86F45FD2BF6FF80 /* HelloAetherCircleAVPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3DAD1CEB9F18358CFDDDBF7 /* HelloAetherCircleAVPApp.swift */; };
+		CC41286CA9BC67FC04CF850E /* AetherCircleCore in Frameworks */ = {isa = PBXBuildFile; productRef = E46C7255908B176A642FCC21 /* AetherCircleCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		6242AFB0B59F7CE9EA4C519D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6FE6547B76E86EEB1CB1BC37 /* Hello AetherCircle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hello AetherCircle.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3DAD1CEB9F18358CFDDDBF7 /* HelloAetherCircleAVPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloAetherCircleAVPApp.swift; sourceTree = "<group>"; };
+		D59A92800E95E55D58B20AA1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		2061FBA8B607E922A328A07D /* Files */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Files;
+			sourceTree = "<group>";
+		};
+		9B3FDA2DC30700A8BF7C59E6 /* Swift */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Swift;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AFFCD0946FBE1C708293DA52 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC41286CA9BC67FC04CF850E /* AetherCircleCore in Frameworks */,
+				82E187D5E4B69CBF753C6C4D /* AetherCircleAVP in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2D0D5C4C72FB72F99C04D1D5 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				2061FBA8B607E922A328A07D /* Files */,
+				9B3FDA2DC30700A8BF7C59E6 /* Swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		592E4FB3CA4457788A17281F /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		631DB5BF505A36602013CFC5 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				D3DAD1CEB9F18358CFDDDBF7 /* HelloAetherCircleAVPApp.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		77A4B8F1E4BDBA1F4BB3DA31 /* HelloAetherCircle */ = {
+			isa = PBXGroup;
+			children = (
+				2D0D5C4C72FB72F99C04D1D5 /* Shared */,
+			);
+			name = HelloAetherCircle;
+			path = ..;
+			sourceTree = "<group>";
+		};
+		C9A29C583A1AA5BFBEA8B382 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6FE6547B76E86EEB1CB1BC37 /* Hello AetherCircle.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		EADBF1214A614748E16D2DE7 = {
+			isa = PBXGroup;
+			children = (
+				6242AFB0B59F7CE9EA4C519D /* Assets.xcassets */,
+				D59A92800E95E55D58B20AA1 /* Info.plist */,
+				77A4B8F1E4BDBA1F4BB3DA31 /* HelloAetherCircle */,
+				592E4FB3CA4457788A17281F /* Resources */,
+				631DB5BF505A36602013CFC5 /* Sources */,
+				C9A29C583A1AA5BFBEA8B382 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6A590449C0CA3312173A0274 /* HelloAetherCircle */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1F333AAE224E4AE2B9A8CB9F /* Build configuration list for PBXNativeTarget "HelloAetherCircle" */;
+			buildPhases = (
+				3F6ACC01F5660F8C9C396EB9 /* Sources */,
+				33FD876F803A5B6D8FFBE443 /* Resources */,
+				AFFCD0946FBE1C708293DA52 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2061FBA8B607E922A328A07D /* Files */,
+				9B3FDA2DC30700A8BF7C59E6 /* Swift */,
+			);
+			name = HelloAetherCircle;
+			packageProductDependencies = (
+				E46C7255908B176A642FCC21 /* AetherCircleCore */,
+				D6BDC8620CCA8B07ED64EEAA /* AetherCircleAVP */,
+			);
+			productName = HelloAetherCircle;
+			productReference = 6FE6547B76E86EEB1CB1BC37 /* Hello AetherCircle.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7A8B236E9210225BC1DACF64 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = 33A02C4DCB98D89E846C33C5 /* Build configuration list for PBXProject "HelloAetherCircle" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EADBF1214A614748E16D2DE7;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B693EA5458C3F1750D4B5394 /* XCRemoteSwiftPackageReference "AetherCircleDevelopment" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = C9A29C583A1AA5BFBEA8B382 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6A590449C0CA3312173A0274 /* HelloAetherCircle */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		33FD876F803A5B6D8FFBE443 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0C840C51DBF6FF0B996C27D1 /* Assets.xcassets in Resources */,
+				5A31B37F577A3351F2D7500B /* Files in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3F6ACC01F5660F8C9C396EB9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BAC8FED7C86F45FD2BF6FF80 /* HelloAetherCircleAVPApp.swift in Sources */,
+				617CE73B68C2AC33689A2C2E /* Swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		3277FE85CB0EEDE4B9FC77A6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZTFNBJMT4H;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zodiacinnovations.helloaethercircle;
+				PRODUCT_NAME = "Hello AetherCircle";
+				SDKROOT = xros;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 7;
+			};
+			name = Debug;
+		};
+		6EF97321784A943613A4E003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				XROS_DEPLOYMENT_TARGET = 2.0;
+			};
+			name = Release;
+		};
+		94025BB4E88656A6A1B365B0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				XROS_DEPLOYMENT_TARGET = 2.0;
+			};
+			name = Debug;
+		};
+		F536CEA797C066ED71C98EC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZTFNBJMT4H;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zodiacinnovations.helloaethercircle;
+				PRODUCT_NAME = "Hello AetherCircle";
+				SDKROOT = xros;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 7;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1F333AAE224E4AE2B9A8CB9F /* Build configuration list for PBXNativeTarget "HelloAetherCircle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3277FE85CB0EEDE4B9FC77A6 /* Debug */,
+				F536CEA797C066ED71C98EC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		33A02C4DCB98D89E846C33C5 /* Build configuration list for PBXProject "HelloAetherCircle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				94025BB4E88656A6A1B365B0 /* Debug */,
+				6EF97321784A943613A4E003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B693EA5458C3F1750D4B5394 /* XCRemoteSwiftPackageReference "AetherCircleDevelopment" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Zodiac-Innovations/AetherCircleDevelopment.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D6BDC8620CCA8B07ED64EEAA /* AetherCircleAVP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B693EA5458C3F1750D4B5394 /* XCRemoteSwiftPackageReference "AetherCircleDevelopment" */;
+			productName = AetherCircleAVP;
+		};
+		E46C7255908B176A642FCC21 /* AetherCircleCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B693EA5458C3F1750D4B5394 /* XCRemoteSwiftPackageReference "AetherCircleDevelopment" */;
+			productName = AetherCircleCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 7A8B236E9210225BC1DACF64 /* Project object */;
+}
