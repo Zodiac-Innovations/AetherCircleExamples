@@ -1,0 +1,15 @@
+{
+  "originHash" : "61763da7357a76f88e44c2212cbe50760135502018ad692999093f4184dab1d5",
+  "pins" : [
+    {
+      "identity" : "aethercircledevelopment",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Zodiac-Innovations/AetherCircleDevelopment.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "62f53b8db3945b50828297bffe06b6748d25bf4e"
+      }
+    }
+  ],
+  "version" : 3
+}
