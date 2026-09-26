@@ -37,6 +37,30 @@ Regenerate its AVP project after changing project metadata or after a generator 
 aethercircle avp create -d
 ```
 
+### AetherCircleShowcase
+
+A multi-scene catalog demonstrating the principal AetherCircle objects, controls, materials, and navigation patterns. Its home scene provides entry points for three focused demonstrations:
+
+- **Primitive Objects** displays every visible Aether primitive in a labeled grid, using randomly selected colors and textured materials with continuous three-axis rotation.
+- **Panel Objects** demonstrates standard and double-sided buttons, message and Yes/No helper panels, multi-page panel content, Boolean controls in default, checkbox, radio-group, and switch flavors, and an integer slider.
+- **Materials** randomly selects three textured materials and three visible primitive shapes each time the scene opens, then displays labeled rotating objects.
+
+The example also demonstrates named color and texture material registration, physically based roughness and metallic settings, reusable title and Home controls, composite objects, golden target highlighting, scene navigation, and the standard confirmed Quit control.
+
+Open the example with:
+
+```bash
+cd AetherCircleShowcase
+aethercircle doctor
+aethercircle avp ide
+```
+
+Regenerate its AVP project after changing project metadata or after a generator update:
+
+```bash
+aethercircle avp create -d
+```
+
 ## Creating Another Example
 
 Install the current development CLI from `AetherCircleDevelopment`, then create the new project at the repository root:
