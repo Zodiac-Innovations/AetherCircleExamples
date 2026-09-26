@@ -47,7 +47,7 @@ aethercircle avp ide
 Regenerate its AVP project after changing project metadata or after a generator update:
 
 ```bash
-aethercircle avp create -d
+aethercircle avp build -d
 ```
 
 ### AetherCircleShowcase
@@ -71,7 +71,7 @@ aethercircle avp ide
 Regenerate its AVP project after changing project metadata or after a generator update:
 
 ```bash
-aethercircle avp create -d
+aethercircle avp build -d
 ```
 
 ## Creating Another Example
@@ -83,7 +83,7 @@ aethercircle create ExampleName \
     --display-name "Example Name" \
     --key com.zodiacinnovations
 cd ExampleName
-aethercircle avp create
+aethercircle avp build
 ```
 
 Keep each example self-contained at the repository root and add a description to the Examples section of this README. Reserve `HelloAetherCircle` as the unmodified reference output of the current Starter.
