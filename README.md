@@ -6,7 +6,7 @@ Example applications demonstrating the AetherCircle cross-platform immersive app
 
 ## Repository Organization
 
-Every example is stored as a self-contained, top-level AetherCircle project. The repository intentionally uses a flat list rather than separate Samples and Showcases folders.
+Every example is stored as a self-contained, top-level AetherCircle project.
 
 An example can include:
 
