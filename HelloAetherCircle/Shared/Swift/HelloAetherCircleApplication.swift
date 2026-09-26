@@ -12,7 +12,7 @@ public final class HelloAetherCircleApplication: AetherApplication {
 
         let title = AetherTextObject(
             name: "Title",
-            text: "Hello AetherCircle",
+            text: "HelloAetherCircle",
             characterHeight: 0.16,
             extrusionDepth: 0.02,
             position: AetherPosition3D(
@@ -51,7 +51,7 @@ public final class HelloAetherCircleApplication: AetherApplication {
         )
 
         let scene = AetherScene(
-            name: "Hello AetherCircle",
+            name: "HelloAetherCircle",
             objects: [
                 title,
                 cube,
@@ -67,4 +67,3 @@ public final class HelloAetherCircleApplication: AetherApplication {
         }
     }
 }
-

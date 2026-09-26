@@ -17,7 +17,7 @@
 
 /* Begin PBXFileReference section */
 		6242AFB0B59F7CE9EA4C519D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		6FE6547B76E86EEB1CB1BC37 /* HelloAetherCircle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HelloAetherCircle.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6FE6547B76E86EEB1CB1BC37 /* HelloAetherCircle.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HelloAetherCircle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D3DAD1CEB9F18358CFDDDBF7 /* HelloAetherCircleAVPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloAetherCircleAVPApp.swift; sourceTree = "<group>"; };
 		D59A92800E95E55D58B20AA1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -25,11 +25,21 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2061FBA8B607E922A328A07D /* Files */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			name = Files;
 			path = Files;
 			sourceTree = "<group>";
 		};
 		9B3FDA2DC30700A8BF7C59E6 /* Swift */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			name = Swift;
 			path = Swift;
 			sourceTree = "<group>";
 		};
@@ -60,6 +70,8 @@
 		592E4FB3CA4457788A17281F /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				6242AFB0B59F7CE9EA4C519D /* Assets.xcassets */,
+				D59A92800E95E55D58B20AA1 /* Info.plist */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -137,6 +149,8 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = 33A02C4DCB98D89E846C33C5 /* Build configuration list for PBXProject "HelloAetherCircle" */;
 			developmentRegion = en;
@@ -190,7 +204,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ZTFNBJMT4H;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -329,7 +342,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ZTFNBJMT4H;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

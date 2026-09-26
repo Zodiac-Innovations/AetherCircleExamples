@@ -17,7 +17,7 @@ targets:
     info:
       path: Info.plist
       properties:
-        NSHumanReadableCopyright: "© 2026, Zodiac Innovations. All rights reserved."
+        NSHumanReadableCopyright: "© 2026 Zodiac Innovations. All rights reserved."
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: true
     sources:
