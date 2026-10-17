@@ -51,6 +51,7 @@ public final class AetherAutomationRunner: @unchecked Sendable {
         activate: (AetherAutomationTarget) throws -> Void,
         setInteractionEnabled: (Bool) throws -> Void
     ) {
+        Thread.current.threadDictionary["AetherCircle.Automation.FrameThread"] = true
         lock.lock()
         let run = active
         lock.unlock()
