@@ -65,6 +65,7 @@ public final class AetherPanelObject:
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         flavor: AetherPanelFlavor = .default,
         title: String? = nil,
         objects: [AetherObject],
@@ -114,6 +115,7 @@ public final class AetherPanelObject:
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             objects: layout.objects,
             position: position,
             isVisible: isVisible
@@ -144,6 +146,7 @@ public final class AetherPanelObject:
     /// Creates a message panel with a title, message, and dismissing OK button.
     public static func messagePanel(
         name: String = "Message Panel",
+        autoID: String = "",
         title: String,
         message: String,
         size: AetherSize3D? = nil,
@@ -173,6 +176,7 @@ public final class AetherPanelObject:
         )
         let panel = AetherPanelObject(
             name: name,
+            autoID: autoID,
             title: title,
             objects: [
                 label,
@@ -200,6 +204,7 @@ public final class AetherPanelObject:
     /// its corresponding action.
     public static func yesNoPanel(
         name: String = "Yes No Panel",
+        autoID: String = "",
         title: String,
         message: String,
         size: AetherSize3D? = nil,
@@ -270,6 +275,7 @@ public final class AetherPanelObject:
 
         let panel = AetherPanelObject(
             name: name,
+            autoID: autoID,
             title: title,
             objects: [
                 label,
@@ -453,3 +459,4 @@ public final class AetherPanelObject:
         )
     }
 }
+

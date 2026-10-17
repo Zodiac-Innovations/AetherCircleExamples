@@ -39,6 +39,7 @@ public class AetherCompositeObject:
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         objects: [AetherObject] = [],
         position: AetherPosition3D = .zero,
         rotation: AetherRotation3D = .zero,
@@ -55,6 +56,7 @@ public class AetherCompositeObject:
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .space,
             position: position,
             rotation: rotation,
@@ -91,3 +93,4 @@ public class AetherCompositeObject:
         children.removeAll()
     }
 }
+

@@ -64,6 +64,7 @@ public final class AetherBoolToggleObject:
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         value: Bool = false,
         flavor: AetherBoolToggleFlavor = .default,
         size: AetherSize3D? = nil,
@@ -99,6 +100,7 @@ public final class AetherBoolToggleObject:
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             objects: [
                 parts.background,
                 parts.indicator,
@@ -288,3 +290,4 @@ public final class AetherBoolToggleObject:
         }
     }
 }
+
