@@ -108,6 +108,128 @@ class QuestRenderer {
     double elapsed=0;
     XrTime firstTime=0;
     std::vector<Matrix> transforms;
+    XrActionSet actionSet=XR_NULL_HANDLE;
+    XrAction aimAction=XR_NULL_HANDLE,triggerAction=XR_NULL_HANDLE;
+    std::array<XrPath,2> handPaths{};
+    std::array<XrSpace,2> aimSpaces{};
+    std::array<Matrix,2> aims{};
+    std::array<bool,2> rayVisible{},triggerArmed{},loggedController{};
+    std::array<int,2> targets{{-1,-1}};
+    std::array<float,2> rayLengths{{3,3}};
+
+    void updateTransforms() {
+        const int count=swift.objectCount();
+        transforms.resize(count);
+        for(int i=0;i<count;++i) {
+            auto v=[&](int k){return swift.objectValue(i,k);};
+            Matrix local=Matrix::translation(v(0),v(1),v(2))*
+                Matrix::euler(v(6)+v(9)*elapsed,v(7)+v(10)*elapsed,v(8)+v(11)*elapsed);
+            int parent=swift.objectParent(i);
+            transforms[i]=(parent>=0 && parent<i)?transforms[parent]*local:local;
+        }
+    }
+    void initializeControllers() {
+        XrActionSetCreateInfo set{XR_TYPE_ACTION_SET_CREATE_INFO};
+        std::strcpy(set.actionSetName,"showcase_input");
+        std::strcpy(set.localizedActionSetName,"Showcase Input");
+        xrCheck(xrCreateActionSet(instance,&set,&actionSet),"create controller action set");
+        xrCheck(xrStringToPath(instance,"/user/hand/left",&handPaths[0]),"left hand path");
+        xrCheck(xrStringToPath(instance,"/user/hand/right",&handPaths[1]),"right hand path");
+        auto makeAction=[&](const char* name,const char* label,XrActionType type,XrAction& action) {
+            XrActionCreateInfo info{XR_TYPE_ACTION_CREATE_INFO};
+            std::strcpy(info.actionName,name);std::strcpy(info.localizedActionName,label);
+            info.actionType=type;info.countSubactionPaths=2;info.subactionPaths=handPaths.data();
+            xrCheck(xrCreateAction(actionSet,&info,&action),"create controller action");
+        };
+        makeAction("aim","Point",XR_ACTION_TYPE_POSE_INPUT,aimAction);
+        makeAction("trigger","Activate",XR_ACTION_TYPE_FLOAT_INPUT,triggerAction);
+        std::array<XrActionSuggestedBinding,4> bindings{};
+        for(int hand=0;hand<2;++hand) {
+            std::string prefix=hand==0?"/user/hand/left":"/user/hand/right";
+            XrPath aimPath=XR_NULL_PATH,triggerPath=XR_NULL_PATH;
+            xrCheck(xrStringToPath(instance,(prefix+"/input/aim/pose").c_str(),&aimPath),"aim binding path");
+            xrCheck(xrStringToPath(instance,(prefix+"/input/trigger/value").c_str(),&triggerPath),"trigger binding path");
+            bindings[hand*2]={aimAction,aimPath};bindings[hand*2+1]={triggerAction,triggerPath};
+        }
+        XrPath profile=XR_NULL_PATH;
+        xrCheck(xrStringToPath(instance,"/interaction_profiles/oculus/touch_controller",&profile),"Touch profile path");
+        XrInteractionProfileSuggestedBinding suggested{XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
+        suggested.interactionProfile=profile;suggested.countSuggestedBindings=4;suggested.suggestedBindings=bindings.data();
+        xrCheck(xrSuggestInteractionProfileBindings(instance,&suggested),"suggest Touch controller bindings");
+        for(int hand=0;hand<2;++hand) {
+            XrActionSpaceCreateInfo info{XR_TYPE_ACTION_SPACE_CREATE_INFO};
+            info.action=aimAction;info.subactionPath=handPaths[hand];info.poseInActionSpace.orientation.w=1;
+            xrCheck(xrCreateActionSpace(session,&info,&aimSpaces[hand]),"create controller aim space");
+        }
+        XrSessionActionSetsAttachInfo attach{XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO};
+        attach.countActionSets=1;attach.actionSets=&actionSet;
+        xrCheck(xrAttachSessionActionSets(session,&attach),"attach controller actions");
+        log("Touch controller aim and trigger actions attached.");
+    }
+    // Ray/OBB intersection: inverse rigid transform leaves distance in meters.
+    static float boxHit(const Matrix& world,const Matrix& aim,const std::array<float,3>& size) {
+        float delta[3]={aim.m[12]-world.m[12],aim.m[13]-world.m[13],aim.m[14]-world.m[14]};
+        float direction[3]={-aim.m[8],-aim.m[9],-aim.m[10]};
+        float near=0,far=10;
+        for(int axis=0;axis<3;++axis) {
+            float origin=0,ray=0;
+            for(int k=0;k<3;++k){origin+=world.m[axis*4+k]*delta[k];ray+=world.m[axis*4+k]*direction[k];}
+            float half=std::max(size[axis]*.5f,.003f);
+            if(std::abs(ray)<1e-6f) {if(std::abs(origin)>half)return -1;continue;}
+            float a=(-half-origin)/ray,b=(half-origin)/ray;
+            if(a>b)std::swap(a,b);
+            near=std::max(near,a);far=std::min(far,b);
+            if(near>far)return -1;
+        }
+        return far>=0?near:-1;
+    }
+    void updateControllers(XrTime time) {
+        targets={-1,-1};rayVisible={false,false};
+        if(!focused || !placementReady) {triggerArmed={false,false};return;}
+        XrActiveActionSet active{actionSet,XR_NULL_PATH};
+        XrActionsSyncInfo sync{XR_TYPE_ACTIONS_SYNC_INFO};sync.countActiveActionSets=1;sync.activeActionSets=&active;
+        XrResult result=xrSyncActions(session,&sync);
+        if(result==XR_SESSION_NOT_FOCUSED)return;
+        xrCheck(result,"sync controllers");
+        for(int hand=0;hand<2;++hand) {
+            XrActionStateGetInfo get{XR_TYPE_ACTION_STATE_GET_INFO};get.subactionPath=handPaths[hand];get.action=aimAction;
+            XrActionStatePose poseState{XR_TYPE_ACTION_STATE_POSE};xrCheck(xrGetActionStatePose(session,&get,&poseState),"controller pose state");
+            get.action=triggerAction;
+            XrActionStateFloat trigger{XR_TYPE_ACTION_STATE_FLOAT};xrCheck(xrGetActionStateFloat(session,&get,&trigger),"controller trigger state");
+            if(!poseState.isActive || !trigger.isActive){triggerArmed[hand]=false;continue;}
+            XrSpaceLocation location{XR_TYPE_SPACE_LOCATION};xrCheck(xrLocateSpace(aimSpaces[hand],space,time,&location),"locate controller");
+            const XrSpaceLocationFlags valid=XR_SPACE_LOCATION_POSITION_VALID_BIT|XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+            if((location.locationFlags&valid)!=valid){triggerArmed[hand]=false;continue;}
+            if(!loggedController[hand]) {
+                __android_log_print(ANDROID_LOG_INFO,logTag,"Controller %s tracking active.",hand==0?"left":"right");
+                loggedController[hand]=true;
+            }
+            auto& p=location.pose.position;
+            aims[hand]=Matrix::translation(p.x,p.y,p.z)*Matrix::quaternion(location.pose.orientation);
+            rayVisible[hand]=true;rayLengths[hand]=3;
+            float nearest=10;
+            for(int i=0;i<swift.objectCount();++i) {
+                if(swift.objectPrimitive(i)==2 || swift.objectValue(i,12)==0)continue;
+                // Hit test currently rendered box geometry only.
+                int primitive=swift.objectPrimitive(i);if(primitive!=0 && primitive!=3)continue;
+                float hit=boxHit(sceneOrigin*transforms[i],aims[hand],
+                    {swift.objectValue(i,3),swift.objectValue(i,4),swift.objectValue(i,5)});
+                if(hit>=0 && hit<nearest) {nearest=hit;targets[hand]=swift.objectTarget(i);}
+            }
+            if(nearest<10)rayLengths[hand]=nearest;
+            if(trigger.currentState<.35f)triggerArmed[hand]=true;
+            if(trigger.currentState>.65f && triggerArmed[hand]) {
+                triggerArmed[hand]=false;
+                if(targets[hand]>=0) {
+                    __android_log_print(ANDROID_LOG_INFO,logTag,"Controller activated target %d.",targets[hand]);
+                    swift.activate(targets[hand]);
+                    // A callback can replace the scene and invalidate every index.
+                    targets={-1,-1};updateTransforms();return;
+                }
+            }
+        }
+    }
+
 
     GLuint shader(GLenum type,const char* source) {
         GLuint s=glCreateShader(type); glShaderSource(s,1,&source,nullptr); glCompileShader(s);
@@ -136,12 +258,11 @@ class QuestRenderer {
             -.5f,-.5f,-.5f, .5f,-.5f,-.5f, .5f,-.5f,.5f, -.5f,-.5f,-.5f, .5f,-.5f,.5f, -.5f,-.5f,.5f};
         for (int i=0;i<count;++i) {
             auto value=[&](int k){return swift.objectValue(i,k);};
-            Matrix local=Matrix::translation(value(0),value(1),value(2))*
-                Matrix::euler(value(6)+value(9)*elapsed,value(7)+value(10)*elapsed,value(8)+value(11)*elapsed);
-            int parent=swift.objectParent(i);
-            transforms[i]=(parent>=0 && parent<i)?transforms[parent]*local:local;
             if (!value(12)) continue;
             std::array<float,4> color{}; for(int c=0;c<4;++c)color[c]=swift.objectColor(i,c);
+            int owner=swift.objectTarget(i);
+            if(owner>=0 && (targets[0]==owner || targets[1]==owner) && value(13)==0)
+                color={1.f,.72f,.12f,color[3]};
             const float height=value(13);
             if (height>0) {
                 int length=swift.objectText(i,nullptr,0);
@@ -158,13 +279,18 @@ class QuestRenderer {
                         vertices.insert(vertices.end(),{x,y1,0,x1,y1,0,x1,y,0,x,y1,0,x1,y,0,x,y,0});
                     }
                 }
-                geometry(vertices,camera*transforms[i],color);
+                geometry(vertices,camera*sceneOrigin*transforms[i],color);
             } else {
                 int primitive=swift.objectPrimitive(i);
                 if(primitive==0 || primitive==3)
-                    geometry(cube,camera*transforms[i]*Matrix::scale(value(3),value(4),value(5)),color);
+                    geometry(cube,camera*sceneOrigin*transforms[i]*Matrix::scale(value(3),value(4),value(5)),color);
                 // Other primitive meshes and textures are subsequent work.
             }
+        }
+        for(int hand=0;hand<2;++hand) if(rayVisible[hand]) {
+            Matrix ray=aims[hand]*Matrix::translation(0,0,-rayLengths[hand]/2)*
+                Matrix::scale(.004f,.004f,rayLengths[hand]);
+            geometry(cube,camera*ray,targets[hand]>=0?std::array<float,4>{1, .75f, .1f,1}:std::array<float,4>{.2f,.85f,1,1});
         }
     }
 public:
@@ -182,7 +308,9 @@ public:
             if(eye.swapchain)xrDestroySwapchain(eye.swapchain);
         }
         if(vbo)glDeleteBuffers(1,&vbo); if(vao)glDeleteVertexArrays(1,&vao); if(program)glDeleteProgram(program);
+        for(auto aimSpace:aimSpaces)if(aimSpace)xrDestroySpace(aimSpace);
         if(space)xrDestroySpace(space); if(session)xrDestroySession(session);
+        if(actionSet)xrDestroyActionSet(actionSet);
         if(display!=EGL_NO_DISPLAY) {
             eglMakeCurrent(display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT);
             if(surface!=EGL_NO_SURFACE)eglDestroySurface(display,surface);
@@ -251,6 +379,7 @@ public:
         matrixLocation=glGetUniformLocation(program,"matrix");colorLocation=glGetUniformLocation(program,"color");
         glGenVertexArrays(1,&vao);glBindVertexArray(vao);glGenBuffers(1,&vbo);glBindBuffer(GL_ARRAY_BUFFER,vbo);
         glEnableVertexAttribArray(0);glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),nullptr);
+        initializeControllers();
         log("OpenXR GLES session, floor space and stereo swapchains are ready.");
     }
     void pollEvents() {
@@ -308,6 +437,8 @@ public:
                         "Home anchored at head=(%.3f,%.3f,%.3f), yaw=%.3f",x,y,z,yaw);
                 }
                 swift.prepareScene();
+                updateTransforms();
+                updateControllers(state.predictedDisplayTime);
                 for(size_t i=0;i<eyes.size();++i) {
                     auto& eye=eyes[i];uint32_t index=0;
                     XrSwapchainImageAcquireInfo acquire{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};xrCheck(xrAcquireSwapchainImage(eye.swapchain,&acquire,&index),"acquire eye");
@@ -323,19 +454,12 @@ public:
                     glClearColor(.025f,.035f,.065f,1);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
                     glUseProgram(program);glBindVertexArray(vao);glBindBuffer(GL_ARRAY_BUFFER,vbo);
                     drawCalls=0;
-                    drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*sceneOrigin);
-                    // Temporary placement-independent diagnostic at bottom-center.
-                    glDisable(GL_DEPTH_TEST);
-                    geometry({-.06f,-.84f,0, .06f,-.84f,0, 0,-.70f,0},
-                             Matrix::identity(),{1,1,0,1});
+                    drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose));
                     if(placementReady && !loggedDrawing && i==0) {
-                        unsigned char pixel[4]={};
-                        glReadPixels(eye.width/2,static_cast<int>(eye.height*.11f),
-                                     1,1,GL_RGBA,GL_UNSIGNED_BYTE,pixel);
                         GLenum error=glGetError();
                         __android_log_print(ANDROID_LOG_INFO,logTag,
-                            "Draw diagnostics: objects=%d draws=%d GL=0x%x markerRGBA=%u,%u,%u,%u",
-                            swift.objectCount(),drawCalls,error,pixel[0],pixel[1],pixel[2],pixel[3]);
+                            "Draw diagnostics: objects=%d draws=%d GL=0x%x",
+                            swift.objectCount(),drawCalls,error);
                         for(int object=0;object<std::min(3,swift.objectCount());++object) {
                             __android_log_print(ANDROID_LOG_INFO,logTag,
                                 "Object %d: primitive=%d pos=(%.3f,%.3f,%.3f) visible=%.0f textHeight=%.3f alpha=%.3f",

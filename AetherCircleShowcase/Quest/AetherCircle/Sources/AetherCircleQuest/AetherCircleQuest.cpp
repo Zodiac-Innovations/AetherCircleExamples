@@ -73,6 +73,7 @@ struct SwiftBridge {
     using ObjectPrimitive = std::int32_t (*)(std::int32_t);
     using ObjectValue = float (*)(std::int32_t, std::int32_t);
     using ObjectColor = float (*)(std::int32_t, std::int32_t);
+    using Activate = void (*)(std::int32_t);
     using PrepareScene = void (*)();
     using ObjectParent = std::int32_t (*)(std::int32_t);
     using ObjectText = std::int32_t (*)(std::int32_t, char*, std::int32_t);
@@ -87,6 +88,8 @@ struct SwiftBridge {
     PrepareScene prepareScene = nullptr;
     ObjectParent objectParent = nullptr;
     ObjectText objectText = nullptr;
+    ObjectParent objectTarget = nullptr;
+    Activate activate = nullptr;
 
     bool load(android_app* app) {
         library = dlopen("libAetherCircleQuestApp.so", RTLD_NOW | RTLD_LOCAL);
@@ -122,7 +125,9 @@ struct SwiftBridge {
         prepareScene = reinterpret_cast<PrepareScene>(dlsym(library, "aethercircle_swift_prepare_scene"));
         objectParent = reinterpret_cast<ObjectParent>(dlsym(library, "aethercircle_swift_object_parent"));
         objectText = reinterpret_cast<ObjectText>(dlsym(library, "aethercircle_swift_object_text"));
-        if (prepareScene == nullptr || objectParent == nullptr || objectText == nullptr || start == nullptr || stop == nullptr || objectCount == nullptr ||
+        objectTarget = reinterpret_cast<ObjectParent>(dlsym(library, "aethercircle_swift_object_target"));
+        activate = reinterpret_cast<Activate>(dlsym(library, "aethercircle_swift_activate"));
+        if (objectTarget == nullptr || activate == nullptr || prepareScene == nullptr || objectParent == nullptr || objectText == nullptr || start == nullptr || stop == nullptr || objectCount == nullptr ||
             objectPrimitive == nullptr || objectValue == nullptr ||
             objectColor == nullptr) {
             log("The shared Swift application bridge is incomplete.");

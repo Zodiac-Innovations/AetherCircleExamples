@@ -278,3 +278,23 @@ public func aethercircleSwiftObjectText(
     }
     return Int32(bytes.count)
 }
+
+@_cdecl("aethercircle_swift_object_target")
+public func aethercircleSwiftObjectTarget(_ index: Int32) -> Int32 {
+    let runtime = QuestSwiftRuntime.shared
+    var current = index
+    while let object = runtime.object(at: current) {
+        if let config = object.config { return config.canTarget ? current : -1 }
+        current = runtime.renderParents[Int(current)]
+        if current < 0 { break }
+    }
+    return -1
+}
+
+@_cdecl("aethercircle_swift_activate")
+public func aethercircleSwiftActivate(_ index: Int32) {
+    guard let object = QuestSwiftRuntime.shared.object(at: index),
+          object.isVisible, let config = object.config, config.canTarget else { return }
+    config.activateAction?()
+    QuestSwiftRuntime.shared.prepareRenderScene()
+}
