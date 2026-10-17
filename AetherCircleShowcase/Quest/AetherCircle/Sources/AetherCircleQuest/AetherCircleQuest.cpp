@@ -93,6 +93,9 @@ struct SwiftBridge {
     ObjectText objectText = nullptr;
     ObjectText objectTexture = nullptr;
     ObjectCount quitRequested = nullptr;
+    ObjectCount passthroughRequested = nullptr;
+    using SetCapability = void (*)(std::int32_t);
+    SetCapability setPassthroughSupported = nullptr;
     ObjectParent objectTarget = nullptr;
     Activate activate = nullptr;
 
@@ -134,7 +137,9 @@ struct SwiftBridge {
         activate = reinterpret_cast<Activate>(dlsym(library, "aethercircle_swift_activate"));
         objectTexture = reinterpret_cast<ObjectText>(dlsym(library, "aethercircle_swift_object_texture"));
         quitRequested = reinterpret_cast<ObjectCount>(dlsym(library, "aethercircle_swift_quit_requested"));
-        if (objectTexture == nullptr || quitRequested == nullptr || objectTarget == nullptr || activate == nullptr || prepareScene == nullptr || objectParent == nullptr || objectText == nullptr || start == nullptr || stop == nullptr || objectCount == nullptr ||
+        passthroughRequested = reinterpret_cast<ObjectCount>(dlsym(library, "aethercircle_swift_passthrough_requested"));
+        setPassthroughSupported = reinterpret_cast<SetCapability>(dlsym(library, "aethercircle_swift_set_passthrough_supported"));
+        if (passthroughRequested == nullptr || setPassthroughSupported == nullptr || objectTexture == nullptr || quitRequested == nullptr || objectTarget == nullptr || activate == nullptr || prepareScene == nullptr || objectParent == nullptr || objectText == nullptr || start == nullptr || stop == nullptr || objectCount == nullptr ||
             objectPrimitive == nullptr || objectValue == nullptr ||
             objectColor == nullptr) {
             log("The shared Swift application bridge is incomplete.");
@@ -154,6 +159,11 @@ struct SwiftBridge {
             return false;
         }
         setResourceDirectory(resourceDirectory.c_str());
+        return true;
+    }
+
+    void startApplication(bool passthroughSupported) {
+        setPassthroughSupported(passthroughSupported ? 1 : 0);
         start();
         __android_log_print(
             ANDROID_LOG_INFO,
@@ -161,7 +171,6 @@ struct SwiftBridge {
             "Shared Swift application started with %d scene object(s).",
             objectCount()
         );
-        return true;
     }
 
     void unload() {
@@ -198,12 +207,23 @@ bool initializeLoader(android_app* app) {
 
 XrInstance createInstance(
     android_app* app,
-    const aethercircle::ApplicationInfo& application
+    const aethercircle::ApplicationInfo& application,
+    bool& passthroughSupported
 ) {
-    const std::array<const char*, 2> extensions{
+    std::vector<const char*> extensions{
         XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME,
         XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME
     };
+
+    uint32_t extensionCount=0;
+    xrEnumerateInstanceExtensionProperties(nullptr,0,&extensionCount,nullptr);
+    std::vector<XrExtensionProperties> available(extensionCount,{XR_TYPE_EXTENSION_PROPERTIES});
+    if(XR_SUCCEEDED(xrEnumerateInstanceExtensionProperties(nullptr,extensionCount,&extensionCount,available.data()))) {
+        passthroughSupported=std::any_of(available.begin(),available.end(),[](const auto& extension) {
+            return std::strcmp(extension.extensionName,XR_FB_PASSTHROUGH_EXTENSION_NAME)==0;
+        });
+    }
+    if(passthroughSupported)extensions.push_back(XR_FB_PASSTHROUGH_EXTENSION_NAME);
 
     XrInstanceCreateInfoAndroidKHR androidInfo{
         XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR
@@ -272,14 +292,22 @@ void run(android_app* app, const ApplicationInfo& application) {
     try {
         if(!swift.load(app))throw std::runtime_error("Swift application startup");
         if(!initializeLoader(app))throw std::runtime_error("OpenXR loader initialization");
-        instance=createInstance(app,application);
+        bool passthroughSupported=false;
+        instance=createInstance(app,application,passthroughSupported);
         if(instance==XR_NULL_HANDLE)throw std::runtime_error("OpenXR instance creation");
         XrSystemGetInfo info{XR_TYPE_SYSTEM_GET_INFO};info.formFactor=XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
         XrSystemId system=XR_NULL_SYSTEM_ID;
         xrCheck(xrGetSystem(instance,&info,&system),"get headset system");
+        if(passthroughSupported) {
+            XrSystemPassthroughPropertiesFB passthrough{XR_TYPE_SYSTEM_PASSTHROUGH_PROPERTIES_FB};
+            XrSystemProperties properties{XR_TYPE_SYSTEM_PROPERTIES};properties.next=&passthrough;
+            xrCheck(xrGetSystemProperties(instance,system,&properties),"query passthrough support");
+            passthroughSupported=passthrough.supportsPassthrough==XR_TRUE;
+        }
+        swift.startApplication(passthroughSupported);
         // Scoped cleanup releases session/GL objects before destroying the instance.
         QuestRenderer renderer(swift,app->activity->assetManager);
-        renderer.initialize(instance,system);
+        renderer.initialize(instance,system,passthroughSupported);
         bool exitSent=false;
         while(!app->destroyRequested && !renderer.exitRequested) {
             pumpAndroid(app,renderer.running?0:100);

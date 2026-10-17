@@ -100,6 +100,10 @@ class QuestRenderer {
     GLint matrixLocation=-1,colorLocation=-1;
     XrInstance instance=XR_NULL_HANDLE;
     SwiftBridge& swift;
+    XrPassthroughFB passthrough=XR_NULL_HANDLE;
+    XrPassthroughLayerFB passthroughLayer=XR_NULL_HANDLE;
+    PFN_xrDestroyPassthroughFB destroyPassthrough=nullptr;
+    PFN_xrDestroyPassthroughLayerFB destroyPassthroughLayer=nullptr;
     bool loggedFrame=false;
     bool focused=false,placementReady=false,loggedDrawing=false;
     Matrix sceneOrigin=Matrix::identity();
@@ -438,6 +442,8 @@ public:
         for(const auto& texture:textures)if(texture.second)glDeleteTextures(1,&texture.second);
         if(vbo)glDeleteBuffers(1,&vbo); if(vao)glDeleteVertexArrays(1,&vao); if(program)glDeleteProgram(program);
         for(auto aimSpace:aimSpaces)if(aimSpace)xrDestroySpace(aimSpace);
+        if(passthroughLayer && destroyPassthroughLayer)destroyPassthroughLayer(passthroughLayer);
+        if(passthrough && destroyPassthrough)destroyPassthrough(passthrough);
         if(space)xrDestroySpace(space); if(session)xrDestroySession(session);
         if(actionSet)xrDestroyActionSet(actionSet);
         if(display!=EGL_NO_DISPLAY) {
@@ -447,7 +453,7 @@ public:
             eglTerminate(display);
         }
     }
-    void initialize(XrInstance xrInstance,XrSystemId system) {
+    void initialize(XrInstance xrInstance,XrSystemId system,bool passthroughSupported) {
         instance=xrInstance;
         PFN_xrGetOpenGLESGraphicsRequirementsKHR getRequirements=nullptr;
         xrCheck(xrGetInstanceProcAddr(instance,"xrGetOpenGLESGraphicsRequirementsKHR",reinterpret_cast<PFN_xrVoidFunction*>(&getRequirements)),"resolve GLES requirements");
@@ -538,6 +544,30 @@ void main(){
         glEnableVertexAttribArray(0);glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,8*sizeof(float),nullptr);
         glEnableVertexAttribArray(1);glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,8*sizeof(float),reinterpret_cast<void*>(3*sizeof(float)));
         glEnableVertexAttribArray(2);glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,8*sizeof(float),reinterpret_cast<void*>(6*sizeof(float)));
+        if(passthroughSupported) {
+            PFN_xrCreatePassthroughFB createPassthrough=nullptr;
+            PFN_xrCreatePassthroughLayerFB createLayer=nullptr;
+            auto resolve=[&](const char* name,auto& function) {
+                xrCheck(xrGetInstanceProcAddr(instance,name,reinterpret_cast<PFN_xrVoidFunction*>(&function)),name);
+            };
+            resolve("xrCreatePassthroughFB",createPassthrough);
+            resolve("xrCreatePassthroughLayerFB",createLayer);
+            resolve("xrDestroyPassthroughFB",destroyPassthrough);
+            resolve("xrDestroyPassthroughLayerFB",destroyPassthroughLayer);
+            XrPassthroughCreateInfoFB passInfo{XR_TYPE_PASSTHROUGH_CREATE_INFO_FB};
+            passInfo.flags=XR_PASSTHROUGH_IS_RUNNING_AT_CREATION_BIT_FB;
+            XrResult result=createPassthrough(session,&passInfo,&passthrough);
+            if(XR_SUCCEEDED(result)) {
+                XrPassthroughLayerCreateInfoFB layerInfo{XR_TYPE_PASSTHROUGH_LAYER_CREATE_INFO_FB};
+                layerInfo.passthrough=passthrough;
+                layerInfo.flags=XR_PASSTHROUGH_IS_RUNNING_AT_CREATION_BIT_FB;
+                layerInfo.purpose=XR_PASSTHROUGH_LAYER_PURPOSE_RECONSTRUCTION_FB;
+                result=createLayer(session,&layerInfo,&passthroughLayer);
+            }
+            if(XR_FAILED(result)) {
+                __android_log_print(ANDROID_LOG_ERROR,logTag,"Passthrough initialization failed: %d; using full VR.",result);
+            } else log("Quest passthrough underlay is ready; using the shared environment mode.");
+        } else log("Quest passthrough is unavailable; using full VR.");
         initializeControllers();
         log("OpenXR GLES session, floor space and stereo swapchains are ready.");
     }
@@ -568,7 +598,11 @@ void main(){
         XrFrameBeginInfo begin{XR_TYPE_FRAME_BEGIN_INFO};xrCheck(xrBeginFrame(session,&begin),"begin frame");
         XrCompositionLayerProjection layer{XR_TYPE_COMPOSITION_LAYER_PROJECTION};layer.space=space;
         std::array<XrCompositionLayerProjectionView,2> projectionViews{};
-        const XrCompositionLayerBaseHeader* layers[]={reinterpret_cast<const XrCompositionLayerBaseHeader*>(&layer)};
+        const bool usePassthrough=passthroughLayer && swift.passthroughRequested();
+        XrCompositionLayerPassthroughFB background{XR_TYPE_COMPOSITION_LAYER_PASSTHROUGH_FB};
+        background.layerHandle=passthroughLayer;
+        const XrCompositionLayerBaseHeader* layers[2]{};
+        if(usePassthrough)layer.layerFlags=XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
         uint32_t layerCount=0;
         if(state.shouldRender) {
             std::array<XrView,2> views{{{XR_TYPE_VIEW},{XR_TYPE_VIEW}}};uint32_t count=0;
@@ -609,8 +643,8 @@ void main(){
                     if(glCheckFramebufferStatus(GL_FRAMEBUFFER)!=GL_FRAMEBUFFER_COMPLETE)throw std::runtime_error("incomplete eye framebuffer");
                     glViewport(0,0,eye.width,eye.height);glDisable(GL_SCISSOR_TEST);glDisable(GL_CULL_FACE);
                     glEnable(GL_DEPTH_TEST);glDepthFunc(GL_LEQUAL);glDepthMask(GL_TRUE);
-                    glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-                    glClearColor(.025f,.035f,.065f,1);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+                    glEnable(GL_BLEND);glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
+                    if(usePassthrough)glClearColor(0,0,0,0);else glClearColor(.025f,.035f,.065f,1);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
                     glUseProgram(program);glBindVertexArray(vao);glBindBuffer(GL_ARRAY_BUFFER,vbo);
                     drawCalls=0;
                     drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose));
@@ -634,7 +668,9 @@ void main(){
                     projection.pose=views[i].pose;projection.fov=views[i].fov;projection.subImage.swapchain=eye.swapchain;
                     projection.subImage.imageRect.extent={eye.width,eye.height};
                 }
-                layer.viewCount=2;layer.views=projectionViews.data();layerCount=1;
+                layer.viewCount=2;layer.views=projectionViews.data();
+                if(usePassthrough)layers[layerCount++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&background);
+                layers[layerCount++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&layer);
             }
         }
         XrFrameEndInfo end{XR_TYPE_FRAME_END_INFO};end.displayTime=state.predictedDisplayTime;end.environmentBlendMode=XR_ENVIRONMENT_BLEND_MODE_OPAQUE;end.layerCount=layerCount;end.layers=layerCount?layers:nullptr;

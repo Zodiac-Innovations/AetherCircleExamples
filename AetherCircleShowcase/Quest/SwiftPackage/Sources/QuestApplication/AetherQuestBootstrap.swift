@@ -84,6 +84,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     static let shared = QuestSwiftRuntime()
 
     let graphicEngine = QuestGraphicEngine()
+    var supportsPassthrough = false
     let environmentEngine = QuestEnvironmentEngine()
     let assetEngine = QuestAssetEngine()
     let platformServices = QuestPlatform()
@@ -123,7 +124,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
             assetEngine: assetEngine,
             capabilities: AetherCapabilities(
                 coreLevel: .level1,
-                supportsPassthrough: false,
+                supportsPassthrough: supportsPassthrough,
                 supportsFullVR: true,
                 supportsHUD: false,
                 supportsClock: false
@@ -326,4 +327,14 @@ public func aethercircleSwiftObjectTexture(
         buffer[count] = 0
     }
     return Int32(bytes.count)
+}
+
+@_cdecl("aethercircle_swift_set_passthrough_supported")
+public func aethercircleSwiftSetPassthroughSupported(_ supported: Int32) {
+    QuestSwiftRuntime.shared.supportsPassthrough = supported != 0
+}
+
+@_cdecl("aethercircle_swift_passthrough_requested")
+public func aethercircleSwiftPassthroughRequested() -> Int32 {
+    QuestSwiftRuntime.shared.environmentEngine.mode == .passthrough ? 1 : 0
 }
