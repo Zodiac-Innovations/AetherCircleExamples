@@ -78,7 +78,7 @@ while IFS= read -r runtime_library; do
     cp "$runtime_library" "$JNI_LIBS/"
     RUNTIME_COUNT=$((RUNTIME_COUNT + 1))
 done < <(
-    find "$SWIFT_RESOURCE_DIR/android"         -maxdepth 1         -type f         \( -name 'libswift*.so' -o -name 'libFoundation*.so' \)         -print
+    find -L "$SWIFT_RESOURCE_DIR/android" -maxdepth 1 -type f -name '*.so' -print
 )
 
 if [ "$RUNTIME_COUNT" -eq 0 ]; then
