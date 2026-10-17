@@ -231,6 +231,111 @@ class QuestRenderer {
     }
 
 
+    AAssetManager* assets=nullptr;
+    std::map<std::string,GLuint> textures;
+    std::map<int,std::vector<float>> meshes;
+    GLint textureLocation=-1,texturedLocation=-1,lightingLocation=-1;
+    GLint roughnessLocation=-1,metallicLocation=-1,modelLocation=-1;
+
+    GLuint textureFor(int object) {
+        int length=swift.objectTexture(object,nullptr,0);
+        if(length<=0)return 0;
+        std::vector<char> name(length+1);swift.objectTexture(object,name.data(),length+1);
+        std::string filename(name.data());
+        if(auto found=textures.find(filename);found!=textures.end())return found->second;
+        GLuint texture=0;
+        const std::string path="aethercircle/"+filename;
+        AAsset* asset=AAssetManager_open(assets,path.c_str(),AASSET_MODE_BUFFER);
+        AImageDecoder* decoder=nullptr;
+        int result=asset?AImageDecoder_createFromAAsset(asset,&decoder):-1;
+        int width=0,height=0;
+        if(result==ANDROID_IMAGE_DECODER_SUCCESS) {
+            auto header=AImageDecoder_getHeaderInfo(decoder);
+            width=AImageDecoderHeaderInfo_getWidth(header);height=AImageDecoderHeaderInfo_getHeight(header);
+            if(width<=0 || height<=0 || width>8192 || height>8192)result=-1;
+            else result=AImageDecoder_setAndroidBitmapFormat(decoder,ANDROID_BITMAP_FORMAT_RGBA_8888);
+            if(result==ANDROID_IMAGE_DECODER_SUCCESS) {
+                std::vector<unsigned char> pixels(static_cast<size_t>(width)*height*4);
+                result=AImageDecoder_decodeImage(decoder,pixels.data(),width*4,pixels.size());
+                if(result==ANDROID_IMAGE_DECODER_SUCCESS) {
+                    glGenTextures(1,&texture);glBindTexture(GL_TEXTURE_2D,texture);
+                    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels.data());
+                    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+                    glGenerateMipmap(GL_TEXTURE_2D);
+                }
+            }
+        }
+        if(decoder)AImageDecoder_delete(decoder);if(asset)AAsset_close(asset);
+        textures[filename]=texture;
+        __android_log_print(texture?ANDROID_LOG_INFO:ANDROID_LOG_ERROR,logTag,
+            "Texture %s: %s (%dx%d, decoder=%d)",filename.c_str(),texture?"loaded":"FAILED",width,height,result);
+        return texture;
+    }
+    const std::vector<float>& meshFor(int id,const std::vector<float>& cube) {
+        if(id==0 || id==3)return cube;
+        if(auto found=meshes.find(id);found!=meshes.end())return found->second;
+        auto& out=meshes[id];
+        using P=std::array<float,3>;
+        auto tri=[&](P a,P b,P c){for(auto p:{a,b,c})out.insert(out.end(),p.begin(),p.end());};
+        auto quad=[&](P a,P b,P c,P d){tri(a,b,c);tri(a,c,d);};
+        constexpr float pi=3.141592653589793f;constexpr int steps=48,rings=24;
+        if(id==1 || id==4 || id==5 || id==8) {
+            auto point=[&](float u,float v)->P {
+                float phi=(id==4?pi/2:pi)*v;
+                float radius=id==8?.25f:.5f;
+                float y=radius*std::cos(phi);
+                if(id==8)y+=(y>=0?.25f:-.25f);
+                return {radius*std::sin(phi)*std::cos(u),y,radius*std::sin(phi)*std::sin(u)};
+            };
+            for(int j=0;j<rings;++j)for(int i=0;i<steps;++i) {
+                float a=2*pi*i/steps,b=2*pi*(i+1)/steps,v=float(j)/rings,w=float(j+1)/rings;
+                quad(point(a,v),point(a,w),point(b,w),point(b,v));
+            }
+            if(id==4)for(int i=0;i<steps;++i)tri({0,0,0},point(2*pi*i/steps,1),point(2*pi*(i+1)/steps,1));
+        } else if(id==6 || id==7 || id==17 || id==13) {
+            int n=id==13?6:steps;
+            auto point=[](float angle,float y,float radius)->P{return {radius*std::cos(angle),y,radius*std::sin(angle)};};
+            for(int i=0;i<n;++i) {
+                float a=2*pi*i/n,b=2*pi*(i+1)/n;
+                float bottom=id==17?0:-.5f,top=id==17?0:.5f,r=id==7?0:.5f;
+                quad(point(a,bottom,.5f),point(b,bottom,.5f),point(b,top,r),point(a,top,r));
+                tri({0,bottom,0},point(b,bottom,.5f),point(a,bottom,.5f));
+                if(id!=7)tri({0,top,0},point(a,top,r),point(b,top,r));
+            }
+        } else if(id==14 || id==18) {
+            int tubes=id==18?1:16;
+            auto point=[&](float a,float b)->P {
+                if(id==18) {float r=b==0?.5f:.34f;return {r*std::cos(a),0,r*std::sin(a)};}
+                float r=.35f+.15f*std::cos(b);return {r*std::cos(a),.5f*std::sin(b),r*std::sin(a)};
+            };
+            for(int i=0;i<steps;++i)for(int j=0;j<tubes;++j) {
+                float a=2*pi*i/steps,b=2*pi*(i+1)/steps,c=2*pi*j/tubes,d=2*pi*(j+1)/tubes;
+                quad(point(a,c),point(b,c),point(b,d),point(a,d));
+            }
+        } else if(id==15)quad({-.5f,-.5f,0},{.5f,-.5f,0},{.5f,.5f,0},{-.5f,.5f,0});
+        else if(id==16)tri({-.5f,-.5f,0},{.5f,-.5f,0},{0,.5f,0});
+        else if(id==9 || id==10) {
+            int n=id==10?3:4;P apex={0,.5f,0};
+            for(int i=0;i<n;++i) {
+                auto p=[&](int k)->P {float a=2*pi*k/n+pi/4;return {.5f*std::cos(a),-.5f,.5f*std::sin(a)};};
+                tri(p(i),p(i+1),apex);tri({0,-.5f,0},p(i+1),p(i));
+            }
+        } else if(id==11) {
+            P top={0,.5f,0},bottom={0,-.5f,0};
+            for(int i=0;i<4;++i) {
+                auto p=[&](int k)->P {float a=pi*k/2;return {.5f*std::cos(a),0,.5f*std::sin(a)};};
+                tri(p(i),p(i+1),top);tri(p(i+1),p(i),bottom);
+            }
+        } else if(id==12) {
+            P a={-.5f,-.5f,-.5f},b={.5f,-.5f,-.5f},c={-.5f,.5f,-.5f};
+            P d={-.5f,-.5f,.5f},e={.5f,-.5f,.5f},f={-.5f,.5f,.5f};
+            tri(a,b,c);tri(d,f,e);quad(a,d,e,b);quad(a,c,f,d);quad(b,e,f,c);
+        }
+        return out;
+    }
+
     GLuint shader(GLenum type,const char* source) {
         GLuint s=glCreateShader(type); glShaderSource(s,1,&source,nullptr); glCompileShader(s);
         GLint ok=0; glGetShaderiv(s,GL_COMPILE_STATUS,&ok);
@@ -238,13 +343,34 @@ class QuestRenderer {
             __android_log_print(ANDROID_LOG_ERROR,logTag,"Shader: %s",message); glDeleteShader(s); throw std::runtime_error("shader compilation"); }
         return s;
     }
-    void geometry(const std::vector<float>& vertices,const Matrix& matrix,const std::array<float,4>& color) {
-        if (vertices.empty() || color[3]<=0) return;
+    void geometry(const std::vector<float>& vertices,const Matrix& matrix,const std::array<float,4>& color,
+                  GLuint texture=0,float roughness=.5f,float metallic=0,bool lit=false,
+                  const Matrix& model=Matrix::identity(),bool spherical=false) {
+        if(vertices.empty() || color[3]<=0)return;
+        std::vector<float> data;data.reserve(vertices.size()/3*8);
+        for(size_t i=0;i+8<vertices.size();i+=9) {
+            float ax=vertices[i+3]-vertices[i],ay=vertices[i+4]-vertices[i+1],az=vertices[i+5]-vertices[i+2];
+            float bx=vertices[i+6]-vertices[i],by=vertices[i+7]-vertices[i+1],bz=vertices[i+8]-vertices[i+2];
+            float nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+            float length=std::sqrt(nx*nx+ny*ny+nz*nz);
+            if(length>1e-8f){nx/=length;ny/=length;nz/=length;}else{nx=0;ny=0;nz=1;}
+            for(int vertex=0;vertex<3;++vertex) {
+                float x=vertices[i+vertex*3],y=vertices[i+vertex*3+1],z=vertices[i+vertex*3+2];
+                float u=x+.5f,v=y+.5f;
+                if(std::abs(ny)>std::abs(nx) && std::abs(ny)>std::abs(nz)){u=x+.5f;v=z+.5f;}
+                else if(std::abs(nx)>std::abs(nz)){u=z+.5f;v=y+.5f;}
+                if(spherical){u=std::atan2(z,x)/(2*3.14159265f)+.5f;v=std::acos(std::clamp(y*2,-1.f,1.f))/3.14159265f;}
+                data.insert(data.end(),{x,y,z,nx,ny,nz,u,1-v});
+            }
+        }
         glUniformMatrix4fv(matrixLocation,1,GL_FALSE,matrix.m.data());
+        glUniformMatrix4fv(modelLocation,1,GL_FALSE,model.m.data());
         glUniform4fv(colorLocation,1,color.data());
-        glBufferData(GL_ARRAY_BUFFER,static_cast<GLsizeiptr>(vertices.size()*sizeof(float)),vertices.data(),GL_STREAM_DRAW);
-        glDrawArrays(GL_TRIANGLES,0,static_cast<GLsizei>(vertices.size()/3));
-        ++drawCalls;
+        glUniform1i(texturedLocation,texture?1:0);glUniform1i(lightingLocation,lit?1:0);
+        glUniform1f(roughnessLocation,std::clamp(roughness,0.f,1.f));glUniform1f(metallicLocation,std::clamp(metallic,0.f,1.f));
+        glActiveTexture(GL_TEXTURE0);glBindTexture(GL_TEXTURE_2D,texture);glUniform1i(textureLocation,0);
+        glBufferData(GL_ARRAY_BUFFER,static_cast<GLsizeiptr>(data.size()*sizeof(float)),data.data(),GL_STREAM_DRAW);
+        glDrawArrays(GL_TRIANGLES,0,static_cast<GLsizei>(data.size()/8));++drawCalls;
     }
     void drawScene(const Matrix& camera) {
         const int count=swift.objectCount();
@@ -282,9 +408,11 @@ class QuestRenderer {
                 geometry(vertices,camera*sceneOrigin*transforms[i],color);
             } else {
                 int primitive=swift.objectPrimitive(i);
-                if(primitive==0 || primitive==3)
-                    geometry(cube,camera*sceneOrigin*transforms[i]*Matrix::scale(value(3),value(4),value(5)),color);
-                // Other primitive meshes and textures are subsequent work.
+                if(primitive!=2) {
+                    Matrix model=sceneOrigin*transforms[i]*Matrix::scale(value(3),value(4),value(5));
+                    geometry(meshFor(primitive,cube),camera*model,color,textureFor(i),value(14),value(15),true,model,
+                             primitive==1 || primitive==4 || primitive==5);
+                }
             }
         }
         for(int hand=0;hand<2;++hand) if(rayVisible[hand]) {
@@ -298,7 +426,7 @@ public:
     XrSpace space=XR_NULL_HANDLE;
     std::vector<EyeTarget> eyes;
     bool running=false,exitRequested=false;
-    explicit QuestRenderer(SwiftBridge& bridge):swift(bridge) {}
+    QuestRenderer(SwiftBridge& bridge,AAssetManager* manager):swift(bridge),assets(manager) {}
     ~QuestRenderer() {
         if(display!=EGL_NO_DISPLAY && context!=EGL_NO_CONTEXT)
             eglMakeCurrent(display,surface,surface,context);
@@ -307,6 +435,7 @@ public:
             if(eye.depth)glDeleteRenderbuffers(1,&eye.depth);
             if(eye.swapchain)xrDestroySwapchain(eye.swapchain);
         }
+        for(const auto& texture:textures)if(texture.second)glDeleteTextures(1,&texture.second);
         if(vbo)glDeleteBuffers(1,&vbo); if(vao)glDeleteVertexArrays(1,&vao); if(program)glDeleteProgram(program);
         for(auto aimSpace:aimSpaces)if(aimSpace)xrDestroySpace(aimSpace);
         if(space)xrDestroySpace(space); if(session)xrDestroySession(session);
@@ -370,15 +499,45 @@ public:
             glGenFramebuffers(1,&eye.framebuffer);glGenRenderbuffers(1,&eye.depth);
             glBindRenderbuffer(GL_RENDERBUFFER,eye.depth);glRenderbufferStorage(GL_RENDERBUFFER,GL_DEPTH_COMPONENT24,eye.width,eye.height);
         }
-        const char* vs="#version 300 es\nlayout(location=0) in vec3 position; uniform mat4 matrix; void main(){gl_Position=matrix*vec4(position,1.0);}";
-        const char* fs="#version 300 es\nprecision mediump float; uniform vec4 color; out vec4 outputColor; void main(){outputColor=color;}";
+        const char* vs=R"(#version 300 es
+layout(location=0) in vec3 position;
+layout(location=1) in vec3 normal;
+layout(location=2) in vec2 uv;
+uniform mat4 matrix;uniform mat4 model;
+out vec3 surfaceNormal;out vec2 textureUV;
+void main(){gl_Position=matrix*vec4(position,1.0);surfaceNormal=transpose(inverse(mat3(model)))*normal;textureUV=uv;}
+)";
+        const char* fs=R"(#version 300 es
+precision highp float;
+uniform vec4 color;uniform sampler2D baseTexture;
+uniform int textured;uniform int lighting;uniform float roughness;uniform float metallic;
+in vec3 surfaceNormal;in vec2 textureUV;out vec4 outputColor;
+void main(){
+ vec4 base=color;if(textured==1)base*=texture(baseTexture,textureUV);
+ vec3 result=base.rgb;
+ if(lighting==1){
+   vec3 n=normalize(surfaceNormal);if(!gl_FrontFacing)n=-n;
+   vec3 light=normalize(vec3(.4,.8,1.));float diffuse=max(dot(n,light),0.);
+   vec3 halfVector=normalize(light+vec3(0,0,1));
+   float spec=pow(max(dot(n,halfVector),0.),mix(96.,4.,roughness))*(1.-roughness*.7);
+   vec3 f0=mix(vec3(.04),base.rgb,metallic);
+   result=base.rgb*(.32+.68*diffuse)*(1.-metallic*.35)+f0*spec;
+ }
+ outputColor=vec4(result,base.a);
+}
+)";
         GLuint vertex=shader(GL_VERTEX_SHADER,vs),fragment=shader(GL_FRAGMENT_SHADER,fs);
         program=glCreateProgram();glAttachShader(program,vertex);glAttachShader(program,fragment);glLinkProgram(program);
         glDeleteShader(vertex);glDeleteShader(fragment);
         GLint linked=0;glGetProgramiv(program,GL_LINK_STATUS,&linked);if(!linked)throw std::runtime_error("shader program link");
         matrixLocation=glGetUniformLocation(program,"matrix");colorLocation=glGetUniformLocation(program,"color");
+        textureLocation=glGetUniformLocation(program,"baseTexture");texturedLocation=glGetUniformLocation(program,"textured");
+        lightingLocation=glGetUniformLocation(program,"lighting");roughnessLocation=glGetUniformLocation(program,"roughness");
+        metallicLocation=glGetUniformLocation(program,"metallic");modelLocation=glGetUniformLocation(program,"model");
         glGenVertexArrays(1,&vao);glBindVertexArray(vao);glGenBuffers(1,&vbo);glBindBuffer(GL_ARRAY_BUFFER,vbo);
-        glEnableVertexAttribArray(0);glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),nullptr);
+        glEnableVertexAttribArray(0);glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,8*sizeof(float),nullptr);
+        glEnableVertexAttribArray(1);glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,8*sizeof(float),reinterpret_cast<void*>(3*sizeof(float)));
+        glEnableVertexAttribArray(2);glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,8*sizeof(float),reinterpret_cast<void*>(6*sizeof(float)));
         initializeControllers();
         log("OpenXR GLES session, floor space and stereo swapchains are ready.");
     }
@@ -483,3 +642,4 @@ public:
         if(layerCount && !loggedFrame){log("First stereo Showcase frame submitted.");loggedFrame=true;}
     }
 };
+

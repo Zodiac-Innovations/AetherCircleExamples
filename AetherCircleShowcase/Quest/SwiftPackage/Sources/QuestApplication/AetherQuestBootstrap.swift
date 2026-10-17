@@ -58,6 +58,9 @@ private final class QuestPlatform: AetherPlatform, @unchecked Sendable {
     var platformType: AetherPlatformType { .quest }
     var deviceType: AetherDeviceType { .headset }
     var deviceManufacturer: String { "Meta" }
+    var quitRequested = false
+    var canQuitApp: Bool { true }
+    func quitApp() -> Bool { quitRequested = true; return true }
     var resourceDirectory: URL?
     var canRetrieveResources: Bool { resourceDirectory != nil }
     func resourceURL(name: String, type: AetherResourceType) -> URL? {
@@ -111,6 +114,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
             return
         }
 
+        platformServices.quitRequested = false
         let world = AetherWorld(
             graphicEngine: graphicEngine,
             environmentEngine: environmentEngine,
@@ -217,6 +221,8 @@ public func aethercircleSwiftObjectValue(
     case 11: return object.rotationRate?.z ?? 0
     case 12: return object.isVisible ? 1 : 0
     case 13: return (object as? AetherTextObject)?.characterHeight ?? 0
+    case 14: return QuestSwiftRuntime.shared.assetEngine.surface(for: object.material).roughness
+    case 15: return QuestSwiftRuntime.shared.assetEngine.surface(for: object.material).metallic
     default: return 0
     }
 }
@@ -297,4 +303,27 @@ public func aethercircleSwiftActivate(_ index: Int32) {
           object.isVisible, let config = object.config, config.canTarget else { return }
     config.activateAction?()
     QuestSwiftRuntime.shared.prepareRenderScene()
+}
+
+
+@_cdecl("aethercircle_swift_quit_requested")
+public func aethercircleSwiftQuitRequested() -> Int32 {
+    QuestSwiftRuntime.shared.platformServices.quitRequested ? 1 : 0
+}
+
+@_cdecl("aethercircle_swift_object_texture")
+public func aethercircleSwiftObjectTexture(
+    _ index: Int32, _ buffer: UnsafeMutablePointer<CChar>?, _ capacity: Int32
+) -> Int32 {
+    let runtime = QuestSwiftRuntime.shared
+    let filename = runtime.object(at: index).flatMap {
+        runtime.assetEngine.surface(for: $0.material).baseColorTexture
+    } ?? ""
+    let bytes = Array(filename.utf8)
+    if let buffer, capacity > 0 {
+        let count = min(bytes.count, Int(capacity) - 1)
+        for i in 0..<count { buffer[i] = CChar(bitPattern: bytes[i]) }
+        buffer[count] = 0
+    }
+    return Int32(bytes.count)
 }

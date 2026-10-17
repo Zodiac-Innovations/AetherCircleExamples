@@ -33,6 +33,7 @@ target_link_libraries(aethercircle_quest PUBLIC
     OpenXR::openxr_loader
     EGL
     GLESv3
+    jnigraphics
 )
 
 add_library(AetherCircleShowcaseQuest SHARED main.cpp)
@@ -41,4 +42,5 @@ target_link_libraries(AetherCircleShowcaseQuest PRIVATE
     aethercircle_quest
     android_native_app_glue
 )
+
 

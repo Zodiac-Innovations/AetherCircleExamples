@@ -36,3 +36,31 @@ Startup failures now request activity shutdown while pumping lifecycle events.
 Validation: Android ARM64 native compilation with NDK r29/OpenXR 1.1.63 headers;
 parent-transform, inverse-pose, near/far projection checks; manifest XML parsing.
 Full APK compilation and visual verification must run on the configured Mac/headset.
+
+## Quit, meshes and materials
+
+Quit confirmation now calls the Quest platform quit service, requests OpenXR
+session exit, releases graphics/session resources, and finishes NativeActivity.
+All 18 visible primitive cases now have procedural meshes. Base-color PNG/JPG
+textures are decoded using Android ImageDecoder and uploaded with mipmaps;
+roughness and metallic values influence basic lighting (not full PBR parity).
+Other material texture channels are not implemented yet.
+
+Build and verify assets/runtime packaging with:
+
+```bash
+./gradlew :app:verifyQuestApk --console=plain
+```
+
+The verifier compares all Shared/Files bytes with their APK assets and checks
+required ARM64 runtime libraries. The renderer logs each texture filename as
+loaded or FAILED. Controller mesh hit testing currently covers box geometry.
+
+### Name in Meta system overlays
+
+Application and NativeActivity labels explicitly use app_name. Horizon OS may
+still display 'App name unavailable' for an unregistered/sideloaded application.
+A real Meta Developer app registration and its numeric App ID may be needed for
+the overlay title. Once that ID is known, add com.oculus.app_id application
+metadata using the real ID; do not insert a dummy ID. This does not prevent
+in-app Quit or local rendering.

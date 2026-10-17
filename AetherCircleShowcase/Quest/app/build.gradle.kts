@@ -45,3 +45,9 @@ dependencies {
     )
 }
 
+
+tasks.register<Exec>("verifyQuestApk") {
+    dependsOn("assembleDebug")
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "verify-apk.py")
+}

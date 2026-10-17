@@ -10,6 +10,9 @@
 #include <openxr/openxr_platform.h>
 
 #include <android/asset_manager.h>
+#include <android/imagedecoder.h>
+#include <android/bitmap.h>
+#include <map>
 #include <array>
 #include <filesystem>
 #include <fstream>
@@ -88,6 +91,8 @@ struct SwiftBridge {
     PrepareScene prepareScene = nullptr;
     ObjectParent objectParent = nullptr;
     ObjectText objectText = nullptr;
+    ObjectText objectTexture = nullptr;
+    ObjectCount quitRequested = nullptr;
     ObjectParent objectTarget = nullptr;
     Activate activate = nullptr;
 
@@ -127,7 +132,9 @@ struct SwiftBridge {
         objectText = reinterpret_cast<ObjectText>(dlsym(library, "aethercircle_swift_object_text"));
         objectTarget = reinterpret_cast<ObjectParent>(dlsym(library, "aethercircle_swift_object_target"));
         activate = reinterpret_cast<Activate>(dlsym(library, "aethercircle_swift_activate"));
-        if (objectTarget == nullptr || activate == nullptr || prepareScene == nullptr || objectParent == nullptr || objectText == nullptr || start == nullptr || stop == nullptr || objectCount == nullptr ||
+        objectTexture = reinterpret_cast<ObjectText>(dlsym(library, "aethercircle_swift_object_texture"));
+        quitRequested = reinterpret_cast<ObjectCount>(dlsym(library, "aethercircle_swift_quit_requested"));
+        if (objectTexture == nullptr || quitRequested == nullptr || objectTarget == nullptr || activate == nullptr || prepareScene == nullptr || objectParent == nullptr || objectText == nullptr || start == nullptr || stop == nullptr || objectCount == nullptr ||
             objectPrimitive == nullptr || objectValue == nullptr ||
             objectColor == nullptr) {
             log("The shared Swift application bridge is incomplete.");
@@ -271,12 +278,19 @@ void run(android_app* app, const ApplicationInfo& application) {
         XrSystemId system=XR_NULL_SYSTEM_ID;
         xrCheck(xrGetSystem(instance,&info,&system),"get headset system");
         // Scoped cleanup releases session/GL objects before destroying the instance.
-        QuestRenderer renderer(swift);
+        QuestRenderer renderer(swift,app->activity->assetManager);
         renderer.initialize(instance,system);
+        bool exitSent=false;
         while(!app->destroyRequested && !renderer.exitRequested) {
             pumpAndroid(app,renderer.running?0:100);
             if(app->destroyRequested)break;
             renderer.pollEvents();
+            if(swift.quitRequested() && !exitSent) {
+                log("Showcase requested native Quit.");
+                if(renderer.running)xrCheck(xrRequestExitSession(renderer.session),"request session exit");
+                else renderer.exitRequested=true;
+                exitSent=true;
+            }
             if(renderer.running && !renderer.exitRequested)renderer.frame();
         }
     } catch(const std::exception& error) {
@@ -292,3 +306,4 @@ void run(android_app* app, const ApplicationInfo& application) {
     log("AetherCircle Quest runtime stopped.");
 }
 } // namespace aethercircle
+
