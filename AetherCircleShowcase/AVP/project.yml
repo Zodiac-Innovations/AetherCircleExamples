@@ -25,11 +25,9 @@ targets:
       - path: ../Shared/Swift
         name: Shared
         type: syncedFolder
-        buildPhase: sources
       - path: ../Shared/Files
         name: Files
         type: syncedFolder
-        buildPhase: resources
       - path: Assets.xcassets
         name: Assets.xcassets
         group: Resources

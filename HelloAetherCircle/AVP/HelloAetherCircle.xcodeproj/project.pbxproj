@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		0C840C51DBF6FF0B996C27D1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6242AFB0B59F7CE9EA4C519D /* Assets.xcassets */; };
-		5A31B37F577A3351F2D7500B /* Files in Resources */ = {isa = PBXBuildFile; fileRef = 2061FBA8B607E922A328A07D /* Files */; };
-		617CE73B68C2AC33689A2C2E /* Swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3FDA2DC30700A8BF7C59E6 /* Swift */; };
 		82E187D5E4B69CBF753C6C4D /* AetherCircleAVP in Frameworks */ = {isa = PBXBuildFile; productRef = D6BDC8620CCA8B07ED64EEAA /* AetherCircleAVP */; };
 		BAC8FED7C86F45FD2BF6FF80 /* HelloAetherCircleAVPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3DAD1CEB9F18358CFDDDBF7 /* HelloAetherCircleAVPApp.swift */; };
 		CC41286CA9BC67FC04CF850E /* AetherCircleCore in Frameworks */ = {isa = PBXBuildFile; productRef = E46C7255908B176A642FCC21 /* AetherCircleCore */; };
@@ -180,7 +178,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				0C840C51DBF6FF0B996C27D1 /* Assets.xcassets in Resources */,
-				5A31B37F577A3351F2D7500B /* Files in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -192,7 +189,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				BAC8FED7C86F45FD2BF6FF80 /* HelloAetherCircleAVPApp.swift in Sources */,
-				617CE73B68C2AC33689A2C2E /* Swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
