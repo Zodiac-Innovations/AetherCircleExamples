@@ -34,6 +34,8 @@ public final class AetherBoolToggleObject:
     AetherCompositeObject,
     @unchecked Sendable {
 
+    public override func aetherObjectValue() -> String { value ? "true" : "false" }
+
     // MARK: Properties
 
     /// Visual flavor used by the toggle.

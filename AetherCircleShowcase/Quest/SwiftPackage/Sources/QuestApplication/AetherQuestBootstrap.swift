@@ -276,14 +276,11 @@ public func aethercircleSwiftPrepareScene() {
     runtime.platformServices.automationRunner.update(
         now: ProcessInfo.processInfo.systemUptime,
         activate: { target in
-            let object = try target.resolve(in: runtime.graphicEngine.scene)
-            guard let action = object.config?.activateAction else {
-                throw AetherAutomationError.cannotActivate
-            }
-            action()
+            try runtime.graphicEngine.scene.tapObject(target)
         },
         setInteractionEnabled: { _ = runtime.platformServices.setUserInteractionEnabled($0) },
-        showMessage: { runtime.hudEngine.present(.banner(text: $0, onClose: nil)) }
+        showMessage: { runtime.hudEngine.present(.banner(text: $0, onClose: nil)) },
+        readValue: { try runtime.graphicEngine.scene.objectValue($0) }
     )
     runtime.prepareRenderScene()
 }
@@ -331,7 +328,7 @@ public func aethercircleSwiftActivate(_ index: Int32) {
     guard QuestSwiftRuntime.shared.platformServices.isUserInteractionEnabled,
           let object = QuestSwiftRuntime.shared.object(at: index),
           object.isVisible, let config = object.config, config.canTarget else { return }
-    config.activateAction?()
+    try? QuestSwiftRuntime.shared.graphicEngine.scene.tapObject(.id(object.id))
     QuestSwiftRuntime.shared.prepareRenderScene()
 }
 

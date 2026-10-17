@@ -34,4 +34,11 @@ public protocol AetherObjectProtocol: AnyObject {
 
     /// Width, height, and depth in meters.
     var size: AetherSize3D { get set }
+
+    /// String value exposed for automation. Non-value elements return an empty string.
+    func aetherObjectValue() -> String
+}
+
+public extension AetherObjectProtocol {
+    func aetherObjectValue() -> String { "" }
 }

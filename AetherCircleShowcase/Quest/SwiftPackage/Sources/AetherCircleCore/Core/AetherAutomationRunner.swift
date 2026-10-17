@@ -52,7 +52,10 @@ public final class AetherAutomationRunner: @unchecked Sendable {
         now: TimeInterval,
         activate: (AetherAutomationTarget) throws -> Void,
         setInteractionEnabled: @escaping (Bool) throws -> Void,
-        showMessage: (String) throws -> Void = { _ in }
+        showMessage: (String) throws -> Void = { _ in },
+        readValue: (AetherAutomationTarget) throws -> String = { _ in
+            throw AetherAutomationError.unsupported
+        }
     ) {
         Thread.current.threadDictionary["AetherCircle.Automation.FrameThread"] = true
         lock.lock()
@@ -82,13 +85,27 @@ public final class AetherAutomationRunner: @unchecked Sendable {
                     run.deadline = deadline
                     guard now >= deadline else { return }
                     run.deadline = nil
+                case .check(let target, let expected):
+                    let actual: String
+                    do { actual = try readValue(target) }
+                    catch {
+                        throw AetherAutomationError.checkFailed(target, expected: expected, actual: nil)
+                    }
+                    guard actual == expected else {
+                        throw AetherAutomationError.checkFailed(target, expected: expected, actual: actual)
+                    }
                 case .message(let text): try showMessage(text)
                 case .activate(let target): try activate(target)
                 case .setUserInteractionEnabled(let enabled): try setInteractionEnabled(enabled)
                 }
                 run.index += 1
             }
-        } catch { finish(run, error: error) }
+        } catch {
+            if let message = (error as? AetherAutomationError)?.hudMessage {
+                try? showMessage(message)
+            }
+            finish(run, error: error)
+        }
     }
 
     /// Call on the frame thread when the host stops.

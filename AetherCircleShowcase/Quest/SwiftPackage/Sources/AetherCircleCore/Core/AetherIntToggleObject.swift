@@ -28,6 +28,8 @@ public final class AetherIntToggleObject:
     AetherCompositeObject,
     @unchecked Sendable {
 
+    public override func aetherObjectValue() -> String { String(value) }
+
     // MARK: Properties
 
     /// Visual flavor used by the control.

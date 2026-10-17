@@ -33,3 +33,9 @@ parses reusable text, and `runTextScript` uses that factory before `runScript`.
 The `message "text"` command forwards a HUD banner request; the current dummy
 HUD does not draw it yet. Direct command invocations preserve explicit input
 management by using `turnsOffInteraction: false`.
+
+Automation checks are available with `check tag 5 true` or another tap selector.
+Scene lookup and taps now use `findObject`, `tapObject`, and `objectValue`.
+Boolean controls expose "true"/"false", integer controls expose their current
+numeric string, and other elements expose an empty string. Failed checks stop
+the script, request a HUD failure banner, and run automatic input cleanup.

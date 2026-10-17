@@ -81,6 +81,9 @@ public class AetherBasicObject: AetherObjectProtocol, @unchecked Sendable {
     /// Optional action invoked when the user interacts with the object.
     public var onInteraction: ((AetherInteraction) -> Void)?
 
+    /// Value exposed to automation; specialized editable controls override this.
+    public func aetherObjectValue() -> String { "" }
+
     // MARK: Initialization
 
     /// Creates an AetherCircle object.
