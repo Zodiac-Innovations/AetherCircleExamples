@@ -1,6 +1,6 @@
 # Showcase automation tour
 
-From Home, choose **Automation**, then **Run Showcase Tour**.
+From Home, choose **Automation**, then choose **Run Script Object**, **Run Text Script**, or **Run Command Objects**.
 
 The tour disables physical app interaction, returns Home for 10 seconds,
 opens Primitive Objects for 10 seconds, returns Home, opens Panel Objects
@@ -8,8 +8,10 @@ for 10 seconds, returns Home, opens Materials for 10 seconds, then returns
 Home for 5 seconds. It re-enables interaction and activates the normal Quit
 button and its Yes confirmation. Total programmed wait time is 45 seconds.
 
-The script is embedded in the shared Showcase application and runs through
-the platform's `runTextScript` API. Navigation uses stable `autoID` values.
+The shared application demonstrates a typed script through `runScript`, text
+through `runTextScript`, and individual wait/tap/interaction objects through
+synchronous `invoke()` calls on a Dispatch worker queue. All three run the same
+sequence; direct waits leave rendering active by blocking only the worker. Navigation uses stable `autoID` values.
 No scene registry is required. If the sequence fails, the error is printed
 to the app log and the app requests that interaction be restored.
 

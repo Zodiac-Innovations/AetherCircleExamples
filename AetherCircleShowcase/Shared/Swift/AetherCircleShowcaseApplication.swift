@@ -1,4 +1,5 @@
 import AetherCircleCore
+import Dispatch
 
 public final class AetherCircleShowcaseApplication: AetherApplication {
 
@@ -293,51 +294,128 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
     }
 
-    /// Demonstrates the text-script API through the same buttons a user presses.
+    private enum TourMode: String, Sendable {
+        case scriptObject
+        case textScript
+        case commandObjects
+    }
+
+    /// Three entry points demonstrate the same tour and timing.
     private func showAutomationScene() {
         let description = AetherTextObject(
             name: "Automation Description",
-            text: "Tour Home and three screens, then quit.",
+            text: "Three ways to run the same 45-second tour.",
             characterHeight: 0.045,
             extrusionDepth: 0.006,
             material: Material.white,
-            position: AetherPosition3D(x: 0, y: 1.70, z: sceneDepth)
-        )
-        let runButton = AetherButtonObject(
-            name: "Run Showcase Tour Button",
-            autoID: "showcase.run-tour",
-            title: "Run Showcase Tour",
-            size: AetherSize3D(x: 0.85, y: 0.16, z: 0.04),
-            sizing: .fitTextToButton,
-            material: Material.button,
-            textMaterial: Material.white,
-            position: AetherPosition3D(x: 0, y: 1.35, z: sceneDepth),
-            targetAppearance: .goldenGlow,
-            action: {
-                // Capture only the Sendable platform service. The runner executes
-                // scene changes on the platform frame thread, not this task.
-                Task { [platform = self.world.platform] in
-                    do {
-                        try await platform.runTextScript(Self.showcaseTourScript)
-                    } catch AetherAutomationError.alreadyRunning {
-                        // A repeated press does not interrupt the running tour.
-                    } catch {
-                        print("Showcase automation failed: \(error)")
-                        // Restore input on the frame thread if a command fails.
-                        try? await platform.runTextScript("interaction on")
-                    }
-                }
-            }
+            position: AetherPosition3D(x: 0, y: 1.72, z: sceneDepth)
         )
         world.graphicEngine.changeToScene(AetherScene(
             name: "Automation",
             objects: [
                 makeTitle("Automation", y: 2.05),
                 description,
-                runButton,
+                makeTourButton("Run Script Object", mode: .scriptObject, y: 1.43),
+                makeTourButton("Run Text Script", mode: .textScript, y: 1.18),
+                makeTourButton("Run Command Objects", mode: .commandObjects, y: 0.93),
                 makeHomeButton(),
             ]
         ))
+    }
+
+    private func makeTourButton(
+        _ title: String, mode: TourMode, y: AetherFloat
+    ) -> AetherButtonObject {
+        AetherButtonObject(
+            name: title + " Button",
+            autoID: "showcase.run-" + mode.rawValue,
+            title: title,
+            size: AetherSize3D(x: 0.95, y: 0.16, z: 0.04),
+            sizing: .fitTextToButton,
+            material: Material.button,
+            textMaterial: Material.white,
+            position: AetherPosition3D(x: 0, y: y, z: sceneDepth),
+            targetAppearance: .goldenGlow,
+            action: {
+                let platform = self.world.platform
+                if mode == .commandObjects {
+                    // Synchronous invoke/wait calls run on a dedicated worker.
+                    // Navigation is dispatched back to the platform frame thread.
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        Self.runCommandObjectTour(on: platform)
+                    }
+                } else {
+                    Task {
+                        do {
+                            switch mode {
+                            case .scriptObject:
+                                try await platform.runScript(Self.showcaseTour)
+                            case .textScript:
+                                try await platform.runTextScript(Self.showcaseTourScript)
+                            case .commandObjects: break
+                            }
+                        } catch AetherAutomationError.alreadyRunning {
+                            // A repeated press does not interrupt the running tour.
+                        } catch {
+                            print("Showcase automation failed: \(error)")
+                            try? await platform.runTextScript("interaction on")
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    /// Builds a typed script directly rather than parsing the text version.
+    private static var showcaseTour: AetherAutomationScript {
+        AetherAutomationScript(commands: [
+            .setUserInteractionEnabled(false),
+            .activate(.autoID("showcase.home")),
+            .wait(10),
+            .activate(.autoID("showcase.primitives")),
+            .wait(10),
+            .activate(.autoID("showcase.home")),
+            .activate(.autoID("showcase.panels")),
+            .wait(10),
+            .activate(.autoID("showcase.home")),
+            .activate(.autoID("showcase.materials")),
+            .wait(10),
+            .activate(.autoID("showcase.home")),
+            .wait(5),
+            .setUserInteractionEnabled(true),
+            .activate(.autoID("showcase.quit")),
+            .activate(.name("Quit Confirmation Yes")),
+        ])
+    }
+
+    /// Each object executes synchronously when invoke() is called.
+    private static func runCommandObjectTour(on platform: any AetherPlatform) {
+        let commands: [any AetherAutomationInvocable] = [
+            AetherAutomationInteraction(platform: platform, enabled: false),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
+            AetherAutomationWait(seconds: 10),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.primitives")),
+            AetherAutomationWait(seconds: 10),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.panels")),
+            AetherAutomationWait(seconds: 10),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.materials")),
+            AetherAutomationWait(seconds: 10),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
+            AetherAutomationWait(seconds: 5),
+            AetherAutomationInteraction(platform: platform, enabled: true),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.quit")),
+            AetherAutomationTap(platform: platform, target: .name("Quit Confirmation Yes")),
+        ]
+        do {
+            for command in commands { try command.invoke() }
+        } catch AetherAutomationError.alreadyRunning {
+            // Leave any existing tour in control of input.
+        } catch {
+            print("Showcase command invocation failed: \(error)")
+            try? AetherAutomationInteraction(platform: platform, enabled: true).invoke()
+        }
     }
 
     /// Each navigation target resolves in the current scene, including nested

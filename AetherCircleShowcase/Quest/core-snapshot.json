@@ -43,8 +43,9 @@
     "Values/AetherVector2.swift": "9ac3430083061aa67502ed2e55acec701d363e730ccc64f090f085be64d97a96",
     "Values/AetherVector3.swift": "0e10c1b249bfbd8a35a6bce7d79cd2a34389edbf3c6d93f69be45bd64f598c76",
     "Values/AetherVector4.swift": "ea958593146c988ebaa415646be86caa4ae291f8c00dce35892387c4ca917b10",
-    "Core/AetherAutomationScript.swift": "ed3cc33b2fe11469ee15db9ce44480e7da0ee5081cf46843a55c5437a4d74ebd",
-    "Core/AetherAutomationRunner.swift": "b199971ffa3785bca22098541bd85681d21c17266db885be0895d034119cd43e",
-    "Core/AetherObjectProtocol.swift": "939d9ba51230ac3c658c49438309b8450e858c177852b5ace02390a549b35780"
+    "Core/AetherAutomationScript.swift": "c713bcfcdf2527ea6ee66d9ddcb169d63258b5feb169835bd407de1661b4d06d",
+    "Core/AetherAutomationRunner.swift": "dc90a35ac110616bfb9498ad635a0b79a48f67376d2333a6fe24133aa5f8c0ce",
+    "Core/AetherObjectProtocol.swift": "939d9ba51230ac3c658c49438309b8450e858c177852b5ace02390a549b35780",
+    "Core/AetherAutomationInvocable.swift": "c7fd3ef3892637a87ea167bc8962b64c3dad9257aa05ee47cef9462e3be7f57c"
   }
 }

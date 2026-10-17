@@ -23,6 +23,7 @@ public enum AetherAutomationError: Error, Sendable, Equatable {
     case ambiguousTarget
     case cannotActivate
     case stopped
+    case requiresBackgroundThread
 }
 
 /// A reusable sequence of commands. Text is fully parsed before execution.
