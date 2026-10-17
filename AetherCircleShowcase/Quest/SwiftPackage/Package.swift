@@ -14,7 +14,9 @@ let package = Package(
     targets: [
         .target(
             name: "AetherCircleCore",
-            path: "Sources/AetherCircleCore"
+            // Showcase supplies its own application; bundled demos are not needed.
+            path: "Sources/AetherCircleCore",
+            exclude: ["Demos"]
         ),
         .target(
             name: "QuestApplication",
