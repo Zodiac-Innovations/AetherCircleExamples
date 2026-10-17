@@ -15,16 +15,16 @@ import Foundation
 ///
 /// Child positions and rotations are relative to the composite object.
 public class AetherCompositeObject:
-    AetherObject,
+    AetherBasicObject,
     @unchecked Sendable {
 
     // MARK: Properties
 
     /// Objects contained by the composite.
-    public private(set) var children: [AetherObject]
+    public private(set) var children: [AetherBasicObject]
 
     /// Alias describing the child objects that make up the composite.
-    public var objects: [AetherObject] {
+    public var objects: [AetherBasicObject] {
         children
     }
 
@@ -40,7 +40,7 @@ public class AetherCompositeObject:
         tag: Int = 0,
         name: String = "",
         autoID: String = "",
-        objects: [AetherObject] = [],
+        objects: [AetherBasicObject] = [],
         position: AetherPosition3D = .zero,
         rotation: AetherRotation3D = .zero,
         isVisible: Bool = true,
@@ -74,14 +74,14 @@ public class AetherCompositeObject:
 
     /// Adds a child object to the composite.
     public func add(
-        _ object: AetherObject
+        _ object: AetherBasicObject
     ) {
         children.append(object)
     }
 
     /// Removes every child with the specified object's identifier.
     public func remove(
-        _ object: AetherObject
+        _ object: AetherBasicObject
     ) {
         children.removeAll {
             $0.id == object.id

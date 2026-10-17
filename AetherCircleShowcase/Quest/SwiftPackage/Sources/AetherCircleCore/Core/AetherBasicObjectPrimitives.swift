@@ -1,5 +1,5 @@
 //
-//  AetherObjectPrimitives.swift
+//  AetherBasicObjectPrimitives.swift
 //  AetherCircleCore
 //
 //  Convenience constructors for geometric AetherCircle objects
@@ -7,7 +7,7 @@
 
 // MARK: Extension
 
-public extension AetherObject {
+public extension AetherBasicObject {
 
     /// Creates a rectangular box.
     static func box(
@@ -16,7 +16,7 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -34,7 +34,7 @@ public extension AetherObject {
         autoID: String = "",
         diameter: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         uniformShape(
             tag: tag,
             name: name,
@@ -52,7 +52,7 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -71,7 +71,7 @@ public extension AetherObject {
         diameter: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -94,7 +94,7 @@ public extension AetherObject {
         diameter: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -117,7 +117,7 @@ public extension AetherObject {
         diameter: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -139,7 +139,7 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -157,7 +157,7 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -175,7 +175,7 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -193,7 +193,7 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         octahedron(
             tag: tag,
             name: name,
@@ -210,7 +210,7 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -228,7 +228,7 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -246,7 +246,7 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -265,7 +265,7 @@ public extension AetherObject {
         width: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -288,7 +288,7 @@ public extension AetherObject {
         width: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -310,7 +310,7 @@ public extension AetherObject {
         autoID: String = "",
         diameter: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -332,7 +332,7 @@ public extension AetherObject {
         autoID: String = "",
         diameter: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,
@@ -355,8 +355,8 @@ public extension AetherObject {
         primitive: AetherPrimitive,
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
-        AetherObject(
+    ) -> AetherBasicObject {
+        AetherBasicObject(
             tag: tag,
             name: name,
             autoID: autoID,
@@ -374,7 +374,7 @@ public extension AetherObject {
         primitive: AetherPrimitive,
         size: AetherFloat,
         material: AetherMaterial
-    ) -> AetherObject {
+    ) -> AetherBasicObject {
         shape(
             tag: tag,
             name: name,

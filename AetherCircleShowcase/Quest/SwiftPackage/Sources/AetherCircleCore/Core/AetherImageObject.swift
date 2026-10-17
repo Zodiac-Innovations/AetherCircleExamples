@@ -16,7 +16,7 @@ import Foundation
 /// The image name is resolved by the platform from the application's bundled
 /// resources. The material is used as a fallback when the image cannot load.
 public final class AetherImageObject:
-    AetherObject,
+    AetherBasicObject,
     @unchecked Sendable {
 
     // MARK: Properties

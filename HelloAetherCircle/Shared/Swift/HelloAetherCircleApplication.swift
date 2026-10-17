@@ -22,7 +22,7 @@ public final class HelloAetherCircleApplication: AetherApplication {
             )
         )
 
-        let cube = AetherObject.cube(
+        let cube = AetherBasicObject.cube(
             name: "Hello Cube",
             size: 0.25,
             material: .named(blueMaterialKey)

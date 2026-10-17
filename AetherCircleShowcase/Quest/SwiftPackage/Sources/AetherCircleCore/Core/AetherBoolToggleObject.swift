@@ -54,8 +54,8 @@ public final class AetherBoolToggleObject:
     /// Action invoked after the user changes the value.
     public var onChange: AetherBlockFlag?
 
-    private let backgroundObject: AetherObject
-    private let indicatorObject: AetherObject
+    private let backgroundObject: AetherBasicObject
+    private let indicatorObject: AetherBasicObject
 
     // MARK: Initialization
 
@@ -205,19 +205,19 @@ public final class AetherBoolToggleObject:
         offMaterial: AetherMaterial,
         onMaterial: AetherMaterial
     ) -> (
-        background: AetherObject,
-        indicator: AetherObject
+        background: AetherBasicObject,
+        indicator: AetherBasicObject
     ) {
         switch flavor {
         case .default, .switch:
-            let background = AetherObject(
+            let background = AetherBasicObject(
                 name: name + " Track",
                 primitive: .cube,
                 size: size,
                 material: offMaterial
             )
             let diameter = min(size.y * 0.82, size.x * 0.32)
-            let indicator = AetherObject.sphere(
+            let indicator = AetherBasicObject.sphere(
                 name: name + " Thumb",
                 diameter: diameter,
                 material: onMaterial
@@ -229,7 +229,7 @@ public final class AetherBoolToggleObject:
 
         case .checkbox:
             let side = min(size.x, size.y)
-            let background = AetherObject(
+            let background = AetherBasicObject(
                 name: name + " Box",
                 primitive: .cube,
                 size: AetherSize3D(
@@ -258,7 +258,7 @@ public final class AetherBoolToggleObject:
 
         case .radioGroup:
             let diameter = min(size.x, size.y)
-            let background = AetherObject(
+            let background = AetherBasicObject(
                 name: name + " Ring",
                 primitive: .ring,
                 size: AetherSize3D(
@@ -268,7 +268,7 @@ public final class AetherBoolToggleObject:
                 ),
                 material: offMaterial
             )
-            let indicator = AetherObject(
+            let indicator = AetherBasicObject(
                 name: name + " Selection",
                 primitive: .disc,
                 position: AetherPosition3D(

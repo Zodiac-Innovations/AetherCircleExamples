@@ -465,7 +465,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             0,
             0.62,
         ]
-        var objects: [AetherObject] = [
+        var objects: [AetherBasicObject] = [
             makeTitle("Materials", y: 2.05),
             makeHomeButton(),
         ]
@@ -479,7 +479,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 : availablePrimitives.removeFirst()
 
             objects.append(
-                AetherObject(
+                AetherBasicObject(
                     name: name + " " + primitive.rawValue,
                     primitive: primitive,
                     position: AetherPosition3D(
@@ -1000,7 +1000,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     private func showPrimitiveObjectsScene() {
-        var objects: [AetherObject] = [
+        var objects: [AetherBasicObject] = [
             makeTitle(
                 "Primitive Objects",
                 y: 2.10
@@ -1022,7 +1022,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             let y = firstY - AetherFloat(row) * spacingY
             let material = randomDisplayMaterial()
 
-            let object = AetherObject(
+            let object = AetherBasicObject(
                 name: primitive.rawValue,
                 primitive: primitive,
                 position: AetherPosition3D(

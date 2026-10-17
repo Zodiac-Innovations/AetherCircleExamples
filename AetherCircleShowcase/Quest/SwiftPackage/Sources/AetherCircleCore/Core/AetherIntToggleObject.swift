@@ -48,8 +48,8 @@ public final class AetherIntToggleObject:
     /// Action invoked after the user changes the value.
     public var onChange: AetherBlockInt?
 
-    private let fillObject: AetherObject
-    private let thumbObject: AetherObject
+    private let fillObject: AetherBasicObject
+    private let thumbObject: AetherBasicObject
 
     // MARK: Initialization
 
@@ -86,13 +86,13 @@ public final class AetherIntToggleObject:
         toggleSize = size
         self.onChange = onChange
 
-        let track = AetherObject(
+        let track = AetherBasicObject(
             name: name + " Track",
             primitive: .cube,
             size: size,
             material: trackMaterial
         )
-        let fill = AetherObject(
+        let fill = AetherBasicObject(
             name: name + " Fill",
             primitive: .cube,
             size: AetherSize3D(
@@ -102,7 +102,7 @@ public final class AetherIntToggleObject:
             ),
             material: fillMaterial
         )
-        let thumb = AetherObject.sphere(
+        let thumb = AetherBasicObject.sphere(
             name: name + " Thumb",
             diameter: size.y * 1.35,
             material: thumbMaterial

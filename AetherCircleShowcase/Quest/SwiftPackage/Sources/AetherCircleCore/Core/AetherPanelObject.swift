@@ -34,7 +34,7 @@ public final class AetherPanelObject:
     public let title: String?
 
     /// Objects supplied as the panel's content.
-    public let contentObjects: [AetherObject]
+    public let contentObjects: [AetherBasicObject]
 
     /// Explicit requested size, or nil when content determines the size.
     public let explicitSize: AetherSize3D?
@@ -68,7 +68,7 @@ public final class AetherPanelObject:
         autoID: String = "",
         flavor: AetherPanelFlavor = .default,
         title: String? = nil,
-        objects: [AetherObject],
+        objects: [AetherBasicObject],
         size: AetherSize3D? = nil,
         spacing: AetherFloat = 0.06,
         padding: AetherFloat = 0.08,
@@ -305,7 +305,7 @@ public final class AetherPanelObject:
 
     private static func automaticSize(
         title: String?,
-        objects: [AetherObject],
+        objects: [AetherBasicObject],
         spacing: AetherFloat,
         padding: AetherFloat,
         hideAble: Bool
@@ -351,7 +351,7 @@ public final class AetherPanelObject:
     private static func makeLayout(
         name: String,
         title: String?,
-        objects: [AetherObject],
+        objects: [AetherBasicObject],
         panelSize: AetherSize3D,
         spacing: AetherFloat,
         padding: AetherFloat,
@@ -360,16 +360,16 @@ public final class AetherPanelObject:
         textMaterial: AetherMaterial,
         textBackgroundMaterial: AetherMaterial
     ) -> (
-        objects: [AetherObject],
+        objects: [AetherBasicObject],
         closeButton: AetherButtonObject?
     ) {
-        let background = AetherObject(
+        let background = AetherBasicObject(
             name: name + " Background",
             primitive: .cube,
             size: panelSize,
             material: material
         )
-        var children: [AetherObject] = [background]
+        var children: [AetherBasicObject] = [background]
         var closeButton: AetherButtonObject?
         var cursorY = panelSize.y / 2 - padding
         let titleValue = title ?? ""
@@ -433,7 +433,7 @@ public final class AetherPanelObject:
     }
 
     private static func estimatedSize(
-        _ object: AetherObject
+        _ object: AetherBasicObject
     ) -> AetherSize3D {
         guard let text = object as? AetherTextObject else {
             return object.size

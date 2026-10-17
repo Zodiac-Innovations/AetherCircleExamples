@@ -12,14 +12,14 @@ private final class QuestGraphicEngine: AetherGraphicEngine {
     }
 
     func changeAddObject(
-        _ object: AetherObject,
+        _ object: AetherBasicObject,
         effect: AetherEffect
     ) {
         scene.add(object)
     }
 
     func changeRemoveObject(
-        _ object: AetherObject,
+        _ object: AetherBasicObject,
         effect: AetherEffect
     ) {
         scene.remove(object)
@@ -101,13 +101,13 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     let assetEngine = QuestAssetEngine()
     let platformServices = QuestPlatform()
     private var application: AetherApplication?
-    var renderObjects: [AetherObject] = []
+    var renderObjects: [AetherBasicObject] = []
     var renderParents: [Int32] = []
 
     func prepareRenderScene() {
         renderObjects.removeAll(keepingCapacity: true)
         renderParents.removeAll(keepingCapacity: true)
-        func append(_ object: AetherObject, parent: Int32) {
+        func append(_ object: AetherBasicObject, parent: Int32) {
             guard object.isVisible else { return }
             let index = Int32(renderObjects.count)
             renderObjects.append(object)
@@ -159,7 +159,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         graphicEngine.scene = AetherScene()
     }
 
-    func object(at index: Int32) -> AetherObject? {
+    func object(at index: Int32) -> AetherBasicObject? {
         let objects = renderObjects
         guard index >= 0, Int(index) < objects.count else {
             return nil

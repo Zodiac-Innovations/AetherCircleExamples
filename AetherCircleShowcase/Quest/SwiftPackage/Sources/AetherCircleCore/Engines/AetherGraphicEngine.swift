@@ -29,7 +29,7 @@ public protocol AetherGraphicEngine: AetherEngine {
     ///   - object: Object to add.
     ///   - effect: Effect to use to add.
     func changeAddObject(
-        _ object: AetherObject,
+        _ object: AetherBasicObject,
         effect: AetherEffect
     )
     
@@ -40,7 +40,7 @@ public protocol AetherGraphicEngine: AetherEngine {
     ///   - object: Object to remove.
     ///   - effect: Effect to use to remove.
     func changeRemoveObject(
-        _ object: AetherObject,
+        _ object: AetherBasicObject,
         effect: AetherEffect
     )
     
@@ -62,7 +62,7 @@ public extension AetherGraphicEngine {
     ///
     /// - Parameters:
     ///   - object: Object to add.
-    func changeAddObject(_ object: AetherObject) {
+    func changeAddObject(_ object: AetherBasicObject) {
         changeAddObject(object, effect: .none)
     }
     
@@ -70,7 +70,7 @@ public extension AetherGraphicEngine {
     ///
     /// - Parameters:
     ///   - object: Object to remove.
-    func changeRemoveObject(_ object: AetherObject) {
+    func changeRemoveObject(_ object: AetherBasicObject) {
         changeRemoveObject(object, effect: .none)
     }
     
@@ -84,7 +84,7 @@ public final class AetherGraphicDummy: AetherGraphicEngine {
     
     public func changeToScene(_ scene: AetherScene, effect: AetherEffect) { }
 
-    public func changeAddObject(_ object: AetherObject, effect: AetherEffect) { }
+    public func changeAddObject(_ object: AetherBasicObject, effect: AetherEffect) { }
 
-    public func changeRemoveObject(_ object: AetherObject, effect: AetherEffect) { }
+    public func changeRemoveObject(_ object: AetherBasicObject, effect: AetherEffect) { }
 }
