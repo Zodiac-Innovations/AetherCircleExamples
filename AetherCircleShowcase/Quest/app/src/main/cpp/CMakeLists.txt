@@ -23,7 +23,7 @@ target_include_directories(aethercircle_quest PUBLIC
 target_compile_features(aethercircle_quest PUBLIC cxx_std_20)
 target_compile_definitions(aethercircle_quest PUBLIC
     XR_USE_PLATFORM_ANDROID
-    XR_USE_GRAPHICS_API_VULKAN
+    XR_USE_GRAPHICS_API_OPENGL_ES
 )
 target_link_libraries(aethercircle_quest PUBLIC
     android
@@ -31,7 +31,8 @@ target_link_libraries(aethercircle_quest PUBLIC
     dl
     log
     OpenXR::openxr_loader
-    vulkan
+    EGL
+    GLESv3
 )
 
 add_library(AetherCircleShowcaseQuest SHARED main.cpp)

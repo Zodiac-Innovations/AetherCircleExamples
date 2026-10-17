@@ -85,6 +85,23 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     let assetEngine = QuestAssetEngine()
     let platformServices = QuestPlatform()
     private var application: AetherApplication?
+    var renderObjects: [AetherObject] = []
+    var renderParents: [Int32] = []
+
+    func prepareRenderScene() {
+        renderObjects.removeAll(keepingCapacity: true)
+        renderParents.removeAll(keepingCapacity: true)
+        func append(_ object: AetherObject, parent: Int32) {
+            guard object.isVisible else { return }
+            let index = Int32(renderObjects.count)
+            renderObjects.append(object)
+            renderParents.append(parent)
+            if let composite = object as? AetherCompositeObject {
+                for child in composite.children { append(child, parent: index) }
+            }
+        }
+        for object in graphicEngine.scene.objects { append(object, parent: -1) }
+    }
 
     private init() {
     }
@@ -103,7 +120,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
             capabilities: AetherCapabilities(
                 coreLevel: .level1,
                 supportsPassthrough: false,
-                supportsFullVR: false,
+                supportsFullVR: true,
                 supportsHUD: false,
                 supportsClock: false
             ),
@@ -115,6 +132,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         )
         self.application = application
         application.start()
+        prepareRenderScene()
     }
 
     func stop() {
@@ -124,7 +142,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     }
 
     func object(at index: Int32) -> AetherObject? {
-        let objects = graphicEngine.scene.objects
+        let objects = renderObjects
         guard index >= 0, Int(index) < objects.count else {
             return nil
         }
@@ -144,7 +162,7 @@ public func aethercircleSwiftStop() {
 
 @_cdecl("aethercircle_swift_object_count")
 public func aethercircleSwiftObjectCount() -> Int32 {
-    Int32(QuestSwiftRuntime.shared.graphicEngine.scene.objects.count)
+    Int32(QuestSwiftRuntime.shared.renderObjects.count)
 }
 
 @_cdecl("aethercircle_swift_object_primitive")
@@ -198,6 +216,7 @@ public func aethercircleSwiftObjectValue(
     case 10: return object.rotationRate?.y ?? 0
     case 11: return object.rotationRate?.z ?? 0
     case 12: return object.isVisible ? 1 : 0
+    case 13: return (object as? AetherTextObject)?.characterHeight ?? 0
     default: return 0
     }
 }
@@ -227,4 +246,35 @@ public func aethercircleSwiftSetResourceDirectory(_ path: UnsafePointer<CChar>?)
     QuestSwiftRuntime.shared.platformServices.resourceDirectory = path.map {
         URL(fileURLWithPath: String(cString: $0), isDirectory: true)
     }
+}
+
+// Snapshot once per frame; parents precede their children. Transforms stay local.
+@_cdecl("aethercircle_swift_prepare_scene")
+public func aethercircleSwiftPrepareScene() {
+    QuestSwiftRuntime.shared.prepareRenderScene()
+}
+
+@_cdecl("aethercircle_swift_object_parent")
+public func aethercircleSwiftObjectParent(_ index: Int32) -> Int32 {
+    let parents = QuestSwiftRuntime.shared.renderParents
+    guard index >= 0, Int(index) < parents.count else { return -1 }
+    return parents[Int(index)]
+}
+
+// Caller owns the buffer. The return value is the full UTF-8 byte count.
+@_cdecl("aethercircle_swift_object_text")
+public func aethercircleSwiftObjectText(
+    _ index: Int32, _ buffer: UnsafeMutablePointer<CChar>?, _ capacity: Int32
+) -> Int32 {
+    guard let text = QuestSwiftRuntime.shared.object(at: index) as? AetherTextObject else {
+        if let buffer, capacity > 0 { buffer[0] = 0 }
+        return 0
+    }
+    let bytes = Array(text.text.utf8)
+    if let buffer, capacity > 0 {
+        let count = min(bytes.count, Int(capacity) - 1)
+        for i in 0..<count { buffer[i] = CChar(bitPattern: bytes[i]) }
+        buffer[count] = 0
+    }
+    return Int32(bytes.count)
 }

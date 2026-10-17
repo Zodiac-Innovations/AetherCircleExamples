@@ -1,0 +1,317 @@
+#pragma once
+
+// OpenXR stereo renderer. Included after SwiftBridge in AetherCircleQuest.cpp.
+// All GL, OpenXR and Swift bridge operations run on the NativeActivity thread.
+
+inline void xrCheck(XrResult result, const char* operation) {
+    if (XR_FAILED(result)) {
+        __android_log_print(ANDROID_LOG_ERROR, logTag, "%s failed: %d", operation, result);
+        throw std::runtime_error(operation);
+    }
+}
+
+struct Matrix {
+    std::array<float, 16> m{};
+    static Matrix identity() { Matrix a; a.m = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1}; return a; }
+    static Matrix translation(float x, float y, float z) {
+        Matrix a = identity(); a.m[12]=x; a.m[13]=y; a.m[14]=z; return a;
+    }
+    static Matrix scale(float x, float y, float z) {
+        Matrix a = identity(); a.m[0]=x; a.m[5]=y; a.m[10]=z; return a;
+    }
+    Matrix operator*(const Matrix& b) const {
+        Matrix out;
+        for (int c=0;c<4;++c) for (int r=0;r<4;++r) for (int k=0;k<4;++k)
+            out.m[c*4+r] += m[k*4+r]*b.m[c*4+k];
+        return out;
+    }
+    static Matrix quaternion(XrQuaternionf q) {
+        Matrix a=identity();
+        const float x=q.x,y=q.y,z=q.z,w=q.w;
+        a.m[0]=1-2*y*y-2*z*z; a.m[1]=2*x*y+2*w*z; a.m[2]=2*x*z-2*w*y;
+        a.m[4]=2*x*y-2*w*z; a.m[5]=1-2*x*x-2*z*z; a.m[6]=2*y*z+2*w*x;
+        a.m[8]=2*x*z+2*w*y; a.m[9]=2*y*z-2*w*x; a.m[10]=1-2*x*x-2*y*y;
+        return a;
+    }
+    static Matrix euler(float x,float y,float z) {
+        return quaternion({0,0,std::sin(z/2),std::cos(z/2)})*
+               quaternion({0,std::sin(y/2),0,std::cos(y/2)})*
+               quaternion({std::sin(x/2),0,0,std::cos(x/2)});
+    }
+    static Matrix view(XrPosef pose) {
+        auto q=pose.orientation;
+        return quaternion({-q.x,-q.y,-q.z,q.w})*
+               translation(-pose.position.x,-pose.position.y,-pose.position.z);
+    }
+    static Matrix projection(XrFovf fov) {
+        float l=std::tan(fov.angleLeft),r=std::tan(fov.angleRight);
+        float d=std::tan(fov.angleDown),u=std::tan(fov.angleUp);
+        const float n=0.05f,f=100.f;
+        Matrix a;
+        a.m[0]=2/(r-l); a.m[5]=2/(u-d); a.m[8]=(r+l)/(r-l); a.m[9]=(u+d)/(u-d);
+        a.m[10]=-(f+n)/(f-n); a.m[11]=-1; a.m[14]=-2*f*n/(f-n);
+        return a;
+    }
+};
+
+// Original compact 5x7 glyphs. Lowercase uses uppercase forms in this first pass.
+inline std::array<unsigned char,7> glyph(char c) {
+    switch (std::toupper(static_cast<unsigned char>(c))) {
+#define G(c,a,b,d,e,f,g,h) case c: return {a,b,d,e,f,g,h}
+    G('A',14,17,17,31,17,17,17); G('B',30,17,17,30,17,17,30);
+    G('C',14,17,16,16,16,17,14); G('D',30,17,17,17,17,17,30);
+    G('E',31,16,16,30,16,16,31); G('F',31,16,16,30,16,16,16);
+    G('G',14,17,16,23,17,17,15); G('H',17,17,17,31,17,17,17);
+    G('I',31,4,4,4,4,4,31); G('J',7,2,2,2,18,18,12);
+    G('K',17,18,20,24,20,18,17); G('L',16,16,16,16,16,16,31);
+    G('M',17,27,21,21,17,17,17); G('N',17,25,21,19,17,17,17);
+    G('O',14,17,17,17,17,17,14); G('P',30,17,17,30,16,16,16);
+    G('Q',14,17,17,17,21,18,13); G('R',30,17,17,30,20,18,17);
+    G('S',15,16,16,14,1,1,30); G('T',31,4,4,4,4,4,4);
+    G('U',17,17,17,17,17,17,14); G('V',17,17,17,17,17,10,4);
+    G('W',17,17,17,21,21,21,10); G('X',17,17,10,4,10,17,17);
+    G('Y',17,17,10,4,4,4,4); G('Z',31,1,2,4,8,16,31);
+    G('0',14,17,19,21,25,17,14); G('1',4,12,4,4,4,4,14);
+    G('2',14,17,1,2,4,8,31); G('3',30,1,1,14,1,1,30);
+    G('4',2,6,10,18,31,2,2); G('5',31,16,16,30,1,1,30);
+    G('6',14,16,16,30,17,17,14); G('7',31,1,2,4,8,8,8);
+    G('8',14,17,17,14,17,17,14); G('9',14,17,17,15,1,1,14);
+    G('-',0,0,0,31,0,0,0); G('.',0,0,0,0,0,12,12);
+    G(':',0,12,12,0,12,12,0); G('?',14,17,1,2,4,0,4);
+    G(' ',0,0,0,0,0,0,0);
+#undef G
+    default: return {31,17,21,21,21,17,31};
+    }
+}
+
+struct EyeTarget {
+    XrSwapchain swapchain=XR_NULL_HANDLE;
+    int width=0,height=0;
+    GLuint framebuffer=0,depth=0;
+    std::vector<XrSwapchainImageOpenGLESKHR> images;
+};
+
+class QuestRenderer {
+    EGLDisplay display=EGL_NO_DISPLAY;
+    EGLContext context=EGL_NO_CONTEXT;
+    EGLSurface surface=EGL_NO_SURFACE;
+    EGLConfig config=nullptr;
+    GLuint program=0,vao=0,vbo=0;
+    GLint matrixLocation=-1,colorLocation=-1;
+    XrInstance instance=XR_NULL_HANDLE;
+    SwiftBridge& swift;
+    bool loggedFrame=false;
+    double elapsed=0;
+    XrTime firstTime=0;
+    std::vector<Matrix> transforms;
+
+    GLuint shader(GLenum type,const char* source) {
+        GLuint s=glCreateShader(type); glShaderSource(s,1,&source,nullptr); glCompileShader(s);
+        GLint ok=0; glGetShaderiv(s,GL_COMPILE_STATUS,&ok);
+        if (!ok) { char message[2048]; glGetShaderInfoLog(s,sizeof(message),nullptr,message);
+            __android_log_print(ANDROID_LOG_ERROR,logTag,"Shader: %s",message); glDeleteShader(s); throw std::runtime_error("shader compilation"); }
+        return s;
+    }
+    void geometry(const std::vector<float>& vertices,const Matrix& matrix,const std::array<float,4>& color) {
+        if (vertices.empty() || color[3]<=0) return;
+        glUniformMatrix4fv(matrixLocation,1,GL_FALSE,matrix.m.data());
+        glUniform4fv(colorLocation,1,color.data());
+        glBufferData(GL_ARRAY_BUFFER,static_cast<GLsizeiptr>(vertices.size()*sizeof(float)),vertices.data(),GL_STREAM_DRAW);
+        glDrawArrays(GL_TRIANGLES,0,static_cast<GLsizei>(vertices.size()/3));
+    }
+    void drawScene(const Matrix& camera) {
+        const int count=swift.objectCount();
+        transforms.resize(count);
+        const std::vector<float> cube={
+            -.5f,-.5f,.5f, .5f,-.5f,.5f, .5f,.5f,.5f, -.5f,-.5f,.5f, .5f,.5f,.5f, -.5f,.5f,.5f,
+            .5f,-.5f,-.5f, -.5f,-.5f,-.5f, -.5f,.5f,-.5f, .5f,-.5f,-.5f, -.5f,.5f,-.5f, .5f,.5f,-.5f,
+            -.5f,-.5f,-.5f, -.5f,-.5f,.5f, -.5f,.5f,.5f, -.5f,-.5f,-.5f, -.5f,.5f,.5f, -.5f,.5f,-.5f,
+            .5f,-.5f,.5f, .5f,-.5f,-.5f, .5f,.5f,-.5f, .5f,-.5f,.5f, .5f,.5f,-.5f, .5f,.5f,.5f,
+            -.5f,.5f,.5f, .5f,.5f,.5f, .5f,.5f,-.5f, -.5f,.5f,.5f, .5f,.5f,-.5f, -.5f,.5f,-.5f,
+            -.5f,-.5f,-.5f, .5f,-.5f,-.5f, .5f,-.5f,.5f, -.5f,-.5f,-.5f, .5f,-.5f,.5f, -.5f,-.5f,.5f};
+        for (int i=0;i<count;++i) {
+            auto value=[&](int k){return swift.objectValue(i,k);};
+            Matrix local=Matrix::translation(value(0),value(1),value(2))*
+                Matrix::euler(value(6)+value(9)*elapsed,value(7)+value(10)*elapsed,value(8)+value(11)*elapsed);
+            int parent=swift.objectParent(i);
+            transforms[i]=(parent>=0 && parent<i)?transforms[parent]*local:local;
+            if (!value(12)) continue;
+            std::array<float,4> color{}; for(int c=0;c<4;++c)color[c]=swift.objectColor(i,c);
+            const float height=value(13);
+            if (height>0) {
+                int length=swift.objectText(i,nullptr,0);
+                std::vector<char> text(static_cast<size_t>(std::max(0,length))+1);
+                swift.objectText(i,text.data(),static_cast<int>(text.size()));
+                std::vector<float> vertices;
+                float advance=height*.62f, pixelX=advance/6, pixelY=height/7;
+                float start=-advance*length/2;
+                for(int c=0;c<length;++c) {
+                    auto rows=glyph(text[c]);
+                    for(int row=0;row<7;++row)for(int col=0;col<5;++col) if(rows[row]&(1<<(4-col))) {
+                        float x=start+c*advance+col*pixelX,y=height/2-row*pixelY;
+                        float x1=x+pixelX*.92f,y1=y-pixelY*.92f;
+                        vertices.insert(vertices.end(),{x,y1,0,x1,y1,0,x1,y,0,x,y1,0,x1,y,0,x,y,0});
+                    }
+                }
+                geometry(vertices,camera*transforms[i],color);
+            } else {
+                int primitive=swift.objectPrimitive(i);
+                if(primitive==0 || primitive==3)
+                    geometry(cube,camera*transforms[i]*Matrix::scale(value(3),value(4),value(5)),color);
+                // Other primitive meshes and textures are subsequent work.
+            }
+        }
+    }
+public:
+    XrSession session=XR_NULL_HANDLE;
+    XrSpace space=XR_NULL_HANDLE;
+    std::vector<EyeTarget> eyes;
+    bool running=false,exitRequested=false;
+    explicit QuestRenderer(SwiftBridge& bridge):swift(bridge) {}
+    ~QuestRenderer() {
+        if(display!=EGL_NO_DISPLAY && context!=EGL_NO_CONTEXT)
+            eglMakeCurrent(display,surface,surface,context);
+        for(auto& eye:eyes) {
+            if(eye.framebuffer)glDeleteFramebuffers(1,&eye.framebuffer);
+            if(eye.depth)glDeleteRenderbuffers(1,&eye.depth);
+            if(eye.swapchain)xrDestroySwapchain(eye.swapchain);
+        }
+        if(vbo)glDeleteBuffers(1,&vbo); if(vao)glDeleteVertexArrays(1,&vao); if(program)glDeleteProgram(program);
+        if(space)xrDestroySpace(space); if(session)xrDestroySession(session);
+        if(display!=EGL_NO_DISPLAY) {
+            eglMakeCurrent(display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT);
+            if(surface!=EGL_NO_SURFACE)eglDestroySurface(display,surface);
+            if(context!=EGL_NO_CONTEXT)eglDestroyContext(display,context);
+            eglTerminate(display);
+        }
+    }
+    void initialize(XrInstance xrInstance,XrSystemId system) {
+        instance=xrInstance;
+        PFN_xrGetOpenGLESGraphicsRequirementsKHR getRequirements=nullptr;
+        xrCheck(xrGetInstanceProcAddr(instance,"xrGetOpenGLESGraphicsRequirementsKHR",reinterpret_cast<PFN_xrVoidFunction*>(&getRequirements)),"resolve GLES requirements");
+        XrGraphicsRequirementsOpenGLESKHR requirements{XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR};
+        xrCheck(getRequirements(instance,system,&requirements),"GLES requirements");
+        display=eglGetDisplay(EGL_DEFAULT_DISPLAY);
+        if(display==EGL_NO_DISPLAY || !eglInitialize(display,nullptr,nullptr) || !eglBindAPI(EGL_OPENGL_ES_API))throw std::runtime_error("EGL initialization");
+        const EGLint attrs[]={EGL_RENDERABLE_TYPE,EGL_OPENGL_ES3_BIT,EGL_SURFACE_TYPE,EGL_PBUFFER_BIT,EGL_RED_SIZE,8,EGL_GREEN_SIZE,8,EGL_BLUE_SIZE,8,EGL_ALPHA_SIZE,8,EGL_DEPTH_SIZE,24,EGL_NONE};
+        EGLint found=0;
+        if(!eglChooseConfig(display,attrs,&config,1,&found) || !found)throw std::runtime_error("EGL configuration");
+        const EGLint contextAttrs[]={EGL_CONTEXT_CLIENT_VERSION,3,EGL_NONE};
+        context=eglCreateContext(display,config,EGL_NO_CONTEXT,contextAttrs);
+        const EGLint pbufferAttrs[]={EGL_WIDTH,16,EGL_HEIGHT,16,EGL_NONE};
+        surface=eglCreatePbufferSurface(display,config,pbufferAttrs);
+        if(context==EGL_NO_CONTEXT || surface==EGL_NO_SURFACE || !eglMakeCurrent(display,surface,surface,context))throw std::runtime_error("EGL context");
+        GLint major=0,minor=0;glGetIntegerv(GL_MAJOR_VERSION,&major);glGetIntegerv(GL_MINOR_VERSION,&minor);
+        XrVersion version=XR_MAKE_VERSION(major,minor,0);
+        if(version<requirements.minApiVersionSupported || version>requirements.maxApiVersionSupported)throw std::runtime_error("GLES version outside OpenXR requirements");
+        XrGraphicsBindingOpenGLESAndroidKHR binding{XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR};
+        binding.display=display;binding.config=config;binding.context=context;
+        XrSessionCreateInfo info{XR_TYPE_SESSION_CREATE_INFO};info.next=&binding;info.systemId=system;
+        xrCheck(xrCreateSession(instance,&info,&session),"create GLES session");
+        uint32_t count=0;
+        xrCheck(xrEnumerateReferenceSpaces(session,0,&count,nullptr),"enumerate reference spaces");
+        std::vector<XrReferenceSpaceType> spaces(count);
+        xrCheck(xrEnumerateReferenceSpaces(session,count,&count,spaces.data()),"reference spaces");
+        XrReferenceSpaceCreateInfo reference{XR_TYPE_REFERENCE_SPACE_CREATE_INFO};reference.poseInReferenceSpace.orientation.w=1;
+        reference.referenceSpaceType=std::find(spaces.begin(),spaces.end(),XR_REFERENCE_SPACE_TYPE_STAGE)!=spaces.end()?XR_REFERENCE_SPACE_TYPE_STAGE:XR_REFERENCE_SPACE_TYPE_LOCAL;
+        // Showcase uses floor-relative heights. LOCAL fallback assumes 1.6m eye height.
+        if(reference.referenceSpaceType==XR_REFERENCE_SPACE_TYPE_LOCAL)reference.poseInReferenceSpace.position.y=-1.6f;
+        xrCheck(xrCreateReferenceSpace(session,&reference,&space),"create scene reference space");
+        xrCheck(xrEnumerateViewConfigurationViews(instance,system,XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,0,&count,nullptr),"enumerate eye views");
+        if(count!=2)throw std::runtime_error("Expected stereo view configuration");
+        std::vector<XrViewConfigurationView> views(count,{XR_TYPE_VIEW_CONFIGURATION_VIEW});
+        xrCheck(xrEnumerateViewConfigurationViews(instance,system,XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,count,&count,views.data()),"eye views");
+        xrCheck(xrEnumerateSwapchainFormats(session,0,&count,nullptr),"enumerate formats");
+        std::vector<int64_t> formats(count);xrCheck(xrEnumerateSwapchainFormats(session,count,&count,formats.data()),"swapchain formats");
+        if(std::find(formats.begin(),formats.end(),GL_RGBA8)==formats.end())throw std::runtime_error("RGBA8 swapchain format unavailable");
+        eyes.resize(2);
+        for(size_t i=0;i<eyes.size();++i) {
+            auto& eye=eyes[i];eye.width=views[i].recommendedImageRectWidth;eye.height=views[i].recommendedImageRectHeight;
+            XrSwapchainCreateInfo swap{XR_TYPE_SWAPCHAIN_CREATE_INFO};
+            swap.usageFlags=XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;swap.format=GL_RGBA8;
+            swap.sampleCount=1;swap.width=eye.width;swap.height=eye.height;swap.faceCount=1;swap.arraySize=1;swap.mipCount=1;
+            xrCheck(xrCreateSwapchain(session,&swap,&eye.swapchain),"create eye swapchain");
+            xrCheck(xrEnumerateSwapchainImages(eye.swapchain,0,&count,nullptr),"enumerate eye images");
+            eye.images.resize(count,{XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR});
+            xrCheck(xrEnumerateSwapchainImages(eye.swapchain,count,&count,reinterpret_cast<XrSwapchainImageBaseHeader*>(eye.images.data())),"eye images");
+            glGenFramebuffers(1,&eye.framebuffer);glGenRenderbuffers(1,&eye.depth);
+            glBindRenderbuffer(GL_RENDERBUFFER,eye.depth);glRenderbufferStorage(GL_RENDERBUFFER,GL_DEPTH_COMPONENT24,eye.width,eye.height);
+        }
+        const char* vs="#version 300 es\nlayout(location=0) in vec3 position; uniform mat4 matrix; void main(){gl_Position=matrix*vec4(position,1.0);}";
+        const char* fs="#version 300 es\nprecision mediump float; uniform vec4 color; out vec4 outputColor; void main(){outputColor=color;}";
+        GLuint vertex=shader(GL_VERTEX_SHADER,vs),fragment=shader(GL_FRAGMENT_SHADER,fs);
+        program=glCreateProgram();glAttachShader(program,vertex);glAttachShader(program,fragment);glLinkProgram(program);
+        glDeleteShader(vertex);glDeleteShader(fragment);
+        GLint linked=0;glGetProgramiv(program,GL_LINK_STATUS,&linked);if(!linked)throw std::runtime_error("shader program link");
+        matrixLocation=glGetUniformLocation(program,"matrix");colorLocation=glGetUniformLocation(program,"color");
+        glGenVertexArrays(1,&vao);glBindVertexArray(vao);glGenBuffers(1,&vbo);glBindBuffer(GL_ARRAY_BUFFER,vbo);
+        glEnableVertexAttribArray(0);glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),nullptr);
+        log("OpenXR GLES session, floor space and stereo swapchains are ready.");
+    }
+    void pollEvents() {
+        XrEventDataBuffer event{XR_TYPE_EVENT_DATA_BUFFER};
+        XrResult result;
+        while((result=xrPollEvent(instance,&event))==XR_SUCCESS) {
+            if(event.type==XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
+                auto& state=*reinterpret_cast<XrEventDataSessionStateChanged*>(&event);
+                __android_log_print(ANDROID_LOG_INFO,logTag,"OpenXR session state: %d",state.state);
+                if(state.state==XR_SESSION_STATE_READY && !running) {
+                    XrSessionBeginInfo begin{XR_TYPE_SESSION_BEGIN_INFO};begin.primaryViewConfigurationType=XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+                    xrCheck(xrBeginSession(session,&begin),"begin session");running=true;
+                } else if(state.state==XR_SESSION_STATE_STOPPING && running) {
+                    xrCheck(xrEndSession(session),"end session");running=false;
+                } else if(state.state==XR_SESSION_STATE_EXITING || state.state==XR_SESSION_STATE_LOSS_PENDING) {
+                    running=false;exitRequested=true;
+                }
+            } else if(event.type==XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING) {exitRequested=true;running=false;}
+            event={XR_TYPE_EVENT_DATA_BUFFER};
+        }
+        if(result!=XR_EVENT_UNAVAILABLE)xrCheck(result,"poll OpenXR events");
+    }
+    void frame() {
+        XrFrameWaitInfo wait{XR_TYPE_FRAME_WAIT_INFO};XrFrameState state{XR_TYPE_FRAME_STATE};
+        xrCheck(xrWaitFrame(session,&wait,&state),"wait frame");
+        XrFrameBeginInfo begin{XR_TYPE_FRAME_BEGIN_INFO};xrCheck(xrBeginFrame(session,&begin),"begin frame");
+        XrCompositionLayerProjection layer{XR_TYPE_COMPOSITION_LAYER_PROJECTION};layer.space=space;
+        std::array<XrCompositionLayerProjectionView,2> projectionViews{};
+        const XrCompositionLayerBaseHeader* layers[]={reinterpret_cast<const XrCompositionLayerBaseHeader*>(&layer)};
+        uint32_t layerCount=0;
+        if(state.shouldRender) {
+            std::array<XrView,2> views{{{XR_TYPE_VIEW},{XR_TYPE_VIEW}}};uint32_t count=0;
+            XrViewLocateInfo locate{XR_TYPE_VIEW_LOCATE_INFO};locate.viewConfigurationType=XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;locate.displayTime=state.predictedDisplayTime;locate.space=space;
+            XrViewState viewState{XR_TYPE_VIEW_STATE};
+            xrCheck(xrLocateViews(session,&locate,&viewState,2,&count,views.data()),"locate views");
+            const XrViewStateFlags valid=XR_VIEW_STATE_POSITION_VALID_BIT|XR_VIEW_STATE_ORIENTATION_VALID_BIT;
+            if(count==2 && (viewState.viewStateFlags&valid)==valid) {
+                if(!firstTime)firstTime=state.predictedDisplayTime;
+                elapsed=static_cast<double>(state.predictedDisplayTime-firstTime)*1e-9;
+                swift.prepareScene();
+                for(size_t i=0;i<eyes.size();++i) {
+                    auto& eye=eyes[i];uint32_t index=0;
+                    XrSwapchainImageAcquireInfo acquire{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};xrCheck(xrAcquireSwapchainImage(eye.swapchain,&acquire,&index),"acquire eye");
+                    XrSwapchainImageWaitInfo imageWait{XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};imageWait.timeout=XR_INFINITE_DURATION;
+                    xrCheck(xrWaitSwapchainImage(eye.swapchain,&imageWait),"wait eye image");
+                    glBindFramebuffer(GL_FRAMEBUFFER,eye.framebuffer);
+                    glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,eye.images.at(index).image,0);
+                    glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER,eye.depth);
+                    if(glCheckFramebufferStatus(GL_FRAMEBUFFER)!=GL_FRAMEBUFFER_COMPLETE)throw std::runtime_error("incomplete eye framebuffer");
+                    glViewport(0,0,eye.width,eye.height);glDisable(GL_SCISSOR_TEST);glDisable(GL_CULL_FACE);
+                    glEnable(GL_DEPTH_TEST);glDepthFunc(GL_LEQUAL);glDepthMask(GL_TRUE);
+                    glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+                    glClearColor(.025f,.035f,.065f,1);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+                    glUseProgram(program);glBindVertexArray(vao);glBindBuffer(GL_ARRAY_BUFFER,vbo);
+                    drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose));
+                    glBindFramebuffer(GL_FRAMEBUFFER,0);glFlush();
+                    XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};xrCheck(xrReleaseSwapchainImage(eye.swapchain,&release),"release eye");
+                    auto& projection=projectionViews[i];projection.type=XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
+                    projection.pose=views[i].pose;projection.fov=views[i].fov;projection.subImage.swapchain=eye.swapchain;
+                    projection.subImage.imageRect.extent={eye.width,eye.height};
+                }
+                layer.viewCount=2;layer.views=projectionViews.data();layerCount=1;
+            }
+        }
+        XrFrameEndInfo end{XR_TYPE_FRAME_END_INFO};end.displayTime=state.predictedDisplayTime;end.environmentBlendMode=XR_ENVIRONMENT_BLEND_MODE_OPAQUE;end.layerCount=layerCount;end.layers=layerCount?layers:nullptr;
+        xrCheck(xrEndFrame(session,&end),"submit frame");
+        if(layerCount && !loggedFrame){log("First stereo Showcase frame submitted.");loggedFrame=true;}
+    }
+};

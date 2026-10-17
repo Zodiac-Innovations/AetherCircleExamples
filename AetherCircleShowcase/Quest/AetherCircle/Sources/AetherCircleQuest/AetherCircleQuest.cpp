@@ -3,7 +3,9 @@
 #include <android/log.h>
 #include <android_native_app_glue.h>
 #include <dlfcn.h>
-#include <vulkan/vulkan.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES3/gl3.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 
@@ -15,6 +17,12 @@
 #include <vector>
 #include <cstdint>
 #include <cstring>
+
+#include <algorithm>
+#include <cmath>
+#include <functional>
+#include <stdexcept>
+#include <cctype>
 
 namespace {
 
@@ -65,6 +73,9 @@ struct SwiftBridge {
     using ObjectPrimitive = std::int32_t (*)(std::int32_t);
     using ObjectValue = float (*)(std::int32_t, std::int32_t);
     using ObjectColor = float (*)(std::int32_t, std::int32_t);
+    using PrepareScene = void (*)();
+    using ObjectParent = std::int32_t (*)(std::int32_t);
+    using ObjectText = std::int32_t (*)(std::int32_t, char*, std::int32_t);
 
     void* library = nullptr;
     Start start = nullptr;
@@ -73,6 +84,9 @@ struct SwiftBridge {
     ObjectPrimitive objectPrimitive = nullptr;
     ObjectValue objectValue = nullptr;
     ObjectColor objectColor = nullptr;
+    PrepareScene prepareScene = nullptr;
+    ObjectParent objectParent = nullptr;
+    ObjectText objectText = nullptr;
 
     bool load(android_app* app) {
         library = dlopen("libAetherCircleQuestApp.so", RTLD_NOW | RTLD_LOCAL);
@@ -105,7 +119,10 @@ struct SwiftBridge {
             dlsym(library, "aethercircle_swift_object_color")
         );
 
-        if (start == nullptr || stop == nullptr || objectCount == nullptr ||
+        prepareScene = reinterpret_cast<PrepareScene>(dlsym(library, "aethercircle_swift_prepare_scene"));
+        objectParent = reinterpret_cast<ObjectParent>(dlsym(library, "aethercircle_swift_object_parent"));
+        objectText = reinterpret_cast<ObjectText>(dlsym(library, "aethercircle_swift_object_text"));
+        if (prepareScene == nullptr || objectParent == nullptr || objectText == nullptr || start == nullptr || stop == nullptr || objectCount == nullptr ||
             objectPrimitive == nullptr || objectValue == nullptr ||
             objectColor == nullptr) {
             log("The shared Swift application bridge is incomplete.");
@@ -173,7 +190,7 @@ XrInstance createInstance(
 ) {
     const std::array<const char*, 2> extensions{
         XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME,
-        XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME
+        XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME
     };
 
     XrInstanceCreateInfoAndroidKHR androidInfo{
@@ -207,67 +224,66 @@ XrInstance createInstance(
         : XR_NULL_HANDLE;
 }
 
-}  // namespace
+#include "QuestRender.hpp"
 
-namespace aethercircle {
-
-void run(android_app* app, const ApplicationInfo& application) {
-    log("AetherCircle Quest runtime started.");
-
-    SwiftBridge swift;
-    if (!swift.load(app)) {
-        log("Shared Swift application startup failed.");
-        return;
+// Always service NativeActivity lifecycle commands and consume pending input.
+void pumpAndroid(android_app* app, int timeout) {
+    int events=0;
+    android_poll_source* source=nullptr;
+    int result=ALooper_pollOnce(timeout,nullptr,&events,reinterpret_cast<void**>(&source));
+    while(result>=0) {
+        if(source)source->process(app,source);
+        if(app->destroyRequested)return;
+        result=ALooper_pollOnce(0,nullptr,&events,reinterpret_cast<void**>(&source));
     }
-
-    if (!initializeLoader(app)) {
-        log("OpenXR loader initialization failed.");
-        swift.unload();
-        return;
-    }
-
-    const XrInstance instance = createInstance(app, application);
-    if (instance == XR_NULL_HANDLE) {
-        log("OpenXR instance creation failed.");
-        swift.unload();
-        return;
-    }
-
-    XrSystemGetInfo systemInfo{XR_TYPE_SYSTEM_GET_INFO};
-    systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
-    XrSystemId system = XR_NULL_SYSTEM_ID;
-
-    if (XR_FAILED(xrGetSystem(instance, &systemInfo, &system))) {
-        log("Quest OpenXR system was not found.");
-        xrDestroyInstance(instance);
-        swift.unload();
-        return;
-    }
-
-    log("OpenXR instance and Quest system are ready.");
-
-    while (!app->destroyRequested) {
-        int events = 0;
-        android_poll_source* source = nullptr;
-        while (ALooper_pollOnce(
-            10,
-            nullptr,
-            &events,
-            reinterpret_cast<void**>(&source)
-        ) >= 0) {
-            if (source != nullptr) {
-                source->process(app, source);
-            }
-            if (app->destroyRequested) {
-                break;
-            }
-        }
-    }
-
-    xrDestroyInstance(instance);
-    swift.unload();
-    log("AetherCircle Quest runtime stopped.");
 }
 
-}  // namespace aethercircle
+} // namespace
 
+namespace aethercircle {
+void run(android_app* app, const ApplicationInfo& application) {
+    log("AetherCircle Quest GLES runtime started.");
+    JNIEnv* env=nullptr;
+    const bool attached=app->activity->vm->GetEnv(reinterpret_cast<void**>(&env),JNI_VERSION_1_6)==JNI_EDETACHED;
+    if(attached && app->activity->vm->AttachCurrentThread(&env,nullptr)!=JNI_OK) {
+        log("Unable to attach native runtime thread to JVM.");
+        ANativeActivity_finish(app->activity);
+        while(!app->destroyRequested)pumpAndroid(app,100);
+        return;
+    }
+    app->onAppCmd=[](android_app*,int32_t command) {
+        __android_log_print(ANDROID_LOG_INFO,logTag,"Android lifecycle command: %d",command);
+    };
+    app->onInputEvent=[](android_app*,AInputEvent*) -> int32_t { return 1; };
+    SwiftBridge swift;
+    XrInstance instance=XR_NULL_HANDLE;
+    try {
+        if(!swift.load(app))throw std::runtime_error("Swift application startup");
+        if(!initializeLoader(app))throw std::runtime_error("OpenXR loader initialization");
+        instance=createInstance(app,application);
+        if(instance==XR_NULL_HANDLE)throw std::runtime_error("OpenXR instance creation");
+        XrSystemGetInfo info{XR_TYPE_SYSTEM_GET_INFO};info.formFactor=XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
+        XrSystemId system=XR_NULL_SYSTEM_ID;
+        xrCheck(xrGetSystem(instance,&info,&system),"get headset system");
+        // Scoped cleanup releases session/GL objects before destroying the instance.
+        QuestRenderer renderer(swift);
+        renderer.initialize(instance,system);
+        while(!app->destroyRequested && !renderer.exitRequested) {
+            pumpAndroid(app,renderer.running?0:100);
+            if(app->destroyRequested)break;
+            renderer.pollEvents();
+            if(renderer.running && !renderer.exitRequested)renderer.frame();
+        }
+    } catch(const std::exception& error) {
+        __android_log_print(ANDROID_LOG_ERROR,logTag,"Quest startup/render failure: %s; EGL error=0x%x",error.what(),eglGetError());
+    }
+    if(instance)xrDestroyInstance(instance);
+    swift.unload();
+    if(!app->destroyRequested) {
+        ANativeActivity_finish(app->activity);
+        while(!app->destroyRequested)pumpAndroid(app,100);
+    }
+    if(attached)app->activity->vm->DetachCurrentThread();
+    log("AetherCircle Quest runtime stopped.");
+}
+} // namespace aethercircle
