@@ -40,6 +40,7 @@ public final class AetherTextObject:
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         text: String,
         characterHeight: AetherFloat = 0.12,
         extrusionDepth: AetherFloat = 0.01,
@@ -63,6 +64,7 @@ public final class AetherTextObject:
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .space,
             position: position,
             rotation: rotation,
@@ -81,3 +83,4 @@ public final class AetherTextObject:
         )
     }
 }
+

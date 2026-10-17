@@ -58,6 +58,18 @@ private final class QuestPlatform: AetherPlatform, @unchecked Sendable {
     var platformType: AetherPlatformType { .quest }
     var deviceType: AetherDeviceType { .headset }
     var deviceManufacturer: String { "Meta" }
+    let automationRunner = AetherAutomationRunner()
+    var canRunAutomation: Bool { true }
+    func runScript(_ script: AetherAutomationScript) async throws {
+        try await automationRunner.run(script)
+    }
+    nonisolated var canSetUserInteractionEnabled: Bool { true }
+    nonisolated(unsafe) private(set) var isUserInteractionEnabled = true
+    @discardableResult
+    nonisolated func setUserInteractionEnabled(_ enabled: Bool) -> Bool {
+        isUserInteractionEnabled = enabled
+        return true
+    }
     var quitRequested = false
     var canQuitApp: Bool { true }
     func quitApp() -> Bool { quitRequested = true; return true }
@@ -141,6 +153,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     }
 
     func stop() {
+        platformServices.automationRunner.stop()
         application?.stop()
         application = nil
         graphicEngine.scene = AetherScene()
@@ -258,7 +271,19 @@ public func aethercircleSwiftSetResourceDirectory(_ path: UnsafePointer<CChar>?)
 // Snapshot once per frame; parents precede their children. Transforms stay local.
 @_cdecl("aethercircle_swift_prepare_scene")
 public func aethercircleSwiftPrepareScene() {
-    QuestSwiftRuntime.shared.prepareRenderScene()
+    let runtime = QuestSwiftRuntime.shared
+    runtime.platformServices.automationRunner.update(
+        now: ProcessInfo.processInfo.systemUptime,
+        activate: { target in
+            let object = try target.resolve(in: runtime.graphicEngine.scene)
+            guard let action = object.config?.activateAction else {
+                throw AetherAutomationError.cannotActivate
+            }
+            action()
+        },
+        setInteractionEnabled: { _ = runtime.platformServices.setUserInteractionEnabled($0) }
+    )
+    runtime.prepareRenderScene()
 }
 
 @_cdecl("aethercircle_swift_object_parent")
@@ -289,6 +314,7 @@ public func aethercircleSwiftObjectText(
 @_cdecl("aethercircle_swift_object_target")
 public func aethercircleSwiftObjectTarget(_ index: Int32) -> Int32 {
     let runtime = QuestSwiftRuntime.shared
+    guard runtime.platformServices.isUserInteractionEnabled else { return -1 }
     var current = index
     while let object = runtime.object(at: current) {
         if let config = object.config { return config.canTarget ? current : -1 }
@@ -300,12 +326,18 @@ public func aethercircleSwiftObjectTarget(_ index: Int32) -> Int32 {
 
 @_cdecl("aethercircle_swift_activate")
 public func aethercircleSwiftActivate(_ index: Int32) {
-    guard let object = QuestSwiftRuntime.shared.object(at: index),
+    guard QuestSwiftRuntime.shared.platformServices.isUserInteractionEnabled,
+          let object = QuestSwiftRuntime.shared.object(at: index),
           object.isVisible, let config = object.config, config.canTarget else { return }
     config.activateAction?()
     QuestSwiftRuntime.shared.prepareRenderScene()
 }
 
+
+@_cdecl("aethercircle_swift_user_interaction_enabled")
+public func aethercircleSwiftUserInteractionEnabled() -> Int32 {
+    QuestSwiftRuntime.shared.platformServices.isUserInteractionEnabled ? 1 : 0
+}
 
 @_cdecl("aethercircle_swift_quit_requested")
 public func aethercircleSwiftQuitRequested() -> Int32 {
@@ -328,7 +360,6 @@ public func aethercircleSwiftObjectTexture(
     }
     return Int32(bytes.count)
 }
-
 @_cdecl("aethercircle_swift_set_passthrough_supported")
 public func aethercircleSwiftSetPassthroughSupported(_ supported: Int32) {
     QuestSwiftRuntime.shared.supportsPassthrough = supported != 0
@@ -338,3 +369,4 @@ public func aethercircleSwiftSetPassthroughSupported(_ supported: Int32) {
 public func aethercircleSwiftPassthroughRequested() -> Int32 {
     QuestSwiftRuntime.shared.environmentEngine.mode == .passthrough ? 1 : 0
 }
+

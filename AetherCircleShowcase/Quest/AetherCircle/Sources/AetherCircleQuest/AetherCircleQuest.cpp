@@ -92,6 +92,7 @@ struct SwiftBridge {
     ObjectParent objectParent = nullptr;
     ObjectText objectText = nullptr;
     ObjectText objectTexture = nullptr;
+    ObjectCount userInteractionEnabled = nullptr;
     ObjectCount quitRequested = nullptr;
     ObjectCount passthroughRequested = nullptr;
     using SetCapability = void (*)(std::int32_t);
@@ -134,12 +135,13 @@ struct SwiftBridge {
         objectParent = reinterpret_cast<ObjectParent>(dlsym(library, "aethercircle_swift_object_parent"));
         objectText = reinterpret_cast<ObjectText>(dlsym(library, "aethercircle_swift_object_text"));
         objectTarget = reinterpret_cast<ObjectParent>(dlsym(library, "aethercircle_swift_object_target"));
+        userInteractionEnabled = reinterpret_cast<ObjectCount>(dlsym(library, "aethercircle_swift_user_interaction_enabled"));
         activate = reinterpret_cast<Activate>(dlsym(library, "aethercircle_swift_activate"));
         objectTexture = reinterpret_cast<ObjectText>(dlsym(library, "aethercircle_swift_object_texture"));
         quitRequested = reinterpret_cast<ObjectCount>(dlsym(library, "aethercircle_swift_quit_requested"));
         passthroughRequested = reinterpret_cast<ObjectCount>(dlsym(library, "aethercircle_swift_passthrough_requested"));
         setPassthroughSupported = reinterpret_cast<SetCapability>(dlsym(library, "aethercircle_swift_set_passthrough_supported"));
-        if (passthroughRequested == nullptr || setPassthroughSupported == nullptr || objectTexture == nullptr || quitRequested == nullptr || objectTarget == nullptr || activate == nullptr || prepareScene == nullptr || objectParent == nullptr || objectText == nullptr || start == nullptr || stop == nullptr || objectCount == nullptr ||
+        if (userInteractionEnabled == nullptr || passthroughRequested == nullptr || setPassthroughSupported == nullptr || objectTexture == nullptr || quitRequested == nullptr || objectTarget == nullptr || activate == nullptr || prepareScene == nullptr || objectParent == nullptr || objectText == nullptr || start == nullptr || stop == nullptr || objectCount == nullptr ||
             objectPrimitive == nullptr || objectValue == nullptr ||
             objectColor == nullptr) {
             log("The shared Swift application bridge is incomplete.");
@@ -334,4 +336,5 @@ void run(android_app* app, const ApplicationInfo& application) {
     log("AetherCircle Quest runtime stopped.");
 }
 } // namespace aethercircle
+
 

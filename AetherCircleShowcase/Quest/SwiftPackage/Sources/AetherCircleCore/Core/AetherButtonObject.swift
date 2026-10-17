@@ -59,6 +59,7 @@ public final class AetherButtonObject:
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         flavor: AetherButtonFlavor = .default,
         title: String,
         size: AetherSize3D = AetherSize3D(
@@ -187,6 +188,7 @@ public final class AetherButtonObject:
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             objects: objects,
             position: position,
             isVisible: isVisible,
@@ -213,3 +215,4 @@ public final class AetherButtonObject:
         config = interaction
     }
 }
+

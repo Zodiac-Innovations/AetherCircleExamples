@@ -58,6 +58,7 @@ public final class AetherIntToggleObject:
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         value: Int = 0,
         range: ClosedRange<Int> = 0...100,
         step: Int = 1,
@@ -113,6 +114,7 @@ public final class AetherIntToggleObject:
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             objects: [
                 track,
                 fill,
@@ -192,3 +194,4 @@ public final class AetherIntToggleObject:
         )
     }
 }
+

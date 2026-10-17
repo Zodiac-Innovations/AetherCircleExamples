@@ -84,6 +84,21 @@ public protocol AetherPlatform: AnyObject, Sendable {
     var deviceType: AetherDeviceType { get }
     var orientation: AetherOrientation { get }
 
+    /// Scripts execute on the host's frame thread while this async call waits.
+    var canRunAutomation: Bool { get }
+    func runScript(_ script: AetherAutomationScript) async throws
+    func runTextScript(_ text: String) async throws
+
+    // App interaction. Call on the platform's UI/runtime thread.
+    /// Whether this host implements the app interaction gate.
+    @MainActor var canSetUserInteractionEnabled: Bool { get }
+    @MainActor var isUserInteractionEnabled: Bool { get }
+    /// Gates app-owned controller, hand, targeting, selection, and touch input.
+    /// Does not disable system controls, safety features, or head tracking.
+    /// Remains in effect across scene changes until explicitly changed.
+    @MainActor @discardableResult
+    func setUserInteractionEnabled(_ enabled: Bool) -> Bool
+
     // External actions
     func canLaunchURL(_ url: URL) -> Bool
     @discardableResult func launchURL(_ url: URL) -> Bool
@@ -158,6 +173,19 @@ public protocol AetherPlatform: AnyObject, Sendable {
 }
 
 public extension AetherPlatform {
+    var canRunAutomation: Bool { false }
+    func runScript(_ script: AetherAutomationScript) async throws {
+        throw AetherAutomationError.unsupported
+    }
+    func runTextScript(_ text: String) async throws {
+        try await runScript(AetherAutomationScript(text: text))
+    }
+
+    @MainActor var canSetUserInteractionEnabled: Bool { false }
+    @MainActor var isUserInteractionEnabled: Bool { true }
+    @MainActor @discardableResult
+    func setUserInteractionEnabled(_ enabled: Bool) -> Bool { false }
+
     var canRetrieveAppIcon: Bool { false }
     func appIconData() -> Data? { nil }
     var appName: String { "Application" }
@@ -309,3 +337,4 @@ public extension AetherPlatform {
 public final class AetherPlatformDummy: AetherPlatform, @unchecked Sendable {
     public init() {}
 }
+

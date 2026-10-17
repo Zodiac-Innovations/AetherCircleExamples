@@ -34,6 +34,7 @@ public final class AetherQuitButtonObject:
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "Quit",
+        autoID: String = "",
         flavor: AetherButtonFlavor = .doubleSided,
         title: String = "Quit",
         confirmationTitle: String = "Quit",
@@ -99,6 +100,7 @@ public final class AetherQuitButtonObject:
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             objects: [
                 quitButton,
                 panel,
@@ -129,3 +131,4 @@ public final class AetherQuitButtonObject:
         button.isVisible = true
     }
 }
+

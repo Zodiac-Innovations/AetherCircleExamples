@@ -31,6 +31,7 @@ public final class AetherImageObject:
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         imageName: String,
         size: AetherSize3D = AetherSize3D(
             x: 0.30,
@@ -53,6 +54,7 @@ public final class AetherImageObject:
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .plane,
             position: position,
             rotation: rotation,
@@ -67,3 +69,4 @@ public final class AetherImageObject:
         )
     }
 }
+

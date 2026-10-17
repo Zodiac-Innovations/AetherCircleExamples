@@ -189,7 +189,7 @@ class QuestRenderer {
     }
     void updateControllers(XrTime time) {
         targets={-1,-1};rayVisible={false,false};
-        if(!focused || !placementReady) {triggerArmed={false,false};return;}
+        if(!swift.userInteractionEnabled() || !focused || !placementReady) {triggerArmed={false,false};return;}
         XrActiveActionSet active{actionSet,XR_NULL_PATH};
         XrActionsSyncInfo sync{XR_TYPE_ACTIONS_SYNC_INFO};sync.countActiveActionSets=1;sync.activeActionSets=&active;
         XrResult result=xrSyncActions(session,&sync);
@@ -228,7 +228,11 @@ class QuestRenderer {
                     __android_log_print(ANDROID_LOG_INFO,logTag,"Controller activated target %d.",targets[hand]);
                     swift.activate(targets[hand]);
                     // A callback can replace the scene and invalidate every index.
-                    targets={-1,-1};updateTransforms();return;
+                    targets={-1,-1};
+                    if(!swift.userInteractionEnabled()) {
+                        rayVisible={false,false};triggerArmed={false,false};
+                    }
+                    updateTransforms();return;
                 }
             }
         }
@@ -678,4 +682,5 @@ void main(){
         if(layerCount && !loggedFrame){log("First stereo Showcase frame submitted.");loggedFrame=true;}
     }
 };
+
 

@@ -13,12 +13,14 @@ public extension AetherObject {
     static func box(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .box,
             size: size,
             material: material
@@ -29,12 +31,14 @@ public extension AetherObject {
     static func hemisphere(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         diameter: AetherFloat,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         uniformShape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .hemisphere,
             size: diameter,
             material: material
@@ -45,12 +49,14 @@ public extension AetherObject {
     static func ellipsoid(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .ellipsoid,
             size: size,
             material: material
@@ -61,6 +67,7 @@ public extension AetherObject {
     static func cylinder(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         diameter: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
@@ -68,6 +75,7 @@ public extension AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .cylinder,
             size: AetherSize3D(
                 x: diameter,
@@ -82,6 +90,7 @@ public extension AetherObject {
     static func cone(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         diameter: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
@@ -89,6 +98,7 @@ public extension AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .cone,
             size: AetherSize3D(
                 x: diameter,
@@ -103,6 +113,7 @@ public extension AetherObject {
     static func capsule(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         diameter: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
@@ -110,6 +121,7 @@ public extension AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .capsule,
             size: AetherSize3D(
                 x: diameter,
@@ -124,12 +136,14 @@ public extension AetherObject {
     static func pyramid(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .pyramid,
             size: size,
             material: material
@@ -140,12 +154,14 @@ public extension AetherObject {
     static func tetrahedron(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .tetrahedron,
             size: size,
             material: material
@@ -156,12 +172,14 @@ public extension AetherObject {
     static func octahedron(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .octahedron,
             size: size,
             material: material
@@ -172,12 +190,14 @@ public extension AetherObject {
     static func diamond(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         octahedron(
             tag: tag,
             name: name,
+            autoID: autoID,
             size: size,
             material: material
         )
@@ -187,12 +207,14 @@ public extension AetherObject {
     static func wedge(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .wedge,
             size: size,
             material: material
@@ -203,12 +225,14 @@ public extension AetherObject {
     static func prism(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .prism,
             size: size,
             material: material
@@ -219,12 +243,14 @@ public extension AetherObject {
     static func torus(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .torus,
             size: size,
             material: material
@@ -235,6 +261,7 @@ public extension AetherObject {
     static func plane(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         width: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
@@ -242,6 +269,7 @@ public extension AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .plane,
             size: AetherSize3D(
                 x: width,
@@ -256,6 +284,7 @@ public extension AetherObject {
     static func triangle(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         width: AetherFloat,
         height: AetherFloat,
         material: AetherMaterial = .defaultObject
@@ -263,6 +292,7 @@ public extension AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .triangle,
             size: AetherSize3D(
                 x: width,
@@ -277,12 +307,14 @@ public extension AetherObject {
     static func disc(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         diameter: AetherFloat,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .disc,
             size: AetherSize3D(
                 x: diameter,
@@ -297,12 +329,14 @@ public extension AetherObject {
     static func ring(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         diameter: AetherFloat,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .ring,
             size: AetherSize3D(
                 x: diameter,
@@ -317,6 +351,7 @@ public extension AetherObject {
     static func shape(
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         primitive: AetherPrimitive,
         size: AetherSize3D,
         material: AetherMaterial = .defaultObject
@@ -324,6 +359,7 @@ public extension AetherObject {
         AetherObject(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: primitive,
             size: size,
             material: material
@@ -334,6 +370,7 @@ public extension AetherObject {
     private static func uniformShape(
         tag: Int,
         name: String,
+        autoID: String,
         primitive: AetherPrimitive,
         size: AetherFloat,
         material: AetherMaterial
@@ -341,6 +378,7 @@ public extension AetherObject {
         shape(
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: primitive,
             size: AetherSize3D(
                 x: size,
@@ -351,3 +389,4 @@ public extension AetherObject {
         )
     }
 }
+

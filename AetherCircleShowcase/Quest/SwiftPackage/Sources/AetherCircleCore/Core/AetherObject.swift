@@ -14,7 +14,7 @@ import Foundation
 // MARK: Class
 
 /// Visible object placed within an AetherCircle scene.
-public class AetherObject: @unchecked Sendable {
+public class AetherObject: AetherObjectProtocol, @unchecked Sendable {
 
     // MARK: Properties
 
@@ -26,6 +26,9 @@ public class AetherObject: @unchecked Sendable {
 
     /// Human-readable name of the object.
     public let name: String
+
+    /// Stable, application-assigned identifier for automation. Empty means unspecified.
+    public var autoID: String
 
     /// Primitive shape used to create the object.
     public let primitive: AetherPrimitive
@@ -86,6 +89,7 @@ public class AetherObject: @unchecked Sendable {
     ///   - id: Unique identifier for the object.
     ///   - tag: Application-defined integer used for scene interactions.
     ///   - name: Human-readable name of the object.
+    ///   - autoID: Stable automation identifier; empty when unspecified.
     ///   - primitive: Primitive shape used to create the object.
     ///   - position: Initial position in meters.
     ///   - rotation: Initial Euler rotation in radians.
@@ -108,6 +112,7 @@ public class AetherObject: @unchecked Sendable {
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         primitive: AetherPrimitive,
         position: AetherPosition3D = .zero,
         rotation: AetherRotation3D = .zero,
@@ -129,6 +134,7 @@ public class AetherObject: @unchecked Sendable {
         self.id = id
         self.tag = tag
         self.name = name
+        self.autoID = autoID
         self.primitive = primitive
         self.position = position
         self.rotation = rotation
@@ -158,6 +164,7 @@ public extension AetherObject {
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherFloat,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
@@ -165,6 +172,7 @@ public extension AetherObject {
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .cube,
             size: AetherSize3D(
                 x: size,
@@ -180,6 +188,7 @@ public extension AetherObject {
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         diameter: AetherFloat,
         material: AetherMaterial = .defaultObject
     ) -> AetherObject {
@@ -187,6 +196,7 @@ public extension AetherObject {
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .sphere,
             size: AetherSize3D(
                 x: diameter,
@@ -202,12 +212,14 @@ public extension AetherObject {
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         size: AetherSize3D
     ) -> AetherObject {
         AetherObject(
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             primitive: .space,
             size: size
         )
@@ -282,3 +294,4 @@ public extension AetherObject {
         }
     }
 }
+

@@ -45,6 +45,7 @@ public final class AetherProgressObject:
         id: UUID = UUID(),
         tag: Int = 0,
         name: String = "",
+        autoID: String = "",
         progress: AetherFloat = 0,
         flavor: AetherProgressFlavor = .default,
         size: AetherSize3D = AetherSize3D(
@@ -83,6 +84,7 @@ public final class AetherProgressObject:
             id: id,
             tag: tag,
             name: name,
+            autoID: autoID,
             objects: [
                 track,
                 fill,
@@ -128,3 +130,4 @@ public final class AetherProgressObject:
         fillObject.isVisible = progress > 0
     }
 }
+

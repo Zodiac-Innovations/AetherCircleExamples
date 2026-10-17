@@ -166,6 +166,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
         let primitiveButton = AetherButtonObject(
             name: "Primitive Objects Button",
+            autoID: "showcase.primitives",
             flavor: .default,
             title: "Primitive Objects",
             size: AetherSize3D(
@@ -189,6 +190,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
         let panelButton = AetherButtonObject(
             name: "Panel Objects Button",
+            autoID: "showcase.panels",
             flavor: .default,
             title: "Panel Objects",
             size: AetherSize3D(
@@ -212,6 +214,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
         let materialButton = AetherButtonObject(
             name: "Materials Button",
+            autoID: "showcase.materials",
             flavor: .default,
             title: "Materials",
             size: AetherSize3D(
@@ -233,6 +236,19 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
         )
 
+        let automationButton = AetherButtonObject(
+            name: "Automation Button",
+            autoID: "showcase.automation",
+            title: "Automation",
+            size: AetherSize3D(x: 0.70, y: 0.16, z: 0.04),
+            sizing: .fitTextToButton,
+            material: Material.button,
+            textMaterial: Material.white,
+            position: AetherPosition3D(x: 0, y: 0.86, z: sceneDepth),
+            targetAppearance: .goldenGlow,
+            action: { self.showAutomationScene() }
+        )
+
         let quit = AetherQuitButtonObject(
             name: "Quit",
             flavor: .doubleSided,
@@ -247,7 +263,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             panelButtonMaterial: Material.button,
             position: AetherPosition3D(
                 x: 0,
-                y: 0.82,
+                y: 0.58,
                 z: sceneDepth
             ),
             targetAppearance: .goldenGlow,
@@ -255,6 +271,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 self.quitApp()
             }
         )
+        quit.button.autoID = "showcase.quit"
         quit.button.rotationRate = AetherRotationRate3D(
             x: 0,
             y: 0.55,
@@ -269,11 +286,80 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                     primitiveButton,
                     panelButton,
                     materialButton,
+                    automationButton,
                     quit,
                 ]
             )
         )
     }
+
+    /// Demonstrates the text-script API through the same buttons a user presses.
+    private func showAutomationScene() {
+        let description = AetherTextObject(
+            name: "Automation Description",
+            text: "Tour Home and three screens, then quit.",
+            characterHeight: 0.045,
+            extrusionDepth: 0.006,
+            material: Material.white,
+            position: AetherPosition3D(x: 0, y: 1.70, z: sceneDepth)
+        )
+        let runButton = AetherButtonObject(
+            name: "Run Showcase Tour Button",
+            autoID: "showcase.run-tour",
+            title: "Run Showcase Tour",
+            size: AetherSize3D(x: 0.85, y: 0.16, z: 0.04),
+            sizing: .fitTextToButton,
+            material: Material.button,
+            textMaterial: Material.white,
+            position: AetherPosition3D(x: 0, y: 1.35, z: sceneDepth),
+            targetAppearance: .goldenGlow,
+            action: {
+                // Capture only the Sendable platform service. The runner executes
+                // scene changes on the platform frame thread, not this task.
+                Task { [platform = self.world.platform] in
+                    do {
+                        try await platform.runTextScript(Self.showcaseTourScript)
+                    } catch AetherAutomationError.alreadyRunning {
+                        // A repeated press does not interrupt the running tour.
+                    } catch {
+                        print("Showcase automation failed: \(error)")
+                        // Restore input on the frame thread if a command fails.
+                        try? await platform.runTextScript("interaction on")
+                    }
+                }
+            }
+        )
+        world.graphicEngine.changeToScene(AetherScene(
+            name: "Automation",
+            objects: [
+                makeTitle("Automation", y: 2.05),
+                description,
+                runButton,
+                makeHomeButton(),
+            ]
+        ))
+    }
+
+    /// Each navigation target resolves in the current scene, including nested
+    /// panel navigation. Quit uses the normal confirmation dialog.
+    private static let showcaseTourScript = """
+    interaction off
+    tap autoID showcase.home
+    wait 10
+    tap autoID showcase.primitives
+    wait 10
+    tap autoID showcase.home
+    tap autoID showcase.panels
+    wait 10
+    tap autoID showcase.home
+    tap autoID showcase.materials
+    wait 10
+    tap autoID showcase.home
+    wait 5
+    interaction on
+    tap autoID showcase.quit
+    tap name 'Quit Confirmation Yes'
+    """
 
     private func showMaterialsScene() {
         let availableMaterials: [(String, AetherMaterial)] = [
@@ -749,6 +835,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     ) -> AetherButtonObject {
         AetherButtonObject(
             name: name,
+            autoID: "showcase.home",
             flavor: .default,
             title: "Home",
             size: AetherSize3D(
@@ -919,6 +1006,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private func makeHomeButton() -> AetherButtonObject {
         AetherButtonObject(
             name: "Home Button",
+            autoID: "showcase.home",
             flavor: .default,
             title: "Home",
             size: AetherSize3D(
@@ -987,3 +1075,4 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
     }
 }
+
