@@ -5,7 +5,7 @@
     "Core/AetherApplication.swift": "5fbad029a6f8604e4eba424af5201e64f6176d7468171a57f676854fb8c4671a",
     "Core/AetherBasicObject.swift": "76f8b20e189036ba2a1e2abeb1538a8cde4d0d7e49a7563b6e0a070c7cb22a34",
     "Core/AetherBasicObjectPrimitives.swift": "ee5a81983ab5556fd2224a4b732e7ef97944b4b2c7a60e9d0a4d14c67574dcd5",
-    "Core/AetherPlatform.swift": "ee9f656e343c778266ab69040b848994a9ccf1c463a81d4f31d265fd91918158",
+    "Core/AetherPlatform.swift": "0487cd293f4887889ca8a43bdcbc035f0436fe334133e78f55d2f4a694bc0bbd",
     "Core/AetherQuitButtonObject.swift": "fc231a27ab9b24da333181d78616d2bd92096d699789ada3543f7186d08b4e2b",
     "Core/AetherWorld.swift": "77ff1526436f8cbbb65fe60665107bb9e7821d0b8d77cd9fbb919b7d242eba0b",
     "Engines/AetherAssetEngine.swift": "11dc913fa431929ea4df96dcaa7ef2c2a42d81d1d2a216632c07b9e5b7f4d991",

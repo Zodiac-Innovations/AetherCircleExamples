@@ -60,8 +60,10 @@ private final class QuestPlatform: AetherPlatform, @unchecked Sendable {
     var deviceManufacturer: String { "Meta" }
     let automationRunner = AetherAutomationRunner()
     var canRunAutomation: Bool { true }
-    func runScript(_ script: AetherAutomationScript) async throws {
+    @discardableResult
+    func runScript(_ script: AetherAutomationScript) async throws -> Bool {
         try await automationRunner.run(script)
+        return true
     }
     nonisolated var canSetUserInteractionEnabled: Bool { true }
     nonisolated(unsafe) private(set) var isUserInteractionEnabled = true
