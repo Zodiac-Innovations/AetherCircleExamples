@@ -358,7 +358,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                             // A repeated press does not interrupt the running tour.
                         } catch {
                             print("Showcase automation failed: \(error)")
-                            try? await platform.runTextScript("interaction on")
+                            try? await platform.runTextScript("interaction on", turnsOffInteraction: false)
                         }
                     }
                 }

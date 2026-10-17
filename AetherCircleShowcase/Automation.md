@@ -26,3 +26,10 @@ AetherCircle.info so generation uses the automation-enabled framework.
 
 Source checks verify command order, wait totals, navigation identifiers, and
 snapshot hashes. Swift/Xcode and device execution still need testing.
+
+Scripts now default to `turnsOffInteraction: true`, restoring interaction even
+on failure or host stop. `AetherAutomationScript.make(text:turnsOffInteraction:)`
+parses reusable text, and `runTextScript` uses that factory before `runScript`.
+The `message "text"` command forwards a HUD banner request; the current dummy
+HUD does not draw it yet. Direct command invocations preserve explicit input
+management by using `turnsOffInteraction: false`.

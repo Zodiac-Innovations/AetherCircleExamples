@@ -8,6 +8,8 @@ public final class AetherAutomationRunner: @unchecked Sendable {
         let continuation: CheckedContinuation<Void, any Error>
         var index = 0
         var deadline: TimeInterval?
+        var started = false
+        var restoreInteraction: (() throws -> Void)?
         init(_ script: AetherAutomationScript, _ continuation: CheckedContinuation<Void, any Error>) {
             self.script = script
             self.continuation = continuation
@@ -49,7 +51,8 @@ public final class AetherAutomationRunner: @unchecked Sendable {
     public func update(
         now: TimeInterval,
         activate: (AetherAutomationTarget) throws -> Void,
-        setInteractionEnabled: (Bool) throws -> Void
+        setInteractionEnabled: @escaping (Bool) throws -> Void,
+        showMessage: (String) throws -> Void = { _ in }
     ) {
         Thread.current.threadDictionary["AetherCircle.Automation.FrameThread"] = true
         lock.lock()
@@ -57,6 +60,13 @@ public final class AetherAutomationRunner: @unchecked Sendable {
         lock.unlock()
         guard let run else { return }
         do {
+            if !run.started {
+                run.started = true
+                if run.script.turnsOffInteraction {
+                    run.restoreInteraction = { try setInteractionEnabled(true) }
+                    try setInteractionEnabled(false)
+                }
+            }
             for _ in 0..<256 {
                 lock.lock()
                 let stillActive = active === run
@@ -72,6 +82,7 @@ public final class AetherAutomationRunner: @unchecked Sendable {
                     run.deadline = deadline
                     guard now >= deadline else { return }
                     run.deadline = nil
+                case .message(let text): try showMessage(text)
                 case .activate(let target): try activate(target)
                 case .setUserInteractionEnabled(let enabled): try setInteractionEnabled(enabled)
                 }
@@ -93,7 +104,11 @@ public final class AetherAutomationRunner: @unchecked Sendable {
         guard active === run else { lock.unlock(); return }
         active = nil
         lock.unlock()
-        if let error { run.continuation.resume(throwing: error) }
+        var resultError = error
+        do { try run.restoreInteraction?() }
+        catch { if resultError == nil { resultError = error } }
+        run.restoreInteraction = nil
+        if let resultError { run.continuation.resume(throwing: resultError) }
         else { run.continuation.resume() }
     }
 }

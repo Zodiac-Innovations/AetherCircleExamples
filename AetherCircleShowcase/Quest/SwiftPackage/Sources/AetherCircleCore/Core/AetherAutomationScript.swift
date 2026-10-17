@@ -10,6 +10,7 @@ public enum AetherAutomationTarget: Sendable, Equatable {
 
 public enum AetherAutomationCommand: Sendable, Equatable {
     case wait(TimeInterval)
+    case message(String)
     case activate(AetherAutomationTarget)
     case setUserInteractionEnabled(Bool)
 }
@@ -30,9 +31,21 @@ public enum AetherAutomationError: Error, Sendable, Equatable {
 public struct AetherAutomationScript: Sendable, Equatable {
     public var commands: [AetherAutomationCommand]
 
-    public init(commands: [AetherAutomationCommand]) { self.commands = commands }
+    /// Automatically disables physical input at start and enables it on completion,
+    /// failure, or host stop. Set false to manage interaction explicitly.
+    public var turnsOffInteraction: Bool
 
-    public init(text: String) throws {
+    public init(commands: [AetherAutomationCommand], turnsOffInteraction: Bool = true) {
+        self.commands = commands
+        self.turnsOffInteraction = turnsOffInteraction
+    }
+
+    /// Converts text to a reusable script without executing it.
+    public static func make(text: String, turnsOffInteraction: Bool = true) throws -> Self {
+        try Self(text: text, turnsOffInteraction: turnsOffInteraction)
+    }
+
+    public init(text: String, turnsOffInteraction: Bool = true) throws {
         var commands: [AetherAutomationCommand] = []
         for (offset, line) in text.components(separatedBy: .newlines).enumerated() {
             let tokens = try Self.tokens(line, line: offset + 1)
@@ -64,6 +77,9 @@ public struct AetherAutomationScript: Sendable, Equatable {
                 default: throw invalid()
                 }
                 commands.append(.activate(target))
+            case "message":
+                guard tokens.count == 2 else { throw invalid() }
+                commands.append(.message(tokens[1]))
             case "interaction":
                 guard tokens.count == 2, ["on", "off"].contains(tokens[1]) else {
                     throw invalid()
@@ -72,7 +88,7 @@ public struct AetherAutomationScript: Sendable, Equatable {
             default: throw invalid()
             }
         }
-        self.init(commands: commands)
+        self.init(commands: commands, turnsOffInteraction: turnsOffInteraction)
     }
 
     /// Quotes allow whitespace; backslash escapes the following character.

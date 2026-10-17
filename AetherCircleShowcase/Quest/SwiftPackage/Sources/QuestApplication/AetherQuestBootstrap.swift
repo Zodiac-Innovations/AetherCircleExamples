@@ -99,6 +99,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     var supportsPassthrough = false
     let environmentEngine = QuestEnvironmentEngine()
     let assetEngine = QuestAssetEngine()
+    let hudEngine = AetherHUDDummy()
     let platformServices = QuestPlatform()
     private var application: AetherApplication?
     var renderObjects: [AetherBasicObject] = []
@@ -131,7 +132,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         let world = AetherWorld(
             graphicEngine: graphicEngine,
             environmentEngine: environmentEngine,
-            hudEngine: AetherHUDDummy(),
+            hudEngine: hudEngine,
             clockEngine: AetherClockDummy(),
             assetEngine: assetEngine,
             capabilities: AetherCapabilities(
@@ -281,7 +282,8 @@ public func aethercircleSwiftPrepareScene() {
             }
             action()
         },
-        setInteractionEnabled: { _ = runtime.platformServices.setUserInteractionEnabled($0) }
+        setInteractionEnabled: { _ = runtime.platformServices.setUserInteractionEnabled($0) },
+        showMessage: { runtime.hudEngine.present(.banner(text: $0, onClose: nil)) }
     )
     runtime.prepareRenderScene()
 }

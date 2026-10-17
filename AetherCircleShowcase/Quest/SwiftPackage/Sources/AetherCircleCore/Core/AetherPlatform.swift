@@ -87,7 +87,7 @@ public protocol AetherPlatform: AnyObject, Sendable {
     /// Scripts execute on the host's frame thread while this async call waits.
     var canRunAutomation: Bool { get }
     func runScript(_ script: AetherAutomationScript) async throws
-    func runTextScript(_ text: String) async throws
+    func runTextScript(_ text: String, turnsOffInteraction: Bool) async throws
 
     // App interaction. Call on the platform's UI/runtime thread.
     /// Whether this host implements the app interaction gate.
@@ -177,8 +177,11 @@ public extension AetherPlatform {
     func runScript(_ script: AetherAutomationScript) async throws {
         throw AetherAutomationError.unsupported
     }
-    func runTextScript(_ text: String) async throws {
-        try await runScript(AetherAutomationScript(text: text))
+    func runTextScript(_ text: String, turnsOffInteraction: Bool = true) async throws {
+        let script = try AetherAutomationScript.make(
+            text: text, turnsOffInteraction: turnsOffInteraction
+        )
+        try await runScript(script)
     }
 
     @MainActor var canSetUserInteractionEnabled: Bool { false }
