@@ -32,7 +32,7 @@ public final class AetherAutomationRunner: @unchecked Sendable {
             }
         }
         try Task.checkCancellation()
-        try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             lock.lock()
             guard active == nil else {
                 lock.unlock()

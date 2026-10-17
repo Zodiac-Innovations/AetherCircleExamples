@@ -25,7 +25,7 @@ public final class AetherScene: @unchecked Sendable {
     public var name: String
 
     /// Objects contained in the scene.
-    public private(set) var objects: [AetherObject]
+    public private(set) var objects: [AetherBasicObject]
 
     // MARK: Initialization
 
@@ -38,7 +38,7 @@ public final class AetherScene: @unchecked Sendable {
     public init(
         id: UUID = UUID(),
         name: String = "",
-        objects: [AetherObject] = []
+        objects: [AetherBasicObject] = []
     ) {
         self.id = id
         self.name = name
@@ -51,7 +51,7 @@ public final class AetherScene: @unchecked Sendable {
     ///
     /// - Parameter object: Object to add.
     public func add(
-        _ object: AetherObject
+        _ object: AetherBasicObject
     ) {
         objects.append(object)
     }
@@ -60,7 +60,7 @@ public final class AetherScene: @unchecked Sendable {
     ///
     /// - Parameter object: Object to remove.
     public func remove(
-        _ object: AetherObject
+        _ object: AetherBasicObject
     ) {
         objects.removeAll {
             $0.id == object.id

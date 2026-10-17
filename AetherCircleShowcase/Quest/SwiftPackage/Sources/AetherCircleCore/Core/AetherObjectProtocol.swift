@@ -9,7 +9,7 @@ import Foundation
 
 /// Identity and spatial information shared by every AetherCircle scene element.
 ///
-/// AetherObject supplies the implementation inherited by primitives, composites,
+/// AetherBasicObject supplies the implementation inherited by primitives, composites,
 /// text, images, buttons, panels, toggles, and progress elements.
 public protocol AetherObjectProtocol: AnyObject {
     /// Unique instance identity.
@@ -21,7 +21,7 @@ public protocol AetherObjectProtocol: AnyObject {
     /// Human-readable object name.
     var name: String { get }
 
-    /// Stable automation identifier. The default implementation in AetherObject
+    /// Stable automation identifier. The default implementation in AetherBasicObject
     /// initializes this to an empty string, meaning unspecified.
     /// Applications should assign unique nonempty values within an automation scope.
     var autoID: String { get set }

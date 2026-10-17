@@ -107,9 +107,9 @@ public struct AetherAutomationScript: Sendable, Equatable {
 
 public extension AetherAutomationTarget {
     /// Resolves exactly one visible object, including nested composite children.
-    func resolve(in scene: AetherScene?) throws -> AetherObject {
-        var matches: [AetherObject] = []
-        func visit(_ objects: [AetherObject]) {
+    func resolve(in scene: AetherScene?) throws -> AetherBasicObject {
+        var matches: [AetherBasicObject] = []
+        func visit(_ objects: [AetherBasicObject]) {
             for object in objects where object.isVisible {
                 let matchesTarget: Bool
                 switch self {

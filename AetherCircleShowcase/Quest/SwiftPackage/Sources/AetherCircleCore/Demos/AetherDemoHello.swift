@@ -17,7 +17,7 @@ nonisolated public final class AetherDemoHello: AetherApplication {
     public override func start() {
         world.environmentEngine.mode = .passthrough
 
-        let cube = AetherObject.cube(
+        let cube = AetherBasicObject.cube(
             name: "Hello Cube",
             size: 0.25,
             material: .color(.blue)

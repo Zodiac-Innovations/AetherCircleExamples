@@ -16,7 +16,7 @@ import Foundation
 /// The platform renderer determines the native font implementation. Character
 /// height and extrusion depth are expressed in meters.
 public final class AetherTextObject:
-    AetherObject,
+    AetherBasicObject,
     @unchecked Sendable {
 
     // MARK: Properties

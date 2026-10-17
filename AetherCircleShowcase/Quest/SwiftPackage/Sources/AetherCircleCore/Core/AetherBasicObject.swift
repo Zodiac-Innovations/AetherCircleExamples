@@ -1,5 +1,5 @@
 //
-//  AetherObject.swift
+//  AetherBasicObject.swift
 //  AetherCircleCore
 //
 //  Created by Steve Sheets on 8/4/26.
@@ -14,7 +14,7 @@ import Foundation
 // MARK: Class
 
 /// Visible object placed within an AetherCircle scene.
-public class AetherObject: AetherObjectProtocol, @unchecked Sendable {
+public class AetherBasicObject: AetherObjectProtocol, @unchecked Sendable {
 
     // MARK: Properties
 
@@ -157,7 +157,7 @@ public class AetherObject: AetherObjectProtocol, @unchecked Sendable {
 
 // MARK: Extensions
 
-public extension AetherObject {
+public extension AetherBasicObject {
     
     /// Creates a cube with equal width, height, and depth.
     static func cube(
@@ -167,8 +167,8 @@ public extension AetherObject {
         autoID: String = "",
         size: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
-        AetherObject(
+    ) -> AetherBasicObject {
+        AetherBasicObject(
             id: id,
             tag: tag,
             name: name,
@@ -191,8 +191,8 @@ public extension AetherObject {
         autoID: String = "",
         diameter: AetherFloat,
         material: AetherMaterial = .defaultObject
-    ) -> AetherObject {
-        AetherObject(
+    ) -> AetherBasicObject {
+        AetherBasicObject(
             id: id,
             tag: tag,
             name: name,
@@ -214,8 +214,8 @@ public extension AetherObject {
         name: String = "",
         autoID: String = "",
         size: AetherSize3D
-    ) -> AetherObject {
-        AetherObject(
+    ) -> AetherBasicObject {
+        AetherBasicObject(
             id: id,
             tag: tag,
             name: name,
@@ -229,7 +229,7 @@ public extension AetherObject {
 
 // MARK: extension
 
-public extension AetherObject {
+public extension AetherBasicObject {
 
     /// Processes a user interaction with the object.
     ///

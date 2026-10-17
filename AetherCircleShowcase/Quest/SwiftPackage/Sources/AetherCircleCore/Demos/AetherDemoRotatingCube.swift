@@ -19,7 +19,7 @@ nonisolated public final class AetherDemoRotatingCube: AetherApplication {
         
         let scene = AetherScene()
 
-        let cube = AetherObject.cube(
+        let cube = AetherBasicObject.cube(
             size: 0.25,
             material: .color(.blue)
         )

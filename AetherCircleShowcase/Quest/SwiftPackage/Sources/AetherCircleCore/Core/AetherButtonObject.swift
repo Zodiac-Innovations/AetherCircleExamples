@@ -138,7 +138,7 @@ public final class AetherButtonObject:
         }
         buttonSize = visualSize
 
-        let background = AetherObject(
+        let background = AetherBasicObject(
             name: name + " Background",
             primitive: .cube,
             size: visualSize,
@@ -157,7 +157,7 @@ public final class AetherButtonObject:
                 z: visualSize.z / 2 + 0.002
             )
         )
-        var objects: [AetherObject] = [
+        var objects: [AetherBasicObject] = [
             background,
             label,
         ]

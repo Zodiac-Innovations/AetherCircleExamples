@@ -36,7 +36,7 @@ public final class AetherProgressObject:
     /// Dimensions of the complete progress track.
     public let progressSize: AetherSize3D
 
-    private let fillObject: AetherObject
+    private let fillObject: AetherBasicObject
 
     // MARK: Initialization
 
@@ -62,13 +62,13 @@ public final class AetherProgressObject:
         self.progress = min(1, max(0, progress))
         progressSize = size
 
-        let track = AetherObject(
+        let track = AetherBasicObject(
             name: name + " Track",
             primitive: .cube,
             size: size,
             material: trackMaterial
         )
-        let fill = AetherObject(
+        let fill = AetherBasicObject(
             name: name + " Fill",
             primitive: .cube,
             size: AetherSize3D(
