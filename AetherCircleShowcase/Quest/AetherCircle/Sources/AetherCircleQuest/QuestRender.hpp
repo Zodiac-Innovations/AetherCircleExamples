@@ -101,6 +101,10 @@ class QuestRenderer {
     XrInstance instance=XR_NULL_HANDLE;
     SwiftBridge& swift;
     bool loggedFrame=false;
+    bool focused=false,placementReady=false,loggedDrawing=false;
+    Matrix sceneOrigin=Matrix::identity();
+    int drawCalls=0;
+
     double elapsed=0;
     XrTime firstTime=0;
     std::vector<Matrix> transforms;
@@ -118,6 +122,7 @@ class QuestRenderer {
         glUniform4fv(colorLocation,1,color.data());
         glBufferData(GL_ARRAY_BUFFER,static_cast<GLsizeiptr>(vertices.size()*sizeof(float)),vertices.data(),GL_STREAM_DRAW);
         glDrawArrays(GL_TRIANGLES,0,static_cast<GLsizei>(vertices.size()/3));
+        ++drawCalls;
     }
     void drawScene(const Matrix& camera) {
         const int count=swift.objectCount();
@@ -254,6 +259,7 @@ public:
         while((result=xrPollEvent(instance,&event))==XR_SUCCESS) {
             if(event.type==XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
                 auto& state=*reinterpret_cast<XrEventDataSessionStateChanged*>(&event);
+                focused=state.state==XR_SESSION_STATE_FOCUSED;
                 __android_log_print(ANDROID_LOG_INFO,logTag,"OpenXR session state: %d",state.state);
                 if(state.state==XR_SESSION_STATE_READY && !running) {
                     XrSessionBeginInfo begin{XR_TYPE_SESSION_BEGIN_INFO};begin.primaryViewConfigurationType=XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
@@ -285,6 +291,22 @@ public:
             if(count==2 && (viewState.viewStateFlags&valid)==valid) {
                 if(!firstTime)firstTime=state.predictedDisplayTime;
                 elapsed=static_cast<double>(state.predictedDisplayTime-firstTime)*1e-9;
+                if(focused && !placementReady) {
+                    const auto& q=views[0].pose.orientation;
+                    Matrix rotation=Matrix::quaternion(q);
+                    const float yaw=std::atan2(rotation.m[8],rotation.m[10]);
+                    const auto& left=views[0].pose.position;
+                    const auto& right=views[1].pose.position;
+                    const float x=(left.x+right.x)*.5f;
+                    const float y=(left.y+right.y)*.5f;
+                    const float z=(left.z+right.z)*.5f;
+                    // Anchor once at launch, not to the moving head each frame.
+                    // Sample coordinates assume a 1.6m eye height.
+                    sceneOrigin=Matrix::translation(x,y-1.6f,z)*Matrix::euler(0,yaw,0);
+                    placementReady=true;
+                    __android_log_print(ANDROID_LOG_INFO,logTag,
+                        "Home anchored at head=(%.3f,%.3f,%.3f), yaw=%.3f",x,y,z,yaw);
+                }
                 swift.prepareScene();
                 for(size_t i=0;i<eyes.size();++i) {
                     auto& eye=eyes[i];uint32_t index=0;
@@ -300,7 +322,29 @@ public:
                     glEnable(GL_BLEND);glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
                     glClearColor(.025f,.035f,.065f,1);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
                     glUseProgram(program);glBindVertexArray(vao);glBindBuffer(GL_ARRAY_BUFFER,vbo);
-                    drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose));
+                    drawCalls=0;
+                    drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*sceneOrigin);
+                    // Temporary placement-independent diagnostic at bottom-center.
+                    glDisable(GL_DEPTH_TEST);
+                    geometry({-.06f,-.84f,0, .06f,-.84f,0, 0,-.70f,0},
+                             Matrix::identity(),{1,1,0,1});
+                    if(placementReady && !loggedDrawing && i==0) {
+                        unsigned char pixel[4]={};
+                        glReadPixels(eye.width/2,static_cast<int>(eye.height*.11f),
+                                     1,1,GL_RGBA,GL_UNSIGNED_BYTE,pixel);
+                        GLenum error=glGetError();
+                        __android_log_print(ANDROID_LOG_INFO,logTag,
+                            "Draw diagnostics: objects=%d draws=%d GL=0x%x markerRGBA=%u,%u,%u,%u",
+                            swift.objectCount(),drawCalls,error,pixel[0],pixel[1],pixel[2],pixel[3]);
+                        for(int object=0;object<std::min(3,swift.objectCount());++object) {
+                            __android_log_print(ANDROID_LOG_INFO,logTag,
+                                "Object %d: primitive=%d pos=(%.3f,%.3f,%.3f) visible=%.0f textHeight=%.3f alpha=%.3f",
+                                object,swift.objectPrimitive(object),
+                                swift.objectValue(object,0),swift.objectValue(object,1),swift.objectValue(object,2),
+                                swift.objectValue(object,12),swift.objectValue(object,13),swift.objectColor(object,3));
+                        }
+                        loggedDrawing=true;
+                    }
                     glBindFramebuffer(GL_FRAMEBUFFER,0);glFlush();
                     XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};xrCheck(xrReleaseSwapchainImage(eye.swapchain,&release),"release eye");
                     auto& projection=projectionViews[i];projection.type=XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
