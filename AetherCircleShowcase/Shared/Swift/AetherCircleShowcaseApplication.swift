@@ -86,7 +86,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private enum EnvironmentImageKey {
         static let spatial = "showcase.environment.spatial"
         static let mono = "showcase.environment.mono"
-        static let stereo = "showcase.environment.stereo-sbs"
+        static let embeddedMono = "showcase.environment.kiara"
     }
 
     /// One registered example is embedded; the other must arrive over HTTPS.
@@ -94,18 +94,18 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         #if os(visionOS)
         if #available(visionOS 26.0, *), world.platform.canDecodeStereoHEIC { registerSpatialDemo() }
         #endif
-        for name in ["half-dome", "el-capitan"] {
+        for name in ["yosemite-01", "yosemite-02"] {
             if let data = world.platform.resourceRetrieve(name: "environment-" + name + ".jpg", type: .image) {
                 world.assetEngine.registerImage(key: "showcase.gallery." + name, data: data)
             }
         }
-        if let data = world.platform.resourceRetrieve(name: "environment-stereo-360-sbs", type: .image) {
-            world.assetEngine.registerImage(key: EnvironmentImageKey.stereo, data: data)
+        if let data = world.platform.resourceRetrieve(name: "environment-kiara-360.jpg", type: .image) {
+            world.assetEngine.registerImage(key: EnvironmentImageKey.embeddedMono, data: data)
         }
         environmentDownloadTask?.cancel()
         let registry = world.assetEngine.imageRegistry
         registry.remove(key: EnvironmentImageKey.mono)
-        guard let url = URL(string: "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/venice_sunset.jpg") else { return }
+        guard let url = URL(string: "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/spruit_sunrise.jpg") else { return }
         environmentDownloadTask = Task {
             do {
                 try await registry.register(key: EnvironmentImageKey.mono, from: url)
@@ -297,20 +297,22 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             ("Carrara Marble", Material.carraraMarble),
             ("Sci-Fi Panel", Material.scifiPanel),
         ]
-        for (index, pattern) in patterns.shuffled().prefix(3).enumerated() {
+        let shuffledPatterns = patterns.shuffled()
+        let floorPatterns = Array(shuffledPatterns.dropFirst(3))
+        for (index, pattern) in shuffledPatterns.prefix(3).enumerated() {
             choices.append((pattern.0, "pattern-\(index + 1)", .materialVR(pattern.1)))
         }
         choices.append(("File 360 Mono", "file-mono", .image360File("environment-venice-360.jpg")))
         choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
         choices.append(("Internet 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
-        choices.append(("Image Stereo SBS", "image-stereo", .image360Image(EnvironmentImageKey.stereo, layout: .stereoSideBySide)))
+        choices.append(("Image 360 Kiara", "image-stereo", .image360Image(EnvironmentImageKey.embeddedMono)))
         choices.append(("Panorama Auto", "panorama-auto", .panoramaFile("environment-hahneberg-panorama.jpg")))
-        choices.append(("Panorama Override", "panorama-override", .panoramaFile("environment-hahneberg-panorama.jpg", horizontalDegrees: 180)))
+        choices.append(("Panorama Override", "panorama-override", .panoramaFile("environment-campus-panorama.jpg", horizontalDegrees: 180)))
         choices.append(("Apple Spatial Photo", "spatial-photo", .spatialPhotoImage(EnvironmentImageKey.spatial)))
         choices.append(("Yosemite Files", "gallery-files", .photo2DFiles(["environment-half-dome.jpg", "environment-el-capitan.jpg"], material: .color(.black))))
-        choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.half-dome", "showcase.gallery.el-capitan"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
-        choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((0..<8).map { $0 % 2 == 0 ? "environment-half-dome.jpg" : "environment-el-capitan.jpg" }, material: .color(.black))))
-        choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: Material.darkWalnut, sky: Material.blue)))
+        choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.yosemite-01", "showcase.gallery.yosemite-02"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
+        choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((3...10).map { String(format: "environment-yosemite-%02d.jpg", $0) }, material: .color(.black))))
+        choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: floorPatterns[0].1, sky: Material.blue)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {
             let button = AetherButtonObject(
@@ -320,13 +322,13 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.68 - AetherFloat(index / 2) * 0.16, z: sceneDepth),
+                position: AetherPosition3D(x: AetherFloat(index % 3 - 1) * 0.86, y: 1.68 - AetherFloat(index / 3) * 0.23, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: {
                     if choice.1 == "image-mono",
                        self.world.assetEngine.registeredImage(for: EnvironmentImageKey.mono) == nil { return }
                     if choice.1 == "floor-material" {
-                        let floor = patterns.randomElement()?.1 ?? Material.darkWalnut
+                        let floor = floorPatterns.randomElement()?.1 ?? floorPatterns[0].1
                         let sky = [Material.red, Material.green, Material.blue, Material.yellow,
                                    Material.orange, Material.purple, Material.cyan, Material.pink].randomElement() ?? Material.blue
                         self.world.environmentEngine.mode = .floorMaterial(floor: floor, sky: sky)
@@ -340,10 +342,15 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 button.availabilityCheck = { registry.entry(for: EnvironmentImageKey.mono) != nil }
                 button.refreshAvailability()
             }
+            if choice.1 == "image-stereo" {
+                let registry = world.assetEngine.imageRegistry
+                button.availabilityCheck = { registry.entry(for: EnvironmentImageKey.embeddedMono) != nil }
+                button.refreshAvailability()
+            }
             if choice.1 == "gallery-images" {
                 let registry = world.assetEngine.imageRegistry
                 button.availabilityCheck = {
-                    registry.entry(for: "showcase.gallery.half-dome") != nil && registry.entry(for: "showcase.gallery.el-capitan") != nil
+                    registry.entry(for: "showcase.gallery.yosemite-01") != nil && registry.entry(for: "showcase.gallery.yosemite-02") != nil
                 }
                 button.refreshAvailability()
             }

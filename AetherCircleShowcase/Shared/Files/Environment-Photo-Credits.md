@@ -1,6 +1,6 @@
-# 360 environment photo credits
+# Environment photo credits
 
-The bundled files ship with Showcase and work offline; the Internet 360 Mono button additionally downloads the original Venice image at startup. They are separate assets with the licenses below; the project source-code license does not replace their licenses.
+The bundled files ship with Showcase and work offline; the Internet 360 Mono button downloads Spruit Sunrise at startup. They are separate assets with the licenses below; the project source-code license does not replace their licenses.
 
 ## environment-venice-360.jpg
 
@@ -23,14 +23,7 @@ The bundled files ship with Showcase and work offline; the Internet 360 Mono but
 - Format: stereoscopic equirectangular top/bottom (left eye on top, right eye below). Each eye covers 360 x 180 degrees.
 - This is a rendered Blender scene, selected to test binocular depth; it is not a camera photograph.
 
-To add your own camera images, export stitched equirectangular JPEG or PNG files. Native camera projects, unstitched dual-fisheye images, VR180, spatial HEIC photos, and video are not supported by this still-image environment.
-
-## environment-stereo-360-sbs.jpg
-
-Derived from DerMische's SphericalStereo 01, credited above, under the same CC BY-SA 4.0 license: https://creativecommons.org/licenses/by-sa/4.0/.
-The resized top/bottom image was split into its original left and right eye views, arranged side by side (4096 x 1024), and recompressed. No new depth was generated. This image is registered as encoded data at startup for the `Image Stereo SBS` button.
-
-The `Internet 360 Mono` button downloads the original 8192 x 4096 Venice Sunset JPEG from the Poly Haven download URL above at startup and registers the returned data. It is disabled until that succeeds, with no embedded fallback. The same Greg Zaal / Poly Haven CC0 credit applies; this downloaded original is not resized by the app. The two `File` buttons and `Image Stereo SBS` remain offline examples.
+To add your own camera images, export stitched equirectangular JPEG or PNG files. Native camera projects, unstitched dual-fisheye images, VR180, and video are not supported by the image360 cases. Native spatial HEIC uses the dedicated spatial-photo cases on supported platforms.
 
 ## environment-hahneberg-panorama.jpg
 
@@ -41,9 +34,9 @@ The `Internet 360 Mono` button downloads the original 8192 x 4096 Venice Sunset 
 - License: released into the public domain by the creator (PD-self); see the source page's Licensing section.
 - Changes: resized from 15775 x 1997 to 4096 x 519 and recompressed for Showcase.
 - The source describes an approximately 270-degree stitched camera panorama. It is not a full-sphere 360 image and is not claimed to have been captured with a phone.
-- Showcase button: `Panorama 270`. The image is rendered once on a cylindrical arc, with its original aspect ratio preserved and dark surroundings outside the captured view.
+- Showcase button: `Panorama Auto`. The image is rendered once on a cylindrical arc, with its original aspect ratio preserved and dark surroundings outside the captured view.
 
-Metadata demo update: Showcase adds GPano XMP crop-width/full-width values of 4096 / 5461 (approximately 270 degrees) to encode the source's approximately 270-degree coverage. These are demonstration metadata added by this project, not original camera metadata. `Panorama Auto` reads that angle; `Panorama Override` deliberately overrides it with 180 degrees for comparison.
+Metadata demo update: Showcase adds GPano XMP crop-width/full-width values of 4096 / 5461 (approximately 270 degrees) to encode the source's approximately 270-degree coverage. These are demonstration metadata added by this project, not original camera metadata. `Panorama Auto` reads that angle. `Panorama Override` now uses a different campus photograph with an explicit 180-degree angle; the two buttons no longer share a photograph.
 
 ## Apple spatial photo demo — environment-spatial-left.jpg / environment-spatial-right.jpg
 
@@ -73,4 +66,151 @@ Metadata demo update: Showcase adds GPano XMP crop-width/full-width values of 40
 - Released into the public domain worldwide by the author; see source page's public-domain declaration.
 - Changes: recompressed as RGB JPEG, retaining 1186 × 790 pixels. No cropping.
 
-Showcase uses these two photographs for `Yosemite Files`, `Yosemite Images` (registered encoded data at startup), and `Gallery 8` (alternates the same two photos in all eight slots; no additional photographs implied).
+Only `Yosemite Files` uses the two photographs above. `Yosemite Images` and `Gallery 8` have separate CC0 photograph sets listed below. No photograph is shared between gallery buttons.
+
+## Button-to-image mapping
+
+Each photo environment button uses a separate photograph or photograph set. Repacking one photograph does not count as a new photograph.
+
+| Button | Photograph(s) | Loading |
+|---|---|---|
+| File 360 Mono | Venice Sunset | Bundled file |
+| File Stereo TB | SphericalStereo 01 | Bundled stereo top/bottom file |
+| Internet 360 Mono | Spruit Sunrise | HTTPS download at startup; no bundled fallback |
+| Image 360 Kiara | Kiara 1 Dawn | Bundled data registered at startup; mono |
+| Panorama Auto | Hahneberg | Bundled panorama with demonstration GPano metadata |
+| Panorama Override | TUT campus | Bundled cylindrical panorama, explicit 180 degrees |
+| Apple Spatial Photo | Apple's hummingbird stereo pair | Encoded and registered at startup |
+| Yosemite Files | Half Dome; El Capitan | Two bundled files |
+| Yosemite Images | Yosemite 01–02 below | Two different images registered at startup |
+| Gallery 8 | Yosemite 03–10 below | Eight distinct bundled files |
+
+The previous side-by-side packing of SphericalStereo 01 is no longer bundled or used: the registered-image button now demonstrates a different mono panorama. Both stereo layouts remain supported by AetherCircle. Existing Apple and DerMische samples retain their original licenses; all newly added photos are CC0.
+
+Material buttons select three distinct texture images. Floor + Sky selects its floor texture from the remaining patterns, so it cannot repeat one of those three backdrop patterns in the same Environment page.
+
+## environment-kiara-360.jpg
+
+- Title: Kiara 1 Dawn
+- Creator: Greg Zaal / Poly Haven
+- Source: https://polyhaven.com/a/kiara_1_dawn
+- Original: https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/kiara_1_dawn.jpg
+- License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/
+- Changes: proportionally resized the 8192 × 4096 tonemapped JPEG to 2048 × 1024; recompressed as RGB JPEG without cropping.
+- Format: mono 360 × 180-degree equirectangular; registered at startup for Image 360 Kiara.
+
+## Internet-only Spruit Sunrise
+
+- Title: Spruit Sunrise
+- Creator: Greg Zaal / Poly Haven
+- Source: https://polyhaven.com/a/spruit_sunrise
+- Download: https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/spruit_sunrise.jpg
+- License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/
+- The app downloads the original tonemapped mono equirectangular JPEG at startup and registers its encoded data. The Internet 360 Mono button remains disabled until registration succeeds; there is no bundled fallback. It does not reuse Venice Sunset.
+
+## environment-campus-panorama.jpg
+
+- Title: TUTcampus_20230130_1630
+- Creator: Bandai Namco Studios Inc.
+- Source and CC0 statement: https://www.bandainamcostudios.com/projects/truehdri/library/tutcampus_20230130_1630
+- Preview original: https://www.bandainamcostudios.com/upload/2024/11/TrueHDRI_TUTcampus_20230128_1630_L1000_Unclipped_sRGB.jpg
+- License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/
+- The source page and its preview URL use different date strings; the URL above is linked by that source page.
+- Changes: reprojected the central 180 horizontal degrees of the equirectangular photograph into a 2048 × 512 cylindrical strip; vertical sampling uses latitude atan(height/radius). Converted/recompressed as RGB JPEG. No synthetic depth or scenery added.
+- Panorama Override uses horizontalDegrees: 180 explicitly; this file contains no demonstration GPano angle metadata.
+
+## Additional Yosemite photographs — CC0
+
+All ten photographs below were taken by Wikimedia Commons contributor **Vulturesong** on 7 October 2022 and dedicated to the public domain under **CC0 1.0**: https://creativecommons.org/publicdomain/zero/1.0/. Each source file's image-license metadata was checked individually. Commons website text/metadata licensing is not being used as evidence of an image license.
+
+The photos were downloaded at a reduced Wikimedia preview resolution and proportionally fitted within 1600 × 1600 pixels, then recompressed as RGB JPEG. No cropping, recoloring, or repeated photographs. Exact filenames and source links follow.
+
+### environment-yosemite-01.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 001.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_001.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/5/54/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_001.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1280 × 960 pixels.
+- Used only by: Yosemite Images (registered at startup).
+
+### environment-yosemite-02.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 005.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_005.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/3/3d/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_005.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1280 × 960 pixels.
+- Used only by: Yosemite Images (registered at startup).
+
+### environment-yosemite-03.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 009.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_009.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/d/d7/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_009.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1280 × 960 pixels.
+- Used only by: Gallery 8, slot 1.
+
+### environment-yosemite-04.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 013.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_013.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/4/48/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_013.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1200 × 1600 pixels.
+- Used only by: Gallery 8, slot 2.
+
+### environment-yosemite-05.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 017.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_017.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/5/56/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_017.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1280 × 960 pixels.
+- Used only by: Gallery 8, slot 3.
+
+### environment-yosemite-06.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 021.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_021.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/c/cc/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_021.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1280 × 960 pixels.
+- Used only by: Gallery 8, slot 4.
+
+### environment-yosemite-07.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 069 - Upper Falls Trail.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_069_-_Upper_Falls_Trail.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/4/49/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_069_-_Upper_Falls_Trail.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1280 × 960 pixels.
+- Used only by: Gallery 8, slot 5.
+
+### environment-yosemite-08.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 103 - Upper Falls Trail.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_103_-_Upper_Falls_Trail.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/4/4f/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_103_-_Upper_Falls_Trail.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1280 × 960 pixels.
+- Used only by: Gallery 8, slot 6.
+
+### environment-yosemite-09.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 135 - Upper Falls Trail.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_135_-_Upper_Falls_Trail.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/4/4d/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_135_-_Upper_Falls_Trail.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1280 × 960 pixels.
+- Used only by: Gallery 8, slot 7.
+
+### environment-yosemite-10.jpg
+
+- Title: Yosemite National Park - HCP - October 07, 2022 - 174.jpg
+- Creator: Vulturesong
+- Source and CC0 declaration: https://commons.wikimedia.org/wiki/File:Yosemite_National_Park_-_HCP_-_October_07,_2022_-_174.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/c/c7/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_174.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
+- Packaged size: 1280 × 960 pixels.
+- Used only by: Gallery 8, slot 8.
