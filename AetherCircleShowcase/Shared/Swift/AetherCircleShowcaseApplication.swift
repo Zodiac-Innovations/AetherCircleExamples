@@ -63,6 +63,11 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         static let button = AetherMaterial.defaultButton
     }
 
+    /// Shared navigation action used by Home buttons throughout the Showcase.
+    private(set) lazy var homeAction = AetherTitleAction("Home") { [weak self] in
+        self?.showHomeScene()
+    }
+
     private let sceneDepth: AetherFloat = -1.7
     private var environmentDownloadTask: Task<Void, Never>?
 
@@ -1103,10 +1108,10 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         name: String
     ) -> AetherButtonObject {
         AetherButtonObject(
+            homeAction,
             name: name,
             autoID: "showcase.home",
             flavor: .default,
-            title: "Home",
             size: AetherSize3D(
                 x: 0.34,
                 y: 0.12,
@@ -1114,10 +1119,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             ),
             material: Material.orange,
             textMaterial: Material.white,
-            targetAppearance: .goldenGlow,
-            action: {
-                self.showHomeScene()
-            }
+            targetAppearance: .goldenGlow
         )
     }
 
@@ -1275,10 +1277,10 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     private func makeHomeButton() -> AetherButtonObject {
         AetherButtonObject(
+            homeAction,
             name: "Home Button",
             autoID: "showcase.home",
             flavor: .default,
-            title: "Home",
             size: AetherSize3D(
                 x: 0.34,
                 y: 0.13,
@@ -1291,10 +1293,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 y: 1.86,
                 z: sceneDepth
             ),
-            targetAppearance: .goldenGlow,
-            action: {
-                self.showHomeScene()
-            }
+            targetAppearance: .goldenGlow
         )
     }
 
