@@ -38,7 +38,7 @@ public enum AetherResourceType: Sendable, Equatable, Hashable {
         switch self {
         case .data: return ["bin", "dat"]
         case .text: return ["txt"]
-        case .image: return ["png", "jpg", "jpeg"]
+        case .image: return ["png", "jpg", "jpeg", "heic", "heif"]
         case .pdf: return ["pdf"]
         case .audio: return ["wav", "mp3", "m4a"]
         case .custom(let value):
@@ -345,4 +345,5 @@ public extension AetherPlatform {
 public final class AetherPlatformDummy: AetherPlatform, @unchecked Sendable {
     public init() {}
 }
+
 

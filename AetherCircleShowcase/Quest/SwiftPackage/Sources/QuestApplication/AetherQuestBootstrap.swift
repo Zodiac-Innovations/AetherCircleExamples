@@ -27,7 +27,17 @@ private final class QuestGraphicEngine: AetherGraphicEngine {
 }
 
 private final class QuestEnvironmentEngine: AetherEnvironmentEngine {
-    var mode: AetherEnvironmentMode = .blankVR
+    private var currentMode: AetherEnvironmentMode = .blankVR
+    var mode: AetherEnvironmentMode {
+        get { currentMode }
+        set {
+            guard supports(newValue) else {
+                print("AetherCircle: native Apple spatial HEIC decoding is not supported on Quest")
+                return
+            }
+            currentMode = newValue
+        }
+    }
 }
 
 private final class QuestAssetEngine: AetherAssetEngine {

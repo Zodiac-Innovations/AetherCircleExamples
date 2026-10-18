@@ -3,7 +3,7 @@ import Foundation
 import FoundationNetworking
 #endif
 
-/// Encoded JPEG/PNG bytes, or the name of a bundled image. Downloaded images
+/// Encoded JPEG/PNG/HEIC bytes, or the name of a bundled image. Downloaded images
 /// are registered as data after the application finishes downloading them.
 public enum AetherImageResource: Sendable, Codable, Hashable {
     case file(String)
@@ -48,7 +48,7 @@ public final class AetherImageRegistry: @unchecked Sendable {
         case unsupportedImageData
     }
 
-    /// Downloads encoded JPEG/PNG bytes and publishes the registration only
+    /// Downloads encoded JPEG/PNG/HEIC bytes and publishes the registration only
     /// after the entire request succeeds. Failure preserves an existing image.
     @discardableResult
     public func register(key: String, from url: URL, session: URLSession = .shared) async throws -> Bool {
@@ -63,7 +63,18 @@ public final class AetherImageRegistry: @unchecked Sendable {
         guard (200..<300).contains(response.statusCode) else { throw DownloadError.httpStatus(response.statusCode) }
         let jpeg = data.starts(with: [0xFF, 0xD8, 0xFF])
         let png = data.starts(with: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
-        guard jpeg || png else { throw DownloadError.unsupportedImageData }
+        let bytes = [UInt8](data.prefix(128))
+        var heif = false
+        if bytes.count >= 16, String(bytes: bytes[4..<8], encoding: .ascii) == "ftyp" {
+            let boxSize = Int(bytes[0]) << 24 | Int(bytes[1]) << 16 | Int(bytes[2]) << 8 | Int(bytes[3])
+            if boxSize >= 16, boxSize <= data.count {
+                let brands = ["heic", "heix", "hevc", "hevx", "mif1", "msf1"]
+                for offset in stride(from: 8, through: min(boxSize, bytes.count) - 4, by: 4) where offset != 12 {
+                    if let brand = String(bytes: bytes[offset..<(offset + 4)], encoding: .ascii), brands.contains(brand) { heif = true }
+                }
+            }
+        }
+        guard jpeg || png || heif else { throw DownloadError.unsupportedImageData }
         return register(key: key, image: .data(data))
     }
 

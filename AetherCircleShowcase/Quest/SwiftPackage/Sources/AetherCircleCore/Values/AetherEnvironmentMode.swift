@@ -39,6 +39,13 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     /// A partial cylindrical panorama from a registered image key.
     case panoramaImage(String, horizontalDegrees: AetherFloat? = nil)
 
+    /// A native Apple stereo HEIC photo, presented ahead of the user (not a 360 globe).
+    /// Requires a platform whose environment engine supports this mode.
+    case spatialPhotoFile(String)
+
+    /// A registered native stereo HEIC photo; supports downloaded encoded data.
+    case spatialPhotoImage(String)
+
     /// A world-fixed tiled floor at y=0 beneath a sky with no translation parallax.
     case floorMaterial(floor: AetherMaterial, sky: AetherMaterial)
 
@@ -47,7 +54,7 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     public var placement: AetherEnvironmentPlacement {
         switch self {
         case .passthrough, .blankVR, .floorMaterial: return .worldFixed
-        case .materialVR, .image360File, .image360Image, .panoramaFile, .panoramaImage: return .userCentered
+        case .materialVR, .image360File, .image360Image, .panoramaFile, .panoramaImage, .spatialPhotoFile, .spatialPhotoImage: return .userCentered
         }
     }
 }

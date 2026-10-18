@@ -15,6 +15,9 @@ public protocol AetherEnvironmentEngine: AetherEngine {
     /// Current immersive environment mode represented by the platform engine.
     var mode: AetherEnvironmentMode { get set }
 
+    /// Whether this platform can present the requested format (not a resource validity check).
+    func supports(_ mode: AetherEnvironmentMode) -> Bool
+
 }
 
 // MARK: Class
@@ -27,3 +30,12 @@ public final class AetherEnvironmentDummy: AetherEnvironmentEngine {
     public var mode: AetherEnvironmentMode = .blankVR
 }
 
+
+public extension AetherEnvironmentEngine {
+    func supports(_ mode: AetherEnvironmentMode) -> Bool {
+        switch mode {
+        case .spatialPhotoFile, .spatialPhotoImage: return false
+        default: return true
+        }
+    }
+}

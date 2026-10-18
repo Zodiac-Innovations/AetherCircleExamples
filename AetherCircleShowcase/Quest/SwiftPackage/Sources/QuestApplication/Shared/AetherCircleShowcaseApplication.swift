@@ -1,6 +1,10 @@
 import AetherCircleCore
 import Foundation
 import Dispatch
+#if os(visionOS)
+import ImageIO
+import UniformTypeIdentifiers
+#endif
 
 public final class AetherCircleShowcaseApplication: AetherApplication {
 
@@ -75,12 +79,16 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     private enum EnvironmentImageKey {
+        static let spatial = "showcase.environment.spatial"
         static let mono = "showcase.environment.mono"
         static let stereo = "showcase.environment.stereo-sbs"
     }
 
     /// One registered example is embedded; the other must arrive over HTTPS.
     private func registerEnvironmentImages() {
+        #if os(visionOS)
+        if #available(visionOS 26.0, *) { registerSpatialDemo() }
+        #endif
         if let data = world.platform.resourceRetrieve(name: "environment-stereo-360-sbs", type: .image) {
             world.assetEngine.registerImage(key: EnvironmentImageKey.stereo, data: data)
         }
@@ -365,6 +373,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Image Stereo SBS", "image-stereo", .image360Image(EnvironmentImageKey.stereo, layout: .stereoSideBySide)))
         choices.append(("Panorama Auto", "panorama-auto", .panoramaFile("environment-hahneberg-panorama.jpg")))
         choices.append(("Panorama Override", "panorama-override", .panoramaFile("environment-hahneberg-panorama.jpg", horizontalDegrees: 180)))
+        choices.append(("Apple Spatial Photo", "spatial-photo", .spatialPhotoImage(EnvironmentImageKey.spatial)))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: Material.darkWalnut, sky: Material.blue)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {
@@ -375,7 +384,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.68 - AetherFloat(index / 2) * 0.21, z: sceneDepth),
+                position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.68 - AetherFloat(index / 2) * 0.18, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: {
                     if choice.1 == "image-mono",
@@ -393,6 +402,12 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             if choice.1 == "image-mono" {
                 let registry = world.assetEngine.imageRegistry
                 button.availabilityCheck = { registry.entry(for: EnvironmentImageKey.mono) != nil }
+                button.refreshAvailability()
+            }
+            if choice.1 == "spatial-photo" {
+                let registry = world.assetEngine.imageRegistry
+                let supported = world.environmentEngine.supports(choice.2)
+                button.availabilityCheck = { supported && registry.entry(for: EnvironmentImageKey.spatial) != nil }
                 button.refreshAvailability()
             }
             objects.append(button)
@@ -1317,3 +1332,47 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 }
 
 
+
+#if os(visionOS)
+extension AetherCircleShowcaseApplication {
+    /// Adapted from Apple's Writing Spatial Photos sample (license in Shared/Files).
+    /// Creates a genuine stereo HEIC at startup, then exercises registered-image loading.
+    @available(visionOS 26.0, *)
+    private func registerSpatialDemo() {
+        guard let leftData = world.platform.resourceRetrieve(name: "environment-spatial-left.jpg", type: .image),
+              let rightData = world.platform.resourceRetrieve(name: "environment-spatial-right.jpg", type: .image),
+              let left = CGImageSourceCreateWithData(leftData as CFData, nil),
+              let right = CGImageSourceCreateWithData(rightData as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(left, 0, nil) else { return }
+        let width = Double(image.width), height = Double(image.height)
+        let focal = width * 0.5 / tan(80.0 * .pi / 360)
+        let intrinsics: [Double] = [focal, 0, width / 2, 0, focal, height / 2, 0, 0, 1]
+        func properties(isLeft: Bool) -> CFDictionary {
+            [kCGImagePropertyGroups: [
+                kCGImagePropertyGroupIndex: 0,
+                kCGImagePropertyGroupType: kCGImagePropertyGroupTypeStereoPair,
+                (isLeft ? kCGImagePropertyGroupImageIsLeftImage : kCGImagePropertyGroupImageIsRightImage): true,
+                kCGImagePropertyGroupImageDisparityAdjustment: 200
+            ], kCGImagePropertyHEIFDictionary: [
+                kIIOMetadata_CameraExtrinsicsKey: [
+                    kIIOCameraExtrinsics_Position: [isLeft ? 0.0 : 0.064, 0.0, 0.0],
+                    kIIOCameraExtrinsics_Rotation: [1.0, 0, 0, 0, 1, 0, 0, 0, 1]
+                ], kIIOMetadata_CameraModelKey: [
+                    kIIOCameraModel_Intrinsics: intrinsics,
+                    kIIOCameraModel_ModelType: kIIOCameraModelType_SimplifiedPinhole
+                ]
+            ], kCGImagePropertyHasAlpha: false] as CFDictionary
+        }
+        let encoded = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(encoded, UTType.heic.identifier as CFString, 2,
+            [kCGImagePropertyPrimaryImage: 0] as CFDictionary) else { return }
+        CGImageDestinationAddImageFromSource(destination, left, 0, properties(isLeft: true))
+        CGImageDestinationAddImageFromSource(destination, right, 0, properties(isLeft: false))
+        guard CGImageDestinationFinalize(destination) else {
+            print("Showcase: spatial HEIC sample encoding failed")
+            return
+        }
+        world.assetEngine.registerImage(key: EnvironmentImageKey.spatial, data: encoded as Data)
+    }
+}
+#endif

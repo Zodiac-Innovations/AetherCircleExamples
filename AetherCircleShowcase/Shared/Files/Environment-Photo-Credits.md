@@ -44,3 +44,13 @@ The `Internet 360 Mono` button downloads the original 8192 x 4096 Venice Sunset 
 - Showcase button: `Panorama 270`. The image is rendered once on a cylindrical arc, with its original aspect ratio preserved and dark surroundings outside the captured view.
 
 Metadata demo update: Showcase adds GPano XMP crop-width/full-width values of 4096 / 5461 (approximately 270 degrees) to encode the source's approximately 270-degree coverage. These are demonstration metadata added by this project, not original camera metadata. `Panorama Auto` reads that angle; `Panorama Override` deliberately overrides it with 180 degrees for comparison.
+
+## Apple spatial photo demo — environment-spatial-left.jpg / environment-spatial-right.jpg
+
+- Source: Apple, Writing Spatial Photos sample, https://developer.apple.com/documentation/imageio/writing-spatial-photos
+- Download: https://docs-assets.developer.apple.com/published/f576a7476465/WritingSpatialPhotos.zip
+- Copyright © 2024 Apple Inc. Permission notice: APPLE-SPATIAL-SAMPLE-LICENSE.txt (included).
+- Hummingbird_Left.png and Hummingbird_Right.png are rendered stereo images supplied by Apple, not iPhone camera photos.
+- Changes: resized proportionally to at most 1280 pixels per dimension, converted to RGB JPEG, without cropping or swapping eyes.
+- On visionOS 26+, Showcase encodes these into a native stereo HEIC at startup and registers it. Calibration follows Apple's sample: 64 mm baseline, 80-degree horizontal field of view, +2% disparity adjustment.
+- `Apple Spatial Photo` is enabled after registration on supported AVP systems; disabled on Quest and earlier visionOS.

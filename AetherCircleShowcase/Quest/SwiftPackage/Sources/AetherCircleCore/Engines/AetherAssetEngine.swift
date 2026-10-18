@@ -48,7 +48,7 @@ public extension AetherAssetEngine {
         registerImage(key: key, image: .file(fileName))
     }
 
-    /// Registers a remote JPEG/PNG after a successful asynchronous download.
+    /// Registers a remote JPEG/PNG/HEIC after a successful asynchronous download.
     @discardableResult
     func registerImage(key: String, url: URL) async throws -> Bool {
         try await imageRegistry.register(key: key, from: url)
