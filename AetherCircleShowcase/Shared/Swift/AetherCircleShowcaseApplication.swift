@@ -379,9 +379,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Panorama Auto", "panorama-auto", .panoramaFile("environment-hahneberg-panorama.jpg")))
         choices.append(("Panorama Override", "panorama-override", .panoramaFile("environment-hahneberg-panorama.jpg", horizontalDegrees: 180)))
         choices.append(("Apple Spatial Photo", "spatial-photo", .spatialPhotoImage(EnvironmentImageKey.spatial)))
-        choices.append(("Yosemite Files", "gallery-files", .images2DFiles(["environment-half-dome.jpg", "environment-el-capitan.jpg"], material: .color(.black))))
-        choices.append(("Yosemite Images", "gallery-images", .images2DImages(["showcase.gallery.half-dome", "showcase.gallery.el-capitan"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
-        choices.append(("Gallery 8", "gallery-eight", .images2DFiles((0..<8).map { $0 % 2 == 0 ? "environment-half-dome.jpg" : "environment-el-capitan.jpg" }, material: .color(.black))))
+        choices.append(("Yosemite Files", "gallery-files", .photo2DFiles(["environment-half-dome.jpg", "environment-el-capitan.jpg"], material: .color(.black))))
+        choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.half-dome", "showcase.gallery.el-capitan"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
+        choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((0..<8).map { $0 % 2 == 0 ? "environment-half-dome.jpg" : "environment-el-capitan.jpg" }, material: .color(.black))))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: Material.darkWalnut, sky: Material.blue)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {
