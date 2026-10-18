@@ -217,101 +217,28 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             y: 2.05
         )
 
-        let primitiveButton = AetherButtonObject(
-            name: "Primitive Objects Button",
-            autoID: "showcase.primitives",
-            flavor: .default,
-            title: "Primitive Objects",
-            size: AetherSize3D(
-                x: 0.70,
-                y: 0.16,
-                z: 0.04
-            ),
-            sizing: .fitTextToButton,
-            material: Material.button,
-            textMaterial: Material.white,
-            position: AetherPosition3D(
-                x: 0,
-                y: 1.58,
-                z: sceneDepth
-            ),
-            targetAppearance: .goldenGlow,
-            action: {
-                self.showPrimitiveObjectsScene()
-            }
-        )
-
-        let panelButton = AetherButtonObject(
-            name: "Panel Objects Button",
-            autoID: "showcase.panels",
-            flavor: .default,
-            title: "Panel Objects",
-            size: AetherSize3D(
-                x: 0.70,
-                y: 0.16,
-                z: 0.04
-            ),
-            sizing: .fitTextToButton,
-            material: Material.button,
-            textMaterial: Material.white,
-            position: AetherPosition3D(
-                x: 0,
-                y: 1.34,
-                z: sceneDepth
-            ),
-            targetAppearance: .goldenGlow,
-            action: {
-                self.showPanelObjectsScene()
-            }
-        )
-
-        let materialButton = AetherButtonObject(
-            name: "Materials Button",
-            autoID: "showcase.materials",
-            flavor: .default,
-            title: "Materials",
-            size: AetherSize3D(
-                x: 0.70,
-                y: 0.16,
-                z: 0.04
-            ),
-            sizing: .fitTextToButton,
-            material: Material.button,
-            textMaterial: Material.white,
-            position: AetherPosition3D(
-                x: 0,
-                y: 1.10,
-                z: sceneDepth
-            ),
-            targetAppearance: .goldenGlow,
-            action: {
-                self.showMaterialsScene()
-            }
-        )
-
-        let automationButton = AetherButtonObject(
-            name: "Automation Button",
-            autoID: "showcase.automation",
-            title: "Automation",
+        let menu = AetherListButton(
+            [
+                AetherTitleAction("Materials") { [weak self] in self?.showMaterialsScene() },
+                AetherTitleAction("Environment") { [weak self] in self?.showEnvironmentScene() },
+                AetherTitleAction("Primitive Objects") { [weak self] in self?.showPrimitiveObjectsScene() },
+                AetherTitleAction("Panel Objects") { [weak self] in self?.showPanelObjectsScene() },
+                AetherTitleAction("Automation") { [weak self] in self?.showAutomationScene() },
+            ],
+            name: "Showcase Menu",
+            autoID: "showcase.menu",
             size: AetherSize3D(x: 0.70, y: 0.16, z: 0.04),
-            sizing: .fitTextToButton,
             material: Material.button,
             textMaterial: Material.white,
-            position: AetherPosition3D(x: 0, y: 0.86, z: sceneDepth),
+            position: AetherPosition3D(x: 0, y: 1.72, z: sceneDepth),
             targetAppearance: .goldenGlow,
-            action: { self.showAutomationScene() }
+            rowSpacing: 0.06
         )
-
-        let environmentButton = AetherButtonObject(
-            name: "Environment Button", autoID: "showcase.environment",
-            title: "Environment",
-            size: AetherSize3D(x: 0.70, y: 0.16, z: 0.04),
-            sizing: .fitTextToButton,
-            material: Material.button, textMaterial: Material.white,
-            position: AetherPosition3D(x: 0, y: 0.62, z: sceneDepth),
-            targetAppearance: .goldenGlow,
-            action: { self.showEnvironmentScene() }
-        )
+        // Preserve the stable identifiers used by all three automation examples.
+        let menuIDs = ["materials", "environment", "primitives", "panels", "automation"]
+        for (button, menuID) in zip(menu.buttons, menuIDs) {
+            button.autoID = "showcase." + menuID
+        }
 
         let quit = AetherQuitButtonObject(
             name: "Quit",
@@ -327,7 +254,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             panelButtonMaterial: Material.button,
             position: AetherPosition3D(
                 x: 0,
-                y: 0.38,
+                y: 0.52,
                 z: sceneDepth
             ),
             targetAppearance: .goldenGlow,
@@ -347,11 +274,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 name: "Showcase Home",
                 objects: [
                     title,
-                    primitiveButton,
-                    panelButton,
-                    materialButton,
-                    automationButton,
-                    environmentButton,
+                    menu,
                     quit,
                 ]
             )
