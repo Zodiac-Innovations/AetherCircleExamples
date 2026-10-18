@@ -29,6 +29,26 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     /// A complete equirectangular photograph, wrapped once around the user.
     /// Stereo layouts contain distinct left- and right-eye views.
     case image360(String, layout: AetherImage360Layout = .mono)
+
+    /// Each environment has exactly one placement behavior. This is derived
+    /// from its case so an application cannot accidentally mix both behaviors.
+    public var placement: AetherEnvironmentPlacement {
+        switch self {
+        case .passthrough, .blankVR: return .worldFixed
+        case .materialVR, .image360: return .userCentered
+        }
+    }
+}
+
+/// How surroundings respond to the user's movement. Scene objects remain
+/// world-fixed independently of the environment's placement.
+public enum AetherEnvironmentPlacement: String, Sendable, Codable, Hashable {
+    /// The user moves through the environment. Also appropriate for future
+    /// world environments with an effectively infinitely distant sky.
+    case worldFixed
+    /// The backdrop follows translation only. Its orientation stays fixed in
+    /// the world, so turning the head reveals a different part of the globe.
+    case userCentered
 }
 
 

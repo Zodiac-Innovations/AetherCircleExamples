@@ -373,7 +373,10 @@ class QuestRenderer {
             // Unwrap each triangle across the longitude seam before interpolation.
             std::array<float,3> longitude{};
             if(spherical) {
-                for(int v=0;v<3;++v)longitude[v]=std::atan2(vertices[i+v*3+2],vertices[i+v*3])/(2*3.14159265f)+.5f;
+                for(int v=0;v<3;++v) {
+                    const float x=vertices[i+v*3],z=vertices[i+v*3+2];
+                    longitude[v]=(panoramaLayout>=0?std::atan2(x,-z):std::atan2(z,x))/(2*3.14159265f)+.5f;
+                }
                 auto bounds=std::minmax_element(longitude.begin(),longitude.end());
                 if(*bounds.second-*bounds.first>.5f)for(float& u:longitude)if(u<.5f)u+=1;
                 for(int v=0;v<3;++v)if(std::abs(vertices[i+v*3+1])>.49999f)
@@ -687,7 +690,13 @@ void main(){
                         std::array<float,4> color{};
                         for(int c=0;c<3;++c)color[c]=swift.objectColor(-1,c);
                         color[3]=1;
-                        Matrix model=Matrix::translation(views[i].pose.position.x,views[i].pose.position.y,views[i].pose.position.z)*Matrix::scale(100,100,100);
+                        const bool followsUser=swift.objectValue(-1,4)>0;
+                        const XrVector3f center=followsUser?XrVector3f{
+                            (views[0].pose.position.x+views[1].pose.position.x)*.5f,
+                            (views[0].pose.position.y+views[1].pose.position.y)*.5f,
+                            (views[0].pose.position.z+views[1].pose.position.z)*.5f
+                        }:XrVector3f{0,0,0};
+                        Matrix model=Matrix::translation(center.x,center.y,center.z)*Matrix::scale(100,100,100);
                         glDepthMask(GL_FALSE);
                         geometry(meshFor(1,{}),Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
                                  color,textureFor(-1),1,0,false,model,true,swift.objectValue(-1,1),swift.objectValue(-1,2),

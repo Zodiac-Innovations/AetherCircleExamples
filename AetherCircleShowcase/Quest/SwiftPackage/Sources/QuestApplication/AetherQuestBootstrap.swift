@@ -247,6 +247,7 @@ public func aethercircleSwiftObjectValue(
                 }
             }
             return -1
+        case 4: return runtime.environmentEngine.mode.placement == .userCentered ? 1 : 0
         default: return 0
         }
     }
