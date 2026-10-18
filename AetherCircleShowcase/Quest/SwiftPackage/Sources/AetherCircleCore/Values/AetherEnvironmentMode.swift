@@ -28,7 +28,10 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
 
     /// A complete equirectangular photograph, wrapped once around the user.
     /// Stereo layouts contain distinct left- and right-eye views.
-    case image360(String, layout: AetherImage360Layout = .mono)
+    case image360File(String, layout: AetherImage360Layout = .mono)
+
+    /// A registered image key, resolved when the environment is selected.
+    case image360Image(String, layout: AetherImage360Layout = .mono)
 
     /// A world-fixed tiled floor at y=0 beneath a sky with no translation parallax.
     case floorMaterial(floor: AetherMaterial, sky: AetherMaterial)
@@ -38,7 +41,7 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     public var placement: AetherEnvironmentPlacement {
         switch self {
         case .passthrough, .blankVR, .floorMaterial: return .worldFixed
-        case .materialVR, .image360: return .userCentered
+        case .materialVR, .image360File, .image360Image: return .userCentered
         }
     }
 }

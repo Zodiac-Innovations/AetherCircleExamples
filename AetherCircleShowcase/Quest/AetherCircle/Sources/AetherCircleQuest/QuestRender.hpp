@@ -241,6 +241,7 @@ class QuestRenderer {
 
     AAssetManager* assets=nullptr;
     std::map<std::string,GLuint> textures;
+    std::string registeredEnvironmentTextureKey;
     std::map<int,std::vector<float>> meshes;
     GLint panoramaLayoutLocation=-1,panoramaEyeLocation=-1;
     GLint textureLocation=-1,texturedLocation=-1,lightingLocation=-1;
@@ -252,11 +253,33 @@ class QuestRenderer {
         std::vector<char> name(length+1);swift.objectTexture(object,name.data(),length+1);
         std::string filename(name.data());
         if(auto found=textures.find(filename);found!=textures.end())return found->second;
+        const bool registered=filename.rfind("@image:",0)==0;
+        if(registered && registeredEnvironmentTextureKey!=filename) {
+            auto previous=textures.find(registeredEnvironmentTextureKey);
+            if(previous!=textures.end()) {
+                if(previous->second)glDeleteTextures(1,&previous->second);
+                textures.erase(previous);
+            }
+            registeredEnvironmentTextureKey=filename;
+        }
         GLuint texture=0;
-        const std::string path="aethercircle/"+filename;
-        AAsset* asset=AAssetManager_open(assets,path.c_str(),AASSET_MODE_BUFFER);
+        AAsset* asset=nullptr;
         AImageDecoder* decoder=nullptr;
-        int result=asset?AImageDecoder_createFromAAsset(asset,&decoder):-1;
+        // The encoded buffer remains alive until after the decoder is deleted.
+        std::vector<unsigned char> encoded;
+        int result=-1;
+        if(registered) {
+            const int bytes=swift.objectTextureBytes(object,nullptr,0);
+            if(bytes>0) {
+                encoded.resize(bytes);
+                const int copied=swift.objectTextureBytes(object,reinterpret_cast<char*>(encoded.data()),bytes);
+                if(copied==bytes)result=AImageDecoder_createFromBuffer(encoded.data(),encoded.size(),&decoder);
+            }
+        } else {
+            const std::string path="aethercircle/"+filename;
+            asset=AAssetManager_open(assets,path.c_str(),AASSET_MODE_BUFFER);
+            if(asset)result=AImageDecoder_createFromAAsset(asset,&decoder);
+        }
         int width=0,height=0;
         if(result==ANDROID_IMAGE_DECODER_SUCCESS) {
             auto header=AImageDecoder_getHeaderInfo(decoder);

@@ -31,6 +31,7 @@ private final class QuestEnvironmentEngine: AetherEnvironmentEngine {
 }
 
 private final class QuestAssetEngine: AetherAssetEngine {
+    let imageRegistry = AetherImageRegistry()
     private var materials: [String: AetherMaterial] = [:]
     init() { resetDefaultMaterials() }
     func registerMaterial(key: String, material: AetherMaterial) { materials[key] = material }
@@ -111,7 +112,13 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     var environmentMaterial: AetherMaterial? {
         switch environmentEngine.mode {
         case .materialVR(let material): return material
-        case .image360(let name, _): return .texture(baseColorTexture: name)
+        case .image360File(let name, _): return .texture(baseColorTexture: name)
+        case .image360Image(let key, _):
+            guard let entry = assetEngine.imageRegistry.entry(for: key) else { return nil }
+            switch entry.image {
+            case .file(let name): return .texture(baseColorTexture: name)
+            case .data: return .color(.white)
+            }
         case .floorMaterial(_, let sky): return sky
         default: return nil
         }
@@ -258,14 +265,15 @@ public func aethercircleSwiftObjectValue(
             if case .floorMaterial = runtime.environmentEngine.mode { return 6 }
             return 1
         case 3:
-            if case .image360(_, let layout) = runtime.environmentEngine.mode {
+            switch runtime.environmentEngine.mode {
+            case .image360File(_, let layout), .image360Image(_, let layout):
                 switch layout {
                 case .mono: return 0
                 case .stereoTopBottom: return 1
                 case .stereoSideBySide: return 2
                 }
+            default: return -1
             }
-            return -1
         case 4:
             if case .floorMaterial = runtime.environmentEngine.mode { return 1 }
             return runtime.environmentEngine.mode.placement == .userCentered ? 1 : 0
@@ -403,7 +411,11 @@ public func aethercircleSwiftObjectTexture(
 ) -> Int32 {
     let runtime = QuestSwiftRuntime.shared
     let material = index == -1 ? runtime.environmentMaterial : (index == -2 ? runtime.floorMaterial : runtime.object(at: index)?.material)
-    let filename = material.flatMap { runtime.assetEngine.surface(for: $0).baseColorTexture } ?? ""
+    var filename = material.flatMap { runtime.assetEngine.surface(for: $0).baseColorTexture } ?? ""
+    if index == -1, case .image360Image(let key, _) = runtime.environmentEngine.mode,
+       let entry = runtime.assetEngine.imageRegistry.entry(for: key), case .data = entry.image {
+        filename = "@image:\(key):\(entry.revision)"
+    }
     let bytes = Array(filename.utf8)
     if let buffer, capacity > 0 {
         let count = min(bytes.count, Int(capacity) - 1)
@@ -423,3 +435,23 @@ public func aethercircleSwiftPassthroughRequested() -> Int32 {
 }
 
 
+
+/// Encoded registered image bytes are copied through the native bridge only
+/// when its revision changes. Bundled file images use the normal asset loader.
+@_cdecl("aethercircle_swift_object_texture_bytes")
+public func aethercircleSwiftObjectTextureBytes(
+    _ index: Int32, _ buffer: UnsafeMutablePointer<CChar>?, _ capacity: Int32
+) -> Int32 {
+    let runtime = QuestSwiftRuntime.shared
+    guard index == -1, case .image360Image(let key, _) = runtime.environmentEngine.mode,
+          case .data(let data)? = runtime.assetEngine.registeredImage(for: key),
+          data.count <= Int(Int32.max) else { return 0 }
+    if let buffer, capacity > 0 {
+        data.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
+            if let base = bytes.baseAddress {
+                UnsafeMutableRawPointer(buffer).copyMemory(from: base, byteCount: min(data.count, Int(capacity)))
+            }
+        }
+    }
+    return Int32(data.count)
+}

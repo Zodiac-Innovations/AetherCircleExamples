@@ -63,7 +63,29 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     public override func start() {
         world.environmentEngine.mode = .passthrough
         registerMaterials()
+        registerEnvironmentImages()
         showHomeScene()
+    }
+
+    private enum EnvironmentImageKey {
+        static let mono = "showcase.environment.mono"
+        static let stereo = "showcase.environment.stereo-sbs"
+    }
+
+    /// Read and register encoded image bytes at startup. The same API accepts bytes from
+    /// a completed internet download without adding a file to the app bundle.
+    private func registerEnvironmentImages() {
+        let examples = [
+            (EnvironmentImageKey.mono, "environment-venice-360"),
+            (EnvironmentImageKey.stereo, "environment-stereo-360-sbs"),
+        ]
+        for (key, file) in examples {
+            guard let data = world.platform.resourceRetrieve(name: file, type: .image) else {
+                print("Showcase: could not load registered environment example \(file)")
+                continue
+            }
+            world.assetEngine.registerImage(key: key, data: data)
+        }
     }
 
     private func registerMaterials() {
@@ -325,8 +347,10 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         for (index, pattern) in patterns.shuffled().prefix(3).enumerated() {
             choices.append((pattern.0, "pattern-\(index + 1)", .materialVR(pattern.1)))
         }
-        choices.append(("360 Venice", "photo-mono", .image360("environment-venice-360.jpg")))
-        choices.append(("Stereo 360", "photo-stereo", .image360("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
+        choices.append(("File 360 Mono", "file-mono", .image360File("environment-venice-360.jpg")))
+        choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
+        choices.append(("Image 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
+        choices.append(("Image Stereo SBS", "image-stereo", .image360Image(EnvironmentImageKey.stereo, layout: .stereoSideBySide)))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: Material.darkWalnut, sky: Material.blue)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {

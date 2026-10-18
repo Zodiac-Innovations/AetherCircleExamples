@@ -24,3 +24,10 @@ These files ship with Showcase and work offline. They are separate assets with t
 - This is a rendered Blender scene, selected to test binocular depth; it is not a camera photograph.
 
 To add your own camera images, export stitched equirectangular JPEG or PNG files. Native camera projects, unstitched dual-fisheye images, VR180, spatial HEIC photos, and video are not supported by this still-image environment.
+
+## environment-stereo-360-sbs.jpg
+
+Derived from DerMische's SphericalStereo 01, credited above, under the same CC BY-SA 4.0 license: https://creativecommons.org/licenses/by-sa/4.0/.
+The resized top/bottom image was split into its original left and right eye views, arranged side by side (4096 x 1024), and recompressed. No new depth was generated. This image is registered as encoded data at startup for the `Image Stereo SBS` button.
+
+The `Image 360 Mono` button registers the Venice image as encoded data at startup. The two `File` buttons load their bundled filenames directly. All examples are offline and use the same rendering paths available to downloaded images.

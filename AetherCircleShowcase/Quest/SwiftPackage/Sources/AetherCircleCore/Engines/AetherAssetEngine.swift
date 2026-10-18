@@ -17,6 +17,8 @@ public enum AetherMaterialFinish: Int, Codable, Sendable, Hashable {
 /// Platform engine contract for shared and inline materials.
 public protocol AetherAssetEngine: AetherEngine {
 
+    var imageRegistry: AetherImageRegistry { get }
+
     /// Registers or replaces a shared material.
     func registerMaterial(
         key: String,
@@ -30,6 +32,26 @@ public protocol AetherAssetEngine: AetherEngine {
 }
 
 public extension AetherAssetEngine {
+
+    @discardableResult
+    func registerImage(key: String, image: AetherImageResource) -> Bool {
+        imageRegistry.register(key: key, image: image)
+    }
+
+    @discardableResult
+    func registerImage(key: String, data: Data) -> Bool {
+        registerImage(key: key, image: .data(data))
+    }
+
+    @discardableResult
+    func registerImage(key: String, fileName: String) -> Bool {
+        registerImage(key: key, image: .file(fileName))
+    }
+
+    func registeredImage(for key: String) -> AetherImageResource? {
+        imageRegistry.entry(for: key)?.image
+    }
+
 
     /// Registers a color as a shared material.
     func registerColor(
@@ -68,6 +90,8 @@ public extension AetherAssetEngine {
 /// Placeholder asset engine used by Core-only environments.
 public final class AetherAssetDummy: AetherAssetEngine {
 
+    public let imageRegistry = AetherImageRegistry()
+
     private var materials: [String: AetherMaterial] = [:]
 
     public init() {
@@ -89,3 +113,4 @@ public final class AetherAssetDummy: AetherAssetEngine {
         materials[key]
     }
 }
+
