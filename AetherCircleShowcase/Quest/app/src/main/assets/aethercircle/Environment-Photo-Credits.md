@@ -54,3 +54,23 @@ Metadata demo update: Showcase adds GPano XMP crop-width/full-width values of 40
 - Changes: resized proportionally to at most 1280 pixels per dimension, converted to RGB JPEG, without cropping or swapping eyes.
 - On visionOS 26+, Showcase encodes these into a native stereo HEIC at startup and registers it. Calibration follows Apple's sample: 64 mm baseline, 80-degree horizontal field of view, +2% disparity adjustment.
 - `Apple Spatial Photo` is enabled after registration on supported AVP systems; disabled on Quest and earlier visionOS.
+
+## Yosemite 2D gallery photographs
+
+### environment-half-dome.jpg
+- Title: Half-dome.jpg (Half Dome at Yosemite National Park).
+- Photographer: Christoffer G. Thomsen (Cgtdk), 12 July 2009.
+- Source: https://commons.wikimedia.org/wiki/File:Half-dome.jpg
+- Original: https://upload.wikimedia.org/wikipedia/commons/e/e4/Half-dome.jpg
+- Public domain dedication: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/
+- Changes: proportionally resized from 3456 × 2304 to 2048 × 1365 and recompressed as RGB JPEG. No cropping.
+
+### environment-el-capitan.jpg
+- Title: El Capitan, Yosemite NP.jpg.
+- Photographer: Fenners, 1 July 2003.
+- Source: https://commons.wikimedia.org/wiki/File:El_Capitan,_Yosemite_NP.jpg
+- Original: https://upload.wikimedia.org/wikipedia/commons/6/64/El_Capitan%2C_Yosemite_NP.jpg
+- Released into the public domain worldwide by the author; see source page's public-domain declaration.
+- Changes: recompressed as RGB JPEG, retaining 1186 × 790 pixels. No cropping.
+
+Showcase uses these two photographs for `Yosemite Files`, `Yosemite Images` (registered encoded data at startup), and `Gallery 8` (alternates the same two photos in all eight slots; no additional photographs implied).

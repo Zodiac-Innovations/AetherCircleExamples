@@ -89,6 +89,11 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         #if os(visionOS)
         if #available(visionOS 26.0, *), world.platform.canDecodeStereoHEIC { registerSpatialDemo() }
         #endif
+        for name in ["half-dome", "el-capitan"] {
+            if let data = world.platform.resourceRetrieve(name: "environment-" + name + ".jpg", type: .image) {
+                world.assetEngine.registerImage(key: "showcase.gallery." + name, data: data)
+            }
+        }
         if let data = world.platform.resourceRetrieve(name: "environment-stereo-360-sbs", type: .image) {
             world.assetEngine.registerImage(key: EnvironmentImageKey.stereo, data: data)
         }
@@ -374,6 +379,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Panorama Auto", "panorama-auto", .panoramaFile("environment-hahneberg-panorama.jpg")))
         choices.append(("Panorama Override", "panorama-override", .panoramaFile("environment-hahneberg-panorama.jpg", horizontalDegrees: 180)))
         choices.append(("Apple Spatial Photo", "spatial-photo", .spatialPhotoImage(EnvironmentImageKey.spatial)))
+        choices.append(("Yosemite Files", "gallery-files", .images2DFiles(["environment-half-dome.jpg", "environment-el-capitan.jpg"], material: .color(.black))))
+        choices.append(("Yosemite Images", "gallery-images", .images2DImages(["showcase.gallery.half-dome", "showcase.gallery.el-capitan"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
+        choices.append(("Gallery 8", "gallery-eight", .images2DFiles((0..<8).map { $0 % 2 == 0 ? "environment-half-dome.jpg" : "environment-el-capitan.jpg" }, material: .color(.black))))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: Material.darkWalnut, sky: Material.blue)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {
@@ -384,7 +392,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.68 - AetherFloat(index / 2) * 0.18, z: sceneDepth),
+                position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.68 - AetherFloat(index / 2) * 0.16, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: {
                     if choice.1 == "image-mono",
@@ -402,6 +410,13 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             if choice.1 == "image-mono" {
                 let registry = world.assetEngine.imageRegistry
                 button.availabilityCheck = { registry.entry(for: EnvironmentImageKey.mono) != nil }
+                button.refreshAvailability()
+            }
+            if choice.1 == "gallery-images" {
+                let registry = world.assetEngine.imageRegistry
+                button.availabilityCheck = {
+                    registry.entry(for: "showcase.gallery.half-dome") != nil && registry.entry(for: "showcase.gallery.el-capitan") != nil
+                }
                 button.refreshAvailability()
             }
             if choice.1 == "spatial-photo" {

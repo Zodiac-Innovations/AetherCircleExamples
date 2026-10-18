@@ -242,7 +242,7 @@ class QuestRenderer {
     AAssetManager* assets=nullptr;
     std::map<std::string,GLuint> textures;
     std::map<GLuint,std::array<int,2>> textureSizes;
-    std::string registeredEnvironmentTextureKey;
+    std::map<int,std::string> registeredEnvironmentTextureKeys;
     std::map<int,std::vector<float>> meshes;
     GLint panoramaLayoutLocation=-1,panoramaEyeLocation=-1;
     GLint textureLocation=-1,texturedLocation=-1,lightingLocation=-1;
@@ -253,16 +253,19 @@ class QuestRenderer {
         if(length<=0)return 0;
         std::vector<char> name(length+1);swift.objectTexture(object,name.data(),length+1);
         std::string filename(name.data());
-        if(auto found=textures.find(filename);found!=textures.end())return found->second;
         const bool registered=filename.rfind("@image:",0)==0;
-        if(registered && registeredEnvironmentTextureKey!=filename) {
-            auto previous=textures.find(registeredEnvironmentTextureKey);
-            if(previous!=textures.end()) {
+        if(registered && registeredEnvironmentTextureKeys[object]!=filename) {
+            const std::string old=registeredEnvironmentTextureKeys[object];
+            registeredEnvironmentTextureKeys[object]=filename;
+            const bool stillUsed=std::any_of(registeredEnvironmentTextureKeys.begin(),registeredEnvironmentTextureKeys.end(),
+                [&](const auto& item){return item.second==old;});
+            auto previous=textures.find(old);
+            if(!stillUsed && previous!=textures.end()) {
                 if(previous->second){textureSizes.erase(previous->second);glDeleteTextures(1,&previous->second);}
                 textures.erase(previous);
             }
-            registeredEnvironmentTextureKey=filename;
         }
+        if(auto found=textures.find(filename);found!=textures.end())return found->second;
         GLuint texture=0;
         AAsset* asset=nullptr;
         AImageDecoder* decoder=nullptr;
@@ -430,6 +433,32 @@ class QuestRenderer {
         glBufferData(GL_ARRAY_BUFFER,static_cast<GLsizeiptr>(data.size()*sizeof(float)),data.data(),GL_STREAM_DRAW);
         glDrawArrays(GL_TRIANGLES,0,static_cast<GLsizei>(data.size()/8));++drawCalls;
     }
+    void drawImageGallery(const Matrix& camera,const XrVector3f& center) {
+        static const std::vector<float> screen={-.5f,-.5f,0, .5f,-.5f,0, -.5f,.5f,0,
+                                               .5f,-.5f,0, .5f,.5f,0, -.5f,.5f,0};
+        const int count=std::min(8,int(swift.objectValue(-1,6)));
+        for(int slot=0;slot<count;++slot) {
+            const int object=-10-slot;
+            if(swift.objectValue(object,0)<=0)continue;
+            const GLuint texture=textureFor(object);
+            const auto dimensions=textureSizes.find(texture);
+            if(!texture || dimensions==textureSizes.end())continue;
+            const float aspect=float(dimensions->second[0])/float(dimensions->second[1]);
+            const float width=std::min(swift.objectValue(object,3),swift.objectValue(object,4)*aspect);
+            const float height=width/aspect;
+            const float angle=swift.objectValue(object,1)*3.14159265f/180;
+            const float radius=swift.objectValue(object,2);
+            const Matrix model=Matrix::translation(center.x+std::sin(angle)*radius,center.y,center.z-std::cos(angle)*radius)*
+                               Matrix::euler(0,-angle,0)*Matrix::scale(width,height,1);
+            glBindTexture(GL_TEXTURE_2D,texture);
+            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+            geometry(screen,camera*model,{1,1,1,1},texture,1,0,false,model);
+            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+        }
+    }
+
     void drawCameraPanorama(const Matrix& camera,const XrVector3f& center) {
         const GLuint texture=textureFor(-1);
         const auto dimensions=textureSizes.find(texture);
@@ -758,6 +787,7 @@ void main(){
                                      color,textureFor(-1),1,0,false,model,true,swift.objectValue(-1,1),swift.objectValue(-1,2),
                                      int(swift.objectValue(-1,3)),int(i));
                         }
+                        drawImageGallery(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose),center);
                         glDepthMask(GL_TRUE);
                     }
                     if(swift.objectValue(-2,0)>0) {

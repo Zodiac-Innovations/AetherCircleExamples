@@ -144,10 +144,32 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         return angle
     }
 
+    var galleryNames: [String] {
+        switch environmentEngine.mode {
+        case .images2DFiles(let names, _), .images2DImages(let names, _): return Array(names.prefix(8))
+        default: return []
+        }
+    }
+    func galleryImage(at bridgeIndex: Int32) -> AetherImageResource? {
+        let slot = Int(-bridgeIndex - 10)
+        let names = galleryNames
+        guard slot >= 0, slot < names.count else { return nil }
+        if case .images2DFiles = environmentEngine.mode { return .file(names[slot]) }
+        return assetEngine.registeredImage(for: names[slot])
+    }
+    func registeredImageKey(at bridgeIndex: Int32) -> String? {
+        if bridgeIndex == -1 { return registeredEnvironmentImageKey }
+        let slot = Int(-bridgeIndex - 10)
+        if case .images2DImages = environmentEngine.mode, slot >= 0, slot < galleryNames.count {
+            return galleryNames[slot]
+        }
+        return nil
+    }
+
     /// Bridge index -1 is reserved for the environment, outside scene interaction.
     var environmentMaterial: AetherMaterial? {
         switch environmentEngine.mode {
-        case .materialVR(let material): return material
+        case .materialVR(let material), .images2DFiles(_, let material), .images2DImages(_, let material): return material
         case .image360File(let name, _), .panoramaFile(let name, _): return .texture(baseColorTexture: name)
         case .image360Image(let key, _), .panoramaImage(let key, _):
             guard let entry = assetEngine.imageRegistry.entry(for: key) else { return nil }
@@ -286,6 +308,20 @@ public func aethercircleSwiftObjectValue(
     _ index: Int32,
     _ value: Int32
 ) -> Float {
+    if index <= -10 && index >= -17 {
+        let runtime = QuestSwiftRuntime.shared
+        let slot = Int(-index - 10)
+        let angles = AetherImageGalleryLayout.anglesDegrees(imageCount: runtime.galleryNames.count)
+        guard slot < angles.count else { return 0 }
+        switch value {
+        case 0: return runtime.galleryImage(at: index) == nil ? 0 : 1
+        case 1: return angles[slot]
+        case 2: return AetherImageGalleryLayout.radius
+        case 3: return AetherImageGalleryLayout.maximumWidth
+        case 4: return AetherImageGalleryLayout.maximumHeight
+        default: return 0
+        }
+    }
     if index == -2 {
         let runtime = QuestSwiftRuntime.shared
         guard let material = runtime.floorMaterial else { return 0 }
@@ -301,10 +337,14 @@ public func aethercircleSwiftObjectValue(
         switch value {
         case 0: return runtime.environmentMaterial == nil ? 0 : 1
         case 1:
+            if case .images2DFiles = runtime.environmentEngine.mode { return 12 }
+            if case .images2DImages = runtime.environmentEngine.mode { return 12 }
             if case .materialVR = runtime.environmentEngine.mode { return 12 }
             if case .floorMaterial = runtime.environmentEngine.mode { return 12 }
             return 1
         case 2:
+            if case .images2DFiles = runtime.environmentEngine.mode { return 6 }
+            if case .images2DImages = runtime.environmentEngine.mode { return 6 }
             if case .materialVR = runtime.environmentEngine.mode { return 6 }
             if case .floorMaterial = runtime.environmentEngine.mode { return 6 }
             return 1
@@ -322,6 +362,7 @@ public func aethercircleSwiftObjectValue(
         case 4:
             if case .floorMaterial = runtime.environmentEngine.mode { return 1 }
             return runtime.environmentEngine.mode.placement == .userCentered ? 1 : 0
+        case 6: return Float(runtime.galleryNames.count)
         case 5:
             switch runtime.environmentEngine.mode {
             case .panoramaFile(_, let degrees), .panoramaImage(_, let degrees): return runtime.panoramaDegrees(override: degrees)
@@ -462,10 +503,13 @@ public func aethercircleSwiftObjectTexture(
     let runtime = QuestSwiftRuntime.shared
     let material = index == -1 ? runtime.environmentMaterial : (index == -2 ? runtime.floorMaterial : runtime.object(at: index)?.material)
     var filename = material.flatMap { runtime.assetEngine.surface(for: $0).baseColorTexture } ?? ""
-    if index == -1, let key = runtime.registeredEnvironmentImageKey,
+    if index <= -10 && index >= -17, case .file(let name)? = runtime.galleryImage(at: index) { filename = name }
+    if let key = runtime.registeredImageKey(at: index),
        let entry = runtime.assetEngine.imageRegistry.entry(for: key), case .data = entry.image {
         filename = "@image:\(key):\(entry.revision)"
     }
+    if let key = runtime.registeredImageKey(at: index),
+       case .file(let name)? = runtime.assetEngine.registeredImage(for: key) { filename = name }
     let bytes = Array(filename.utf8)
     if let buffer, capacity > 0 {
         let count = min(bytes.count, Int(capacity) - 1)
@@ -493,7 +537,7 @@ public func aethercircleSwiftObjectTextureBytes(
     _ index: Int32, _ buffer: UnsafeMutablePointer<CChar>?, _ capacity: Int32
 ) -> Int32 {
     let runtime = QuestSwiftRuntime.shared
-    guard index == -1, let key = runtime.registeredEnvironmentImageKey,
+    guard let key = runtime.registeredImageKey(at: index),
           case .data(let data)? = runtime.assetEngine.registeredImage(for: key),
           data.count <= Int(Int32.max) else { return 0 }
     if let buffer, capacity > 0 {

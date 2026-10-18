@@ -39,6 +39,13 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     /// A partial cylindrical panorama from a registered image key.
     case panoramaImage(String, horizontalDegrees: AetherFloat? = nil)
 
+    /// Up to eight ordinary photos on inward-facing screens at 45-degree slots.
+    /// File names resolve from bundled resources; material fills the surroundings.
+    case images2DFiles([String], material: AetherMaterial)
+
+    /// The same gallery using registered image keys (including downloaded images).
+    case images2DImages([String], material: AetherMaterial)
+
     /// A native Apple stereo HEIC photo, presented ahead of the user (not a 360 globe).
     /// Requires a platform whose environment engine supports this mode.
     case spatialPhotoFile(String)
@@ -54,7 +61,7 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     public var placement: AetherEnvironmentPlacement {
         switch self {
         case .passthrough, .blankVR, .floorMaterial: return .worldFixed
-        case .materialVR, .image360File, .image360Image, .panoramaFile, .panoramaImage, .spatialPhotoFile, .spatialPhotoImage: return .userCentered
+        case .materialVR, .image360File, .image360Image, .panoramaFile, .panoramaImage, .spatialPhotoFile, .spatialPhotoImage, .images2DFiles, .images2DImages: return .userCentered
         }
     }
 }
