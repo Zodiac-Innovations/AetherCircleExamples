@@ -105,6 +105,7 @@ public extension AetherScene {
     /// Performs the same activation action used by platform input.
     func tapObject(_ target: AetherAutomationTarget) throws {
         let object = try findObject(target)
+        if let button = object as? AetherButtonObject { button.refreshAvailability() }
         guard let action = object.config?.activateAction else {
             throw AetherAutomationError.cannotActivate
         }
@@ -116,3 +117,4 @@ public extension AetherScene {
         try findObject(target).aetherObjectValue()
     }
 }
+

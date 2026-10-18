@@ -1,4 +1,5 @@
 import AetherCircleCore
+import Foundation
 import Dispatch
 
 public final class AetherCircleShowcaseApplication: AetherApplication {
@@ -59,6 +60,12 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     private let sceneDepth: AetherFloat = -1.7
+    private var environmentDownloadTask: Task<Void, Never>?
+
+    public override func stop() {
+        environmentDownloadTask?.cancel()
+        environmentDownloadTask = nil
+    }
 
     public override func start() {
         world.environmentEngine.mode = .passthrough
@@ -72,19 +79,24 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         static let stereo = "showcase.environment.stereo-sbs"
     }
 
-    /// Read and register encoded image bytes at startup. The same API accepts bytes from
-    /// a completed internet download without adding a file to the app bundle.
+    /// One registered example is embedded; the other must arrive over HTTPS.
     private func registerEnvironmentImages() {
-        let examples = [
-            (EnvironmentImageKey.mono, "environment-venice-360"),
-            (EnvironmentImageKey.stereo, "environment-stereo-360-sbs"),
-        ]
-        for (key, file) in examples {
-            guard let data = world.platform.resourceRetrieve(name: file, type: .image) else {
-                print("Showcase: could not load registered environment example \(file)")
-                continue
+        if let data = world.platform.resourceRetrieve(name: "environment-stereo-360-sbs", type: .image) {
+            world.assetEngine.registerImage(key: EnvironmentImageKey.stereo, data: data)
+        }
+        environmentDownloadTask?.cancel()
+        let registry = world.assetEngine.imageRegistry
+        registry.remove(key: EnvironmentImageKey.mono)
+        guard let url = URL(string: "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/venice_sunset.jpg") else { return }
+        environmentDownloadTask = Task {
+            do {
+                try await registry.register(key: EnvironmentImageKey.mono, from: url)
+                print("Showcase: internet panorama downloaded and registered.")
+            } catch is CancellationError {
+                // The app stopped before the download completed.
+            } catch {
+                if !Task.isCancelled { print("Showcase: internet panorama download failed: \(error)") }
             }
-            world.assetEngine.registerImage(key: key, data: data)
         }
     }
 
@@ -349,12 +361,12 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
         choices.append(("File 360 Mono", "file-mono", .image360File("environment-venice-360.jpg")))
         choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
-        choices.append(("Image 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
+        choices.append(("Internet 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
         choices.append(("Image Stereo SBS", "image-stereo", .image360Image(EnvironmentImageKey.stereo, layout: .stereoSideBySide)))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: Material.darkWalnut, sky: Material.blue)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {
-            objects.append(AetherButtonObject(
+            let button = AetherButtonObject(
                 name: choice.0 + " Environment Button",
                 autoID: "showcase.environment." + choice.1,
                 title: choice.0,
@@ -364,6 +376,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.65 - AetherFloat(index / 2) * 0.25, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: {
+                    if choice.1 == "image-mono",
+                       self.world.assetEngine.registeredImage(for: EnvironmentImageKey.mono) == nil { return }
                     if choice.1 == "floor-material" {
                         let floor = patterns.randomElement()?.1 ?? Material.darkWalnut
                         let sky = [Material.red, Material.green, Material.blue, Material.yellow,
@@ -373,7 +387,13 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                         self.world.environmentEngine.mode = choice.2
                     }
                 }
-            ))
+            )
+            if choice.1 == "image-mono" {
+                let registry = world.assetEngine.imageRegistry
+                button.availabilityCheck = { registry.entry(for: EnvironmentImageKey.mono) != nil }
+                button.refreshAvailability()
+            }
+            objects.append(button)
         }
         world.graphicEngine.changeToScene(AetherScene(name: "Environment", objects: objects))
     }

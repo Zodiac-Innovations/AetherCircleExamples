@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// Encoded JPEG/PNG bytes, or the name of a bundled image. Downloaded images
 /// are registered as data after the application finishes downloading them.
@@ -35,6 +38,33 @@ public final class AetherImageRegistry: @unchecked Sendable {
         revision &+= 1
         images[key] = Entry(image: image, revision: revision)
         return true
+    }
+
+    public enum DownloadError: Error, Equatable {
+        case invalidKey
+        case unsupportedURL
+        case invalidResponse
+        case httpStatus(Int)
+        case unsupportedImageData
+    }
+
+    /// Downloads encoded JPEG/PNG bytes and publishes the registration only
+    /// after the entire request succeeds. Failure preserves an existing image.
+    @discardableResult
+    public func register(key: String, from url: URL, session: URLSession = .shared) async throws -> Bool {
+        guard !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw DownloadError.invalidKey }
+        guard let scheme = url.scheme?.lowercased(), ["https", "http"].contains(scheme),
+              url.host != nil else { throw DownloadError.unsupportedURL }
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 60)
+        request.setValue("AetherCircle/1.0", forHTTPHeaderField: "User-Agent")
+        let (data, response) = try await session.data(for: request)
+        try Task.checkCancellation()
+        guard let response = response as? HTTPURLResponse else { throw DownloadError.invalidResponse }
+        guard (200..<300).contains(response.statusCode) else { throw DownloadError.httpStatus(response.statusCode) }
+        let jpeg = data.starts(with: [0xFF, 0xD8, 0xFF])
+        let png = data.starts(with: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        guard jpeg || png else { throw DownloadError.unsupportedImageData }
+        return register(key: key, image: .data(data))
     }
 
     public func entry(for key: String) -> Entry? {

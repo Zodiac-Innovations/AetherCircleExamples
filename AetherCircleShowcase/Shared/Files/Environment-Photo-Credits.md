@@ -1,6 +1,6 @@
 # 360 environment photo credits
 
-These files ship with Showcase and work offline. They are separate assets with the licenses below; the project source-code license does not replace their licenses.
+The bundled files ship with Showcase and work offline; the Internet 360 Mono button additionally downloads the original Venice image at startup. They are separate assets with the licenses below; the project source-code license does not replace their licenses.
 
 ## environment-venice-360.jpg
 
@@ -30,4 +30,4 @@ To add your own camera images, export stitched equirectangular JPEG or PNG files
 Derived from DerMische's SphericalStereo 01, credited above, under the same CC BY-SA 4.0 license: https://creativecommons.org/licenses/by-sa/4.0/.
 The resized top/bottom image was split into its original left and right eye views, arranged side by side (4096 x 1024), and recompressed. No new depth was generated. This image is registered as encoded data at startup for the `Image Stereo SBS` button.
 
-The `Image 360 Mono` button registers the Venice image as encoded data at startup. The two `File` buttons load their bundled filenames directly. All examples are offline and use the same rendering paths available to downloaded images.
+The `Internet 360 Mono` button downloads the original 8192 x 4096 Venice Sunset JPEG from the Poly Haven download URL above at startup and registers the returned data. It is disabled until that succeeds, with no embedded fallback. The same Greg Zaal / Poly Haven CC0 credit applies; this downloaded original is not resized by the app. The two `File` buttons and `Image Stereo SBS` remain offline examples.

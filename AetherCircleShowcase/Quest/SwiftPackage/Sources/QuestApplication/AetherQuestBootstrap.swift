@@ -135,6 +135,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         renderParents.removeAll(keepingCapacity: true)
         func append(_ object: AetherBasicObject, parent: Int32) {
             guard object.isVisible else { return }
+            if let button = object as? AetherButtonObject { button.refreshAvailability() }
             let index = Int32(renderObjects.count)
             renderObjects.append(object)
             renderParents.append(parent)

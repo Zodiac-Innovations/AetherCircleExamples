@@ -52,6 +52,43 @@ public final class AetherButtonObject:
     /// Sizing behavior used to reconcile the title and button.
     public let sizing: AetherButtonSizing
 
+    /// Optional availability check, evaluated by the renderer on its own thread.
+    /// Capture thread-safe state such as an asset registry in this closure.
+    public var availabilityCheck: (@Sendable () -> Bool)?
+    public private(set) var isEnabled = true
+    private var enabledInteraction: AetherInteractionConfig?
+    private var enabledMaterials: [(AetherBasicObject, AetherMaterial)] = []
+
+    /// Disables targeting and activation while preserving the original style/action.
+    public func setEnabled(_ enabled: Bool) {
+        guard enabled != isEnabled else { return }
+        if enabled {
+            config = enabledInteraction
+            for (object, material) in enabledMaterials { object.material = material }
+            enabledMaterials.removeAll()
+        } else {
+            enabledInteraction = config
+            enabledMaterials = children.map { ($0, $0.material) }
+            config = nil
+            for child in children {
+                child.material = .color(child is AetherTextObject
+                    ? AetherColor(red: 0.5, green: 0.5, blue: 0.5)
+                    : AetherColor(red: 0.15, green: 0.15, blue: 0.15))
+            }
+        }
+        isEnabled = enabled
+        canActivate = enabled
+    }
+
+    @discardableResult
+    public func refreshAvailability() -> Bool {
+        guard let availabilityCheck else { return false }
+        let enabled = availabilityCheck()
+        guard enabled != isEnabled else { return false }
+        setEnabled(enabled)
+        return true
+    }
+
     // MARK: Initialization
 
     /// Creates a spatial button.
@@ -208,11 +245,12 @@ public final class AetherButtonObject:
     public func setAction(
         _ action: AetherBlockSimple?
     ) {
-        var interaction = config ?? AetherInteractionConfig(
+        var interaction = (isEnabled ? config : enabledInteraction) ?? AetherInteractionConfig(
             canTarget: true
         )
         interaction.activateAction = action
-        config = interaction
+        if isEnabled { config = interaction } else { enabledInteraction = interaction }
     }
 }
+
 
