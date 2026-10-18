@@ -304,7 +304,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private func showAutomationScene() {
         let description = AetherTextObject(
             name: "Automation Description",
-            text: "Three ways to run the same 45-second tour.",
+            text: "Tour screens and test controls in 45 seconds.",
             characterHeight: 0.045,
             extrusionDepth: 0.006,
             material: Material.white,
@@ -358,7 +358,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                             // A repeated press does not interrupt the running tour.
                         } catch {
                             print("Showcase automation failed: \(error)")
-                            try? await platform.runTextScript("interaction on")
+                            try? await platform.runTextScript("interaction on", turnsOffInteraction: false)
                         }
                     }
                 }
@@ -371,21 +371,38 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         AetherAutomationScript(commands: [
             .setUserInteractionEnabled(false),
             .activate(.autoID("showcase.home")),
+            .message("Home: starting the Showcase tour"),
             .wait(10),
             .activate(.autoID("showcase.primitives")),
+            .message("Primitive Objects"),
             .wait(10),
             .activate(.autoID("showcase.home")),
             .activate(.autoID("showcase.panels")),
-            .wait(10),
+            .message("Panel Objects: buttons and dialogs"),
+            .wait(5),
+            .activate(.autoID("showcase.panels.next")),
+            .message("Checking checkbox and integer values"),
+            .check(.autoID("showcase.toggle.checkbox"), "true"),
+            .activate(.autoID("showcase.toggle.checkbox")),
+            .check(.autoID("showcase.toggle.checkbox"), "false"),
+            .activate(.autoID("showcase.toggle.checkbox")),
+            .check(.autoID("showcase.toggle.checkbox"), "true"),
+            .check(.autoID("showcase.integer"), "4"),
+            .activate(.autoID("showcase.integer")),
+            .check(.autoID("showcase.integer"), "5"),
+            .message("All control checks passed"),
+            .wait(5),
             .activate(.autoID("showcase.home")),
             .activate(.autoID("showcase.materials")),
+            .message("Materials"),
             .wait(10),
             .activate(.autoID("showcase.home")),
+            .message("Tour complete: quitting in five seconds"),
             .wait(5),
             .setUserInteractionEnabled(true),
             .activate(.autoID("showcase.quit")),
             .activate(.name("Quit Confirmation Yes")),
-        ])
+        ], turnsOffInteraction: true)
     }
 
     /// Each object executes synchronously when invoke() is called.
@@ -393,16 +410,33 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         let commands: [any AetherAutomationInvocable] = [
             AetherAutomationInteraction(platform: platform, enabled: false),
             AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
+            AetherAutomationMessage(platform: platform, text: "Home: starting the Showcase tour"),
             AetherAutomationWait(seconds: 10),
             AetherAutomationTap(platform: platform, target: .autoID("showcase.primitives")),
+            AetherAutomationMessage(platform: platform, text: "Primitive Objects"),
             AetherAutomationWait(seconds: 10),
             AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
             AetherAutomationTap(platform: platform, target: .autoID("showcase.panels")),
-            AetherAutomationWait(seconds: 10),
+            AetherAutomationMessage(platform: platform, text: "Panel Objects: buttons and dialogs"),
+            AetherAutomationWait(seconds: 5),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.panels.next")),
+            AetherAutomationMessage(platform: platform, text: "Checking checkbox and integer values"),
+            AetherAutomationCheck(platform: platform, target: .autoID("showcase.toggle.checkbox"), expected: "true"),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.toggle.checkbox")),
+            AetherAutomationCheck(platform: platform, target: .autoID("showcase.toggle.checkbox"), expected: "false"),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.toggle.checkbox")),
+            AetherAutomationCheck(platform: platform, target: .autoID("showcase.toggle.checkbox"), expected: "true"),
+            AetherAutomationCheck(platform: platform, target: .autoID("showcase.integer"), expected: "4"),
+            AetherAutomationTap(platform: platform, target: .autoID("showcase.integer")),
+            AetherAutomationCheck(platform: platform, target: .autoID("showcase.integer"), expected: "5"),
+            AetherAutomationMessage(platform: platform, text: "All control checks passed"),
+            AetherAutomationWait(seconds: 5),
             AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
             AetherAutomationTap(platform: platform, target: .autoID("showcase.materials")),
+            AetherAutomationMessage(platform: platform, text: "Materials"),
             AetherAutomationWait(seconds: 10),
             AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
+            AetherAutomationMessage(platform: platform, text: "Tour complete: quitting in five seconds"),
             AetherAutomationWait(seconds: 5),
             AetherAutomationInteraction(platform: platform, enabled: true),
             AetherAutomationTap(platform: platform, target: .autoID("showcase.quit")),
@@ -423,16 +457,33 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private static let showcaseTourScript = """
     interaction off
     tap autoID showcase.home
+    message 'Home: starting the Showcase tour'
     wait 10
     tap autoID showcase.primitives
+    message 'Primitive Objects'
     wait 10
     tap autoID showcase.home
     tap autoID showcase.panels
-    wait 10
+    message 'Panel Objects: buttons and dialogs'
+    wait 5
+    tap autoID showcase.panels.next
+    message 'Checking checkbox and integer values'
+    check autoID showcase.toggle.checkbox true
+    tap autoID showcase.toggle.checkbox
+    check autoID showcase.toggle.checkbox false
+    tap autoID showcase.toggle.checkbox
+    check autoID showcase.toggle.checkbox true
+    check autoID showcase.integer 4
+    tap autoID showcase.integer
+    check autoID showcase.integer 5
+    message 'All control checks passed'
+    wait 5
     tap autoID showcase.home
     tap autoID showcase.materials
+    message 'Materials'
     wait 10
     tap autoID showcase.home
+    message 'Tour complete: quitting in five seconds'
     wait 5
     interaction on
     tap autoID showcase.quit
@@ -626,6 +677,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         let pageOneNext = makePanelNextButton(
             name: "Panel Page One Next"
         )
+        pageOneNext.autoID = "showcase.panels.next"
         pageOneNext.position = AetherPosition3D(
             x: 0.20,
             y: 0,
@@ -718,6 +770,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
         let intToggle = AetherIntToggleObject(
             name: "Integer Slider",
+            autoID: "showcase.integer",
             value: 4,
             range: 0...10,
             step: 1,
@@ -766,6 +819,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         let pageTwoNext = makePanelNextButton(
             name: "Panel Page Two Next"
         )
+        pageTwoNext.autoID = "showcase.panels.next"
         pageTwoNext.position = AetherPosition3D(
             x: 0.20,
             y: 0,
@@ -968,6 +1022,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
         let toggle = AetherBoolToggleObject(
             name: name + " Toggle",
+            autoID: "showcase.toggle." + name.lowercased(),
             value: value,
             flavor: flavor,
             offMaterial: Material.button,

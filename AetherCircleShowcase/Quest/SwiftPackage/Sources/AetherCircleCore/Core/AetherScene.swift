@@ -72,3 +72,47 @@ public final class AetherScene: @unchecked Sendable {
         objects.removeAll()
     }
 }
+
+public extension AetherScene {
+    /// Finds exactly one visible element, including visible composite descendants.
+    func findObject(_ target: AetherAutomationTarget) throws -> AetherBasicObject {
+        var matches: [AetherBasicObject] = []
+        func visit(_ objects: [AetherBasicObject]) {
+            for object in objects where object.isVisible {
+                let matchesTarget: Bool
+                switch target {
+                case .id(let value): matchesTarget = object.id == value
+                case .tag(let value): matchesTarget = object.tag == value
+                case .name(let value): matchesTarget = object.name == value
+                case .autoID(let value): matchesTarget = !value.isEmpty && object.autoID == value
+                case .title(let value):
+                    if let button = object as? AetherButtonObject {
+                        matchesTarget = button.title == value
+                    } else if let panel = object as? AetherPanelObject {
+                        matchesTarget = panel.title == value
+                    } else { matchesTarget = false }
+                }
+                if matchesTarget { matches.append(object) }
+                if let composite = object as? AetherCompositeObject { visit(composite.children) }
+            }
+        }
+        visit(objects)
+        guard !matches.isEmpty else { throw AetherAutomationError.targetNotFound }
+        guard matches.count == 1 else { throw AetherAutomationError.ambiguousTarget }
+        return matches[0]
+    }
+
+    /// Performs the same activation action used by platform input.
+    func tapObject(_ target: AetherAutomationTarget) throws {
+        let object = try findObject(target)
+        guard let action = object.config?.activateAction else {
+            throw AetherAutomationError.cannotActivate
+        }
+        action()
+    }
+
+    /// Reads the object's automation value through the shared interface.
+    func objectValue(_ target: AetherAutomationTarget) throws -> String {
+        try findObject(target).aetherObjectValue()
+    }
+}

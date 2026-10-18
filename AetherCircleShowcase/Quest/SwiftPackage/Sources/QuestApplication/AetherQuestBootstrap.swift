@@ -60,8 +60,10 @@ private final class QuestPlatform: AetherPlatform, @unchecked Sendable {
     var deviceManufacturer: String { "Meta" }
     let automationRunner = AetherAutomationRunner()
     var canRunAutomation: Bool { true }
-    func runScript(_ script: AetherAutomationScript) async throws {
+    @discardableResult
+    func runScript(_ script: AetherAutomationScript) async throws -> Bool {
         try await automationRunner.run(script)
+        return true
     }
     nonisolated var canSetUserInteractionEnabled: Bool { true }
     nonisolated(unsafe) private(set) var isUserInteractionEnabled = true
@@ -99,6 +101,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     var supportsPassthrough = false
     let environmentEngine = QuestEnvironmentEngine()
     let assetEngine = QuestAssetEngine()
+    let hudEngine = AetherHUDDummy()
     let platformServices = QuestPlatform()
     private var application: AetherApplication?
     var renderObjects: [AetherBasicObject] = []
@@ -131,7 +134,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         let world = AetherWorld(
             graphicEngine: graphicEngine,
             environmentEngine: environmentEngine,
-            hudEngine: AetherHUDDummy(),
+            hudEngine: hudEngine,
             clockEngine: AetherClockDummy(),
             assetEngine: assetEngine,
             capabilities: AetherCapabilities(
@@ -275,13 +278,11 @@ public func aethercircleSwiftPrepareScene() {
     runtime.platformServices.automationRunner.update(
         now: ProcessInfo.processInfo.systemUptime,
         activate: { target in
-            let object = try target.resolve(in: runtime.graphicEngine.scene)
-            guard let action = object.config?.activateAction else {
-                throw AetherAutomationError.cannotActivate
-            }
-            action()
+            try runtime.graphicEngine.scene.tapObject(target)
         },
-        setInteractionEnabled: { _ = runtime.platformServices.setUserInteractionEnabled($0) }
+        setInteractionEnabled: { _ = runtime.platformServices.setUserInteractionEnabled($0) },
+        showMessage: { runtime.hudEngine.present(.banner(text: $0, onClose: nil)) },
+        readValue: { try runtime.graphicEngine.scene.objectValue($0) }
     )
     runtime.prepareRenderScene()
 }
@@ -329,7 +330,7 @@ public func aethercircleSwiftActivate(_ index: Int32) {
     guard QuestSwiftRuntime.shared.platformServices.isUserInteractionEnabled,
           let object = QuestSwiftRuntime.shared.object(at: index),
           object.isVisible, let config = object.config, config.canTarget else { return }
-    config.activateAction?()
+    try? QuestSwiftRuntime.shared.graphicEngine.scene.tapObject(.id(object.id))
     QuestSwiftRuntime.shared.prepareRenderScene()
 }
 

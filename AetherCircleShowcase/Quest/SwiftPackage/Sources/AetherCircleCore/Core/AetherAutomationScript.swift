@@ -10,7 +10,9 @@ public enum AetherAutomationTarget: Sendable, Equatable {
 
 public enum AetherAutomationCommand: Sendable, Equatable {
     case wait(TimeInterval)
+    case message(String)
     case activate(AetherAutomationTarget)
+    case check(AetherAutomationTarget, String)
     case setUserInteractionEnabled(Bool)
 }
 
@@ -24,15 +26,28 @@ public enum AetherAutomationError: Error, Sendable, Equatable {
     case cannotActivate
     case stopped
     case requiresBackgroundThread
+    case checkFailed(AetherAutomationTarget, expected: String, actual: String?)
 }
 
 /// A reusable sequence of commands. Text is fully parsed before execution.
 public struct AetherAutomationScript: Sendable, Equatable {
     public var commands: [AetherAutomationCommand]
 
-    public init(commands: [AetherAutomationCommand]) { self.commands = commands }
+    /// Automatically disables physical input at start and enables it on completion,
+    /// failure, or host stop. Set false to manage interaction explicitly.
+    public var turnsOffInteraction: Bool
 
-    public init(text: String) throws {
+    public init(commands: [AetherAutomationCommand], turnsOffInteraction: Bool = true) {
+        self.commands = commands
+        self.turnsOffInteraction = turnsOffInteraction
+    }
+
+    /// Converts text to a reusable script without executing it.
+    public static func make(text: String, turnsOffInteraction: Bool = true) throws -> Self {
+        try Self(text: text, turnsOffInteraction: turnsOffInteraction)
+    }
+
+    public init(text: String, turnsOffInteraction: Bool = true) throws {
         var commands: [AetherAutomationCommand] = []
         for (offset, line) in text.components(separatedBy: .newlines).enumerated() {
             let tokens = try Self.tokens(line, line: offset + 1)
@@ -45,8 +60,9 @@ public struct AetherAutomationScript: Sendable, Equatable {
                 guard tokens.count == 2, let seconds = Double(tokens[1]),
                       seconds.isFinite, seconds >= 0 else { throw invalid() }
                 commands.append(.wait(seconds))
-            case "tap":
-                guard tokens.count == 3 else { throw invalid() }
+            case "tap", "check":
+                let isCheck = tokens[0] == "check"
+                guard tokens.count == (isCheck ? 4 : 3) else { throw invalid() }
                 let value = tokens[2]
                 let target: AetherAutomationTarget
                 switch tokens[1] {
@@ -63,7 +79,10 @@ public struct AetherAutomationScript: Sendable, Equatable {
                     target = .autoID(value)
                 default: throw invalid()
                 }
-                commands.append(.activate(target))
+                commands.append(isCheck ? .check(target, tokens[3]) : .activate(target))
+            case "message":
+                guard tokens.count == 2 else { throw invalid() }
+                commands.append(.message(tokens[1]))
             case "interaction":
                 guard tokens.count == 2, ["on", "off"].contains(tokens[1]) else {
                     throw invalid()
@@ -72,7 +91,7 @@ public struct AetherAutomationScript: Sendable, Equatable {
             default: throw invalid()
             }
         }
-        self.init(commands: commands)
+        self.init(commands: commands, turnsOffInteraction: turnsOffInteraction)
     }
 
     /// Quotes allow whitespace; backslash escapes the following character.
@@ -106,31 +125,28 @@ public struct AetherAutomationScript: Sendable, Equatable {
 }
 
 public extension AetherAutomationTarget {
-    /// Resolves exactly one visible object, including nested composite children.
+    /// Compatibility entry point; the scene owns lookup.
     func resolve(in scene: AetherScene?) throws -> AetherBasicObject {
-        var matches: [AetherBasicObject] = []
-        func visit(_ objects: [AetherBasicObject]) {
-            for object in objects where object.isVisible {
-                let matchesTarget: Bool
-                switch self {
-                case .id(let value): matchesTarget = object.id == value
-                case .tag(let value): matchesTarget = object.tag == value
-                case .name(let value): matchesTarget = object.name == value
-                case .autoID(let value): matchesTarget = !value.isEmpty && object.autoID == value
-                case .title(let value):
-                    if let button = object as? AetherButtonObject {
-                        matchesTarget = button.title == value
-                    } else if let panel = object as? AetherPanelObject {
-                        matchesTarget = panel.title == value
-                    } else { matchesTarget = false }
-                }
-                if matchesTarget { matches.append(object) }
-                if let composite = object as? AetherCompositeObject { visit(composite.children) }
-            }
+        guard let scene else { throw AetherAutomationError.targetNotFound }
+        return try scene.findObject(self)
+    }
+
+    var scriptDescription: String {
+        switch self {
+        case .id(let value): return "id " + value.uuidString
+        case .tag(let value): return "tag " + String(value)
+        case .name(let value): return "name " + value
+        case .title(let value): return "title " + value
+        case .autoID(let value): return "autoID " + value
         }
-        visit(scene?.objects ?? [])
-        guard !matches.isEmpty else { throw AetherAutomationError.targetNotFound }
-        guard matches.count == 1 else { throw AetherAutomationError.ambiguousTarget }
-        return matches[0]
+    }
+}
+
+public extension AetherAutomationError {
+    var hudMessage: String? {
+        if case .checkFailed(let target, let expected, _) = self {
+            return "check " + target.scriptDescription + " failed find " + expected
+        }
+        return nil
     }
 }

@@ -41,6 +41,32 @@ public struct AetherAutomationInteraction: AetherAutomationInvocable {
     }
 }
 
+public struct AetherAutomationMessage: AetherAutomationInvocable {
+    public let platform: any AetherPlatform
+    public let text: String
+    public init(platform: any AetherPlatform, text: String) {
+        self.platform = platform
+        self.text = text
+    }
+    public func invoke() throws {
+        try AetherAutomationCommand.message(text).invoke(on: platform)
+    }
+}
+
+public struct AetherAutomationCheck: AetherAutomationInvocable {
+    public let platform: any AetherPlatform
+    public let target: AetherAutomationTarget
+    public let expected: String
+    public init(platform: any AetherPlatform, target: AetherAutomationTarget, expected: String) {
+        self.platform = platform
+        self.target = target
+        self.expected = expected
+    }
+    public func invoke() throws {
+        try AetherAutomationCommand.check(target, expected).invoke(on: platform)
+    }
+}
+
 public extension AetherAutomationCommand {
     /// Execute one command synchronously. Tap and interaction calls must originate
     /// on a worker thread: they wait for the existing frame-driven dispatcher.
@@ -56,7 +82,7 @@ public extension AetherAutomationCommand {
         let completion = InvocationCompletion()
         Task.detached {
             do {
-                try await platform.runScript(AetherAutomationScript(commands: [self]))
+                try await platform.runScript(AetherAutomationScript(commands: [self], turnsOffInteraction: false))
                 completion.finish(.success(()))
             } catch {
                 completion.finish(.failure(error))
