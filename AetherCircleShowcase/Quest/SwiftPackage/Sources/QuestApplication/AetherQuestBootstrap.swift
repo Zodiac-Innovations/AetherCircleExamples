@@ -146,7 +146,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
 
     var galleryNames: [String] {
         switch environmentEngine.mode {
-        case .images2DFiles(let names, _), .images2DImages(let names, _): return Array(names.prefix(8))
+        case .photo2DFiles(let names, _), .photo2DImages(let names, _): return Array(names.prefix(8))
         default: return []
         }
     }
@@ -154,13 +154,13 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         let slot = Int(-bridgeIndex - 10)
         let names = galleryNames
         guard slot >= 0, slot < names.count else { return nil }
-        if case .images2DFiles = environmentEngine.mode { return .file(names[slot]) }
+        if case .photo2DFiles = environmentEngine.mode { return .file(names[slot]) }
         return assetEngine.registeredImage(for: names[slot])
     }
     func registeredImageKey(at bridgeIndex: Int32) -> String? {
         if bridgeIndex == -1 { return registeredEnvironmentImageKey }
         let slot = Int(-bridgeIndex - 10)
-        if case .images2DImages = environmentEngine.mode, slot >= 0, slot < galleryNames.count {
+        if case .photo2DImages = environmentEngine.mode, slot >= 0, slot < galleryNames.count {
             return galleryNames[slot]
         }
         return nil
@@ -169,7 +169,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     /// Bridge index -1 is reserved for the environment, outside scene interaction.
     var environmentMaterial: AetherMaterial? {
         switch environmentEngine.mode {
-        case .materialVR(let material), .images2DFiles(_, let material), .images2DImages(_, let material): return material
+        case .materialVR(let material), .photo2DFiles(_, let material), .photo2DImages(_, let material): return material
         case .image360File(let name, _), .panoramaFile(let name, _): return .texture(baseColorTexture: name)
         case .image360Image(let key, _), .panoramaImage(let key, _):
             guard let entry = assetEngine.imageRegistry.entry(for: key) else { return nil }
@@ -337,14 +337,14 @@ public func aethercircleSwiftObjectValue(
         switch value {
         case 0: return runtime.environmentMaterial == nil ? 0 : 1
         case 1:
-            if case .images2DFiles = runtime.environmentEngine.mode { return 12 }
-            if case .images2DImages = runtime.environmentEngine.mode { return 12 }
+            if case .photo2DFiles = runtime.environmentEngine.mode { return 12 }
+            if case .photo2DImages = runtime.environmentEngine.mode { return 12 }
             if case .materialVR = runtime.environmentEngine.mode { return 12 }
             if case .floorMaterial = runtime.environmentEngine.mode { return 12 }
             return 1
         case 2:
-            if case .images2DFiles = runtime.environmentEngine.mode { return 6 }
-            if case .images2DImages = runtime.environmentEngine.mode { return 6 }
+            if case .photo2DFiles = runtime.environmentEngine.mode { return 6 }
+            if case .photo2DImages = runtime.environmentEngine.mode { return 6 }
             if case .materialVR = runtime.environmentEngine.mode { return 6 }
             if case .floorMaterial = runtime.environmentEngine.mode { return 6 }
             return 1
