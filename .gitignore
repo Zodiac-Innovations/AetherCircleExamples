@@ -66,3 +66,15 @@ fastlane/test_output
 
 # macOS Finder metadata
 **/.DS_Store
+
+# Android / Quest generated build files and local configuration
+**/build/
+**/.gradle/
+**/.cxx/
+**/.externalNativeBuild/
+**/local.properties
+*.apk
+*.aab
+
+# Android Studio local project settings
+**/.idea/
