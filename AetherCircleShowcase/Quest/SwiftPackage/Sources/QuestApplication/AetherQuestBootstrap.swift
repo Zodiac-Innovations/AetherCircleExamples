@@ -112,8 +112,15 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         switch environmentEngine.mode {
         case .materialVR(let material): return material
         case .image360(let name, _): return .texture(baseColorTexture: name)
+        case .floorMaterial(_, let sky): return sky
         default: return nil
         }
+    }
+
+    /// Bridge index -2 is the floor; it is never a tappable scene object.
+    var floorMaterial: AetherMaterial? {
+        if case .floorMaterial(let floor, _) = environmentEngine.mode { return floor }
+        return nil
     }
 
     func prepareRenderScene() {
@@ -228,15 +235,27 @@ public func aethercircleSwiftObjectValue(
     _ index: Int32,
     _ value: Int32
 ) -> Float {
+    if index == -2 {
+        let runtime = QuestSwiftRuntime.shared
+        guard let material = runtime.floorMaterial else { return 0 }
+        switch value {
+        case 0: return 1
+        case 14: return runtime.assetEngine.surface(for: material).roughness
+        case 15: return runtime.assetEngine.surface(for: material).metallic
+        default: return 0
+        }
+    }
     if index == -1 {
         let runtime = QuestSwiftRuntime.shared
         switch value {
         case 0: return runtime.environmentMaterial == nil ? 0 : 1
         case 1:
             if case .materialVR = runtime.environmentEngine.mode { return 12 }
+            if case .floorMaterial = runtime.environmentEngine.mode { return 12 }
             return 1
         case 2:
             if case .materialVR = runtime.environmentEngine.mode { return 6 }
+            if case .floorMaterial = runtime.environmentEngine.mode { return 6 }
             return 1
         case 3:
             if case .image360(_, let layout) = runtime.environmentEngine.mode {
@@ -247,7 +266,9 @@ public func aethercircleSwiftObjectValue(
                 }
             }
             return -1
-        case 4: return runtime.environmentEngine.mode.placement == .userCentered ? 1 : 0
+        case 4:
+            if case .floorMaterial = runtime.environmentEngine.mode { return 1 }
+            return runtime.environmentEngine.mode.placement == .userCentered ? 1 : 0
         default: return 0
         }
     }
@@ -282,7 +303,7 @@ public func aethercircleSwiftObjectColor(
     _ component: Int32
 ) -> Float {
     let runtime = QuestSwiftRuntime.shared
-    guard let material = index == -1 ? runtime.environmentMaterial : runtime.object(at: index)?.material else { return 0 }
+    guard let material = index == -1 ? runtime.environmentMaterial : (index == -2 ? runtime.floorMaterial : runtime.object(at: index)?.material) else { return 0 }
     let color = runtime.assetEngine.surface(for: material).baseColor
     switch component {
     case 0: return color.red
@@ -381,7 +402,7 @@ public func aethercircleSwiftObjectTexture(
     _ index: Int32, _ buffer: UnsafeMutablePointer<CChar>?, _ capacity: Int32
 ) -> Int32 {
     let runtime = QuestSwiftRuntime.shared
-    let material = index == -1 ? runtime.environmentMaterial : runtime.object(at: index)?.material
+    let material = index == -1 ? runtime.environmentMaterial : (index == -2 ? runtime.floorMaterial : runtime.object(at: index)?.material)
     let filename = material.flatMap { runtime.assetEngine.surface(for: $0).baseColorTexture } ?? ""
     let bytes = Array(filename.utf8)
     if let buffer, capacity > 0 {

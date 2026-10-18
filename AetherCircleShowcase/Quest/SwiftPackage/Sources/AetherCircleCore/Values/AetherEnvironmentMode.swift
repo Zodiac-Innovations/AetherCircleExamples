@@ -30,11 +30,14 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     /// Stereo layouts contain distinct left- and right-eye views.
     case image360(String, layout: AetherImage360Layout = .mono)
 
+    /// A world-fixed tiled floor at y=0 beneath a sky with no translation parallax.
+    case floorMaterial(floor: AetherMaterial, sky: AetherMaterial)
+
     /// Each environment has exactly one placement behavior. This is derived
     /// from its case so an application cannot accidentally mix both behaviors.
     public var placement: AetherEnvironmentPlacement {
         switch self {
-        case .passthrough, .blankVR: return .worldFixed
+        case .passthrough, .blankVR, .floorMaterial: return .worldFixed
         case .materialVR, .image360: return .userCentered
         }
     }

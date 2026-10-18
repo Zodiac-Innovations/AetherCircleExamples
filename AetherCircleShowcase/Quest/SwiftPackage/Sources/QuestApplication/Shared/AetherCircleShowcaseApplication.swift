@@ -327,6 +327,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
         choices.append(("360 Venice", "photo-mono", .image360("environment-venice-360.jpg")))
         choices.append(("Stereo 360", "photo-stereo", .image360("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
+        choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: Material.darkWalnut, sky: Material.blue)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {
             objects.append(AetherButtonObject(
@@ -338,7 +339,16 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 material: Material.button, textMaterial: Material.white,
                 position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.65 - AetherFloat(index / 2) * 0.25, z: sceneDepth),
                 targetAppearance: .goldenGlow,
-                action: { self.world.environmentEngine.mode = choice.2 }
+                action: {
+                    if choice.1 == "floor-material" {
+                        let floor = patterns.randomElement()?.1 ?? Material.darkWalnut
+                        let sky = [Material.red, Material.green, Material.blue, Material.yellow,
+                                   Material.orange, Material.purple, Material.cyan, Material.pink].randomElement() ?? Material.blue
+                        self.world.environmentEngine.mode = .floorMaterial(floor: floor, sky: sky)
+                    } else {
+                        self.world.environmentEngine.mode = choice.2
+                    }
+                }
             ))
         }
         world.graphicEngine.changeToScene(AetherScene(name: "Environment", objects: objects))

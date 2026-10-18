@@ -703,6 +703,15 @@ void main(){
                                  int(swift.objectValue(-1,3)),int(i));
                         glDepthMask(GL_TRUE);
                     }
+                    if(swift.objectValue(-2,0)>0) {
+                        std::array<float,4> color{};for(int c=0;c<4;++c)color[c]=swift.objectColor(-2,c);
+                        const float x=(views[0].pose.position.x+views[1].pose.position.x)*.5f;
+                        const float z=(views[0].pose.position.z+views[1].pose.position.z)*.5f;
+                        Matrix model=Matrix::translation(std::floor(x/256)*256,0,std::floor(z/256)*256)*Matrix::scale(2048,1,2048);
+                        static const std::vector<float> floor={-.5f,0,-.5f, -.5f,0,.5f, .5f,0,.5f, -.5f,0,-.5f, .5f,0,.5f, .5f,0,-.5f};
+                        geometry(floor,Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
+                                 color,textureFor(-2),swift.objectValue(-2,14),swift.objectValue(-2,15),true,model,false,2048,2048);
+                    }
                     drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose));
                     if(placementReady && !loggedDrawing && i==0) {
                         GLenum error=glGetError();
