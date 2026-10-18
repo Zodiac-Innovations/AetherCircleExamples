@@ -33,11 +33,11 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     /// A registered image key, resolved when the environment is selected.
     case image360Image(String, layout: AetherImage360Layout = .mono)
 
-    /// A partial cylindrical panorama from a bundled file. Capture angle defaults to 270 degrees.
-    case panoramaFile(String, horizontalDegrees: AetherFloat = 270)
+    /// A partial cylindrical panorama from a bundled file. Angle uses metadata when omitted, then falls back to 270 degrees.
+    case panoramaFile(String, horizontalDegrees: AetherFloat? = nil)
 
     /// A partial cylindrical panorama from a registered image key.
-    case panoramaImage(String, horizontalDegrees: AetherFloat = 270)
+    case panoramaImage(String, horizontalDegrees: AetherFloat? = nil)
 
     /// A world-fixed tiled floor at y=0 beneath a sky with no translation parallax.
     case floorMaterial(floor: AetherMaterial, sky: AetherMaterial)

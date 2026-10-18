@@ -363,7 +363,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
         choices.append(("Internet 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
         choices.append(("Image Stereo SBS", "image-stereo", .image360Image(EnvironmentImageKey.stereo, layout: .stereoSideBySide)))
-        choices.append(("Panorama 270", "panorama-270", .panoramaFile("environment-hahneberg-panorama.jpg")))
+        choices.append(("Panorama Auto", "panorama-auto", .panoramaFile("environment-hahneberg-panorama.jpg")))
+        choices.append(("Panorama Override", "panorama-override", .panoramaFile("environment-hahneberg-panorama.jpg", horizontalDegrees: 180)))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: Material.darkWalnut, sky: Material.blue)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {

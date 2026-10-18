@@ -42,3 +42,5 @@ The `Internet 360 Mono` button downloads the original 8192 x 4096 Venice Sunset 
 - Changes: resized from 15775 x 1997 to 4096 x 519 and recompressed for Showcase.
 - The source describes an approximately 270-degree stitched camera panorama. It is not a full-sphere 360 image and is not claimed to have been captured with a phone.
 - Showcase button: `Panorama 270`. The image is rendered once on a cylindrical arc, with its original aspect ratio preserved and dark surroundings outside the captured view.
+
+Metadata demo update: Showcase adds GPano XMP crop-width/full-width values of 4096 / 5461 (approximately 270 degrees) to encode the source's approximately 270-degree coverage. These are demonstration metadata added by this project, not original camera metadata. `Panorama Auto` reads that angle; `Panorama Override` deliberately overrides it with 180 degrees for comparison.

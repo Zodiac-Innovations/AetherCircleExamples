@@ -51,10 +51,10 @@ private final class QuestAssetEngine: AetherAssetEngine {
 }
 
 private final class QuestPlatform: AetherPlatform, @unchecked Sendable {
-    let appName = "AetherCircle Showcase"
-    let appIdentifier = "com.zodiacinnovations.aethercircleshowcase"
-    let appVersion = "0.1.0"
-    let appBuild = "1"
+    let appName = {{DISPLAY_NAME_SWIFT}}
+    let appIdentifier = "{{PACKAGE_NAME}}"
+    let appVersion = "{{VERSION}}"
+    let appBuild = "{{BUILD}}"
     var platformName: String { "Meta Quest" }
     var platformType: AetherPlatformType { .quest }
     var deviceType: AetherDeviceType { .headset }
@@ -107,6 +107,31 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     private var application: AetherApplication?
     var renderObjects: [AetherBasicObject] = []
     var renderParents: [Int32] = []
+
+    private var panoramaAngleCache: [String: AetherFloat] = [:]
+    func panoramaDegrees(override: AetherFloat?) -> AetherFloat {
+        if let override { return override }
+        let image: AetherImageResource
+        let cacheKey: String
+        switch environmentEngine.mode {
+        case .panoramaFile(let name, _): image = .file(name); cacheKey = "file:" + name
+        case .panoramaImage(let key, _):
+            guard let entry = assetEngine.imageRegistry.entry(for: key) else { return 270 }
+            image = entry.image; cacheKey = "image:\(key):\(entry.revision)"
+        default: return 270
+        }
+        if let cached = panoramaAngleCache[cacheKey] { return cached }
+        let data: Data?
+        switch image {
+        case .data(let encoded): data = encoded
+        case .file(let name): data = platformServices.resourceRetrieve(name: name, type: .image)
+        }
+        // Retry if native resource extraction has not completed yet.
+        guard let data else { return 270 }
+        let angle = AetherPanoramaMetadata.resolvedHorizontalDegrees(imageData: data)
+        panoramaAngleCache = [cacheKey: angle]
+        return angle
+    }
 
     /// Bridge index -1 is reserved for the environment, outside scene interaction.
     var environmentMaterial: AetherMaterial? {
@@ -177,9 +202,9 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
             ),
             platform: platformServices
         )
-        let application = AetherCircleShowcaseApplication(
+        let application = {{PROJECT_NAME}}Application(
             world: world,
-            name: "AetherCircle Showcase"
+            name: {{DISPLAY_NAME_SWIFT}}
         )
         self.application = application
         application.start()
@@ -288,7 +313,7 @@ public func aethercircleSwiftObjectValue(
             return runtime.environmentEngine.mode.placement == .userCentered ? 1 : 0
         case 5:
             switch runtime.environmentEngine.mode {
-            case .panoramaFile(_, let degrees), .panoramaImage(_, let degrees): return degrees
+            case .panoramaFile(_, let degrees), .panoramaImage(_, let degrees): return runtime.panoramaDegrees(override: degrees)
             default: return 360
             }
         default: return 0
