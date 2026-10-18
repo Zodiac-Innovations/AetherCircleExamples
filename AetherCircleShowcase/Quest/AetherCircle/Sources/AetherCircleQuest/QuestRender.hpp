@@ -241,6 +241,7 @@ class QuestRenderer {
 
     AAssetManager* assets=nullptr;
     std::map<std::string,GLuint> textures;
+    std::map<GLuint,std::array<int,2>> textureSizes;
     std::string registeredEnvironmentTextureKey;
     std::map<int,std::vector<float>> meshes;
     GLint panoramaLayoutLocation=-1,panoramaEyeLocation=-1;
@@ -257,7 +258,7 @@ class QuestRenderer {
         if(registered && registeredEnvironmentTextureKey!=filename) {
             auto previous=textures.find(registeredEnvironmentTextureKey);
             if(previous!=textures.end()) {
-                if(previous->second)glDeleteTextures(1,&previous->second);
+                if(previous->second){textureSizes.erase(previous->second);glDeleteTextures(1,&previous->second);}
                 textures.erase(previous);
             }
             registeredEnvironmentTextureKey=filename;
@@ -286,7 +287,7 @@ class QuestRenderer {
             width=AImageDecoderHeaderInfo_getWidth(header);height=AImageDecoderHeaderInfo_getHeight(header);
             const int panoramaLayout=object==-1?int(swift.objectValue(-1,3)):-1;
             const int panoramaRatio=panoramaLayout==1?1:(panoramaLayout==2?4:2);
-            if(panoramaLayout>=0 && width!=height*panoramaRatio) {
+            if(panoramaLayout>=0 && panoramaLayout<=2 && width!=height*panoramaRatio) {
                 __android_log_print(ANDROID_LOG_ERROR,logTag,"Invalid 360 image dimensions: %s (%dx%d)",filename.c_str(),width,height);
                 width=0;
             }
@@ -297,6 +298,7 @@ class QuestRenderer {
                 result=AImageDecoder_decodeImage(decoder,pixels.data(),width*4,pixels.size());
                 if(result==ANDROID_IMAGE_DECODER_SUCCESS) {
                     glGenTextures(1,&texture);glBindTexture(GL_TEXTURE_2D,texture);
+                    textureSizes[texture]={width,height};
                     glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels.data());
                     // Packed stereo eyes must never blend across eye boundaries in mipmaps.
                     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,panoramaLayout>=0?GL_LINEAR:GL_LINEAR_MIPMAP_LINEAR);
@@ -384,7 +386,7 @@ class QuestRenderer {
     }
     void geometry(const std::vector<float>& vertices,const Matrix& matrix,const std::array<float,4>& color,
                   GLuint texture=0,float roughness=.5f,float metallic=0,bool lit=false,
-                  const Matrix& model=Matrix::identity(),bool spherical=false,float repeatU=1,float repeatV=1,int panoramaLayout=-1,int panoramaEye=0) {
+                  const Matrix& model=Matrix::identity(),bool spherical=false,float repeatU=1,float repeatV=1,int panoramaLayout=-1,int panoramaEye=0,float panoramaRadians=6.2831853f,float panoramaHeight=1) {
         if(vertices.empty() || color[3]<=0)return;
         std::vector<float> data;data.reserve(vertices.size()/3*8);
         for(size_t i=0;i+8<vertices.size();i+=9) {
@@ -411,6 +413,10 @@ class QuestRenderer {
                 if(std::abs(ny)>std::abs(nx) && std::abs(ny)>std::abs(nz)){u=x+.5f;v=z+.5f;}
                 else if(std::abs(nx)>std::abs(nz)){u=z+.5f;v=y+.5f;}
                 if(spherical){u=longitude[vertex];v=std::acos(std::clamp(y*2,-1.f,1.f))/3.14159265f;}
+                if(panoramaLayout==3) {
+                    u=std::atan2(x,-z)/panoramaRadians+.5f;
+                    v=.5f-y/panoramaHeight;
+                }
                 data.insert(data.end(),{x,y,z,nx,ny,nz,u*repeatU,(1-v)*repeatV});
             }
         }
@@ -424,6 +430,30 @@ class QuestRenderer {
         glBufferData(GL_ARRAY_BUFFER,static_cast<GLsizeiptr>(data.size()*sizeof(float)),data.data(),GL_STREAM_DRAW);
         glDrawArrays(GL_TRIANGLES,0,static_cast<GLsizei>(data.size()/8));++drawCalls;
     }
+    void drawCameraPanorama(const Matrix& camera,const XrVector3f& center) {
+        const GLuint texture=textureFor(-1);
+        const auto dimensions=textureSizes.find(texture);
+        const float degrees=swift.objectValue(-1,5);
+        if(!texture || dimensions==textureSizes.end() || !std::isfinite(degrees) || degrees<=0 || degrees>360)return;
+        const float radians=degrees*3.14159265f/180;
+        const float height=radians*float(dimensions->second[1])/float(dimensions->second[0]);
+        const int segments=std::max(8,int(std::ceil(degrees/2)));
+        std::vector<float> vertices;
+        auto point=[&](int column,float v)->std::array<float,3>{
+            float angle=(float(column)/segments-.5f)*radians;
+            float x=std::sin(angle);
+            if(degrees==360 && (column==0 || column==segments))x=column==0?-0.0f:0.0f;
+            return {x,(v-.5f)*height,-std::cos(angle)};
+        };
+        auto triangle=[&](auto a,auto b,auto c){for(auto p:{a,b,c})vertices.insert(vertices.end(),p.begin(),p.end());};
+        for(int column=0;column<segments;++column){
+            auto a=point(column,0),b=point(column+1,0),c=point(column,1),d=point(column+1,1);
+            triangle(a,b,c);triangle(b,d,c);
+        }
+        Matrix model=Matrix::translation(center.x,center.y,center.z)*Matrix::scale(50,50,50);
+        geometry(vertices,camera*model,{1,1,1,1},texture,1,0,false,model,false,1,1,3,0,radians,height);
+    }
+
     void drawScene(const Matrix& camera) {
         const int count=swift.objectCount();
         transforms.resize(count);
@@ -572,7 +602,7 @@ void main(){
  if(panoramaLayout>=0){
    // Decoder rows begin at the image top. Sphere UVs begin at the bottom.
    vec2 texel=1.0/vec2(textureSize(baseTexture,0));
-   uv=vec2(fract(uv.x),clamp(1.0-uv.y,texel.y*.5,1.0-texel.y*.5));
+   uv=vec2(panoramaLayout==3?clamp(uv.x,texel.x*.5,1.0-texel.x*.5):fract(uv.x),clamp(1.0-uv.y,texel.y*.5,1.0-texel.y*.5));
    if(panoramaLayout==1){
      uv.y=clamp((uv.y+float(panoramaEye))*.5,float(panoramaEye)*.5+texel.y*.5,float(panoramaEye+1)*.5-texel.y*.5);
    } else if(panoramaLayout==2){
@@ -705,7 +735,7 @@ void main(){
                     glViewport(0,0,eye.width,eye.height);glDisable(GL_SCISSOR_TEST);glDisable(GL_CULL_FACE);
                     glEnable(GL_DEPTH_TEST);glDepthFunc(GL_LEQUAL);glDepthMask(GL_TRUE);
                     glEnable(GL_BLEND);glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
-                    if(usePassthrough)glClearColor(0,0,0,0);else glClearColor(.025f,.035f,.065f,1);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+                    if(usePassthrough)glClearColor(0,0,0,0);else if(int(swift.objectValue(-1,3))==3)glClearColor(0,0,0,1);else glClearColor(.025f,.035f,.065f,1);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
                     glUseProgram(program);glBindVertexArray(vao);glBindBuffer(GL_ARRAY_BUFFER,vbo);
                     drawCalls=0;
                     // Draw a head-centered globe first, without writing depth or receiving lighting.
@@ -721,9 +751,13 @@ void main(){
                         }:XrVector3f{0,0,0};
                         Matrix model=Matrix::translation(center.x,center.y,center.z)*Matrix::scale(100,100,100);
                         glDepthMask(GL_FALSE);
-                        geometry(meshFor(1,{}),Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
-                                 color,textureFor(-1),1,0,false,model,true,swift.objectValue(-1,1),swift.objectValue(-1,2),
-                                 int(swift.objectValue(-1,3)),int(i));
+                        if(int(swift.objectValue(-1,3))==3) {
+                            drawCameraPanorama(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose),center);
+                        } else {
+                            geometry(meshFor(1,{}),Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
+                                     color,textureFor(-1),1,0,false,model,true,swift.objectValue(-1,1),swift.objectValue(-1,2),
+                                     int(swift.objectValue(-1,3)),int(i));
+                        }
                         glDepthMask(GL_TRUE);
                     }
                     if(swift.objectValue(-2,0)>0) {

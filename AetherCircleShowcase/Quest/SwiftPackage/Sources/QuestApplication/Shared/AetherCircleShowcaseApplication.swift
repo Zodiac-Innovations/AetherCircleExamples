@@ -363,6 +363,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
         choices.append(("Internet 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
         choices.append(("Image Stereo SBS", "image-stereo", .image360Image(EnvironmentImageKey.stereo, layout: .stereoSideBySide)))
+        choices.append(("Panorama 270", "panorama-270", .panoramaFile("environment-hahneberg-panorama.jpg")))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: Material.darkWalnut, sky: Material.blue)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {
@@ -373,7 +374,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.65 - AetherFloat(index / 2) * 0.25, z: sceneDepth),
+                position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.68 - AetherFloat(index / 2) * 0.21, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: {
                     if choice.1 == "image-mono",

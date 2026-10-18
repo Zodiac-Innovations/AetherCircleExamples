@@ -31,3 +31,14 @@ Derived from DerMische's SphericalStereo 01, credited above, under the same CC B
 The resized top/bottom image was split into its original left and right eye views, arranged side by side (4096 x 1024), and recompressed. No new depth was generated. This image is registered as encoded data at startup for the `Image Stereo SBS` button.
 
 The `Internet 360 Mono` button downloads the original 8192 x 4096 Venice Sunset JPEG from the Poly Haven download URL above at startup and registers the returned data. It is disabled until that succeeds, with no embedded fallback. The same Greg Zaal / Poly Haven CC0 credit applies; this downloaded original is not resized by the app. The two `File` buttons and `Image Stereo SBS` remain offline examples.
+
+## environment-hahneberg-panorama.jpg
+
+- Title: Blick vom Hahneberg Berlin Spandau
+- Creator: Lordnikon
+- Source: https://commons.wikimedia.org/wiki/File:Blick_vom_hahneberg_berlin_spandau.jpg
+- Original image: https://upload.wikimedia.org/wikipedia/commons/d/d0/Blick_vom_hahneberg_berlin_spandau.jpg
+- License: released into the public domain by the creator (PD-self); see the source page's Licensing section.
+- Changes: resized from 15775 x 1997 to 4096 x 519 and recompressed for Showcase.
+- The source describes an approximately 270-degree stitched camera panorama. It is not a full-sphere 360 image and is not claimed to have been captured with a phone.
+- Showcase button: `Panorama 270`. The image is rendered once on a cylindrical arc, with its original aspect ratio preserved and dark surroundings outside the captured view.

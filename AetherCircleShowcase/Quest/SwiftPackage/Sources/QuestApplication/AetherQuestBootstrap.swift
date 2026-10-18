@@ -112,14 +112,21 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     var environmentMaterial: AetherMaterial? {
         switch environmentEngine.mode {
         case .materialVR(let material): return material
-        case .image360File(let name, _): return .texture(baseColorTexture: name)
-        case .image360Image(let key, _):
+        case .image360File(let name, _), .panoramaFile(let name, _): return .texture(baseColorTexture: name)
+        case .image360Image(let key, _), .panoramaImage(let key, _):
             guard let entry = assetEngine.imageRegistry.entry(for: key) else { return nil }
             switch entry.image {
             case .file(let name): return .texture(baseColorTexture: name)
             case .data: return .color(.white)
             }
         case .floorMaterial(_, let sky): return sky
+        default: return nil
+        }
+    }
+
+    var registeredEnvironmentImageKey: String? {
+        switch environmentEngine.mode {
+        case .image360Image(let key, _), .panoramaImage(let key, _): return key
         default: return nil
         }
     }
@@ -273,11 +280,17 @@ public func aethercircleSwiftObjectValue(
                 case .stereoTopBottom: return 1
                 case .stereoSideBySide: return 2
                 }
+            case .panoramaFile, .panoramaImage: return 3
             default: return -1
             }
         case 4:
             if case .floorMaterial = runtime.environmentEngine.mode { return 1 }
             return runtime.environmentEngine.mode.placement == .userCentered ? 1 : 0
+        case 5:
+            switch runtime.environmentEngine.mode {
+            case .panoramaFile(_, let degrees), .panoramaImage(_, let degrees): return degrees
+            default: return 360
+            }
         default: return 0
         }
     }
@@ -413,7 +426,7 @@ public func aethercircleSwiftObjectTexture(
     let runtime = QuestSwiftRuntime.shared
     let material = index == -1 ? runtime.environmentMaterial : (index == -2 ? runtime.floorMaterial : runtime.object(at: index)?.material)
     var filename = material.flatMap { runtime.assetEngine.surface(for: $0).baseColorTexture } ?? ""
-    if index == -1, case .image360Image(let key, _) = runtime.environmentEngine.mode,
+    if index == -1, let key = runtime.registeredEnvironmentImageKey,
        let entry = runtime.assetEngine.imageRegistry.entry(for: key), case .data = entry.image {
         filename = "@image:\(key):\(entry.revision)"
     }
@@ -444,7 +457,7 @@ public func aethercircleSwiftObjectTextureBytes(
     _ index: Int32, _ buffer: UnsafeMutablePointer<CChar>?, _ capacity: Int32
 ) -> Int32 {
     let runtime = QuestSwiftRuntime.shared
-    guard index == -1, case .image360Image(let key, _) = runtime.environmentEngine.mode,
+    guard index == -1, let key = runtime.registeredEnvironmentImageKey,
           case .data(let data)? = runtime.assetEngine.registeredImage(for: key),
           data.count <= Int(Int32.max) else { return 0 }
     if let buffer, capacity > 0 {
