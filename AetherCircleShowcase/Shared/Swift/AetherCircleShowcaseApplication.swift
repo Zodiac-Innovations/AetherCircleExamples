@@ -212,11 +212,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     private func showHomeScene() {
-        let title = makeTitle(
-            "AetherCircle Showcase",
-            y: 2.05
-        )
-
         let menu = AetherListButton(
             [
                 AetherTitleAction("Materials") { [weak self] in self?.showMaterialsScene() },
@@ -230,7 +225,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             size: AetherSize3D(x: 0.70, y: 0.16, z: 0.04),
             material: Material.button,
             textMaterial: Material.white,
-            position: AetherPosition3D(x: 0, y: 1.72, z: sceneDepth),
+            position: .zero,
             targetAppearance: .goldenGlow,
             rowSpacing: 0.06
         )
@@ -254,8 +249,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             panelButtonMaterial: Material.button,
             position: AetherPosition3D(
                 x: 0,
-                y: 0.52,
-                z: sceneDepth
+                y: -1.12,
+                z: 0
             ),
             targetAppearance: .goldenGlow,
             quitAction: {
@@ -269,13 +264,21 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             z: 0
         )
 
+        let arrangement = AetherBaseArrangement(
+            title: "AetherCircle Showcase",
+            elements: [menu, quit],
+            width: 1.4,
+            contentHeight: 1.22,
+            position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
+            name: "Home Arrangement",
+            autoID: "showcase.home-arrangement"
+        )
+
         world.graphicEngine.changeToScene(
             AetherScene(
                 name: "Showcase Home",
                 objects: [
-                    title,
-                    menu,
-                    quit,
+                    arrangement,
                 ]
             )
         )
