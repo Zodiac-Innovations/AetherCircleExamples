@@ -242,6 +242,7 @@ class QuestRenderer {
     AAssetManager* assets=nullptr;
     std::map<std::string,GLuint> textures;
     std::map<int,std::vector<float>> meshes;
+    GLint panoramaLayoutLocation=-1,panoramaEyeLocation=-1;
     GLint textureLocation=-1,texturedLocation=-1,lightingLocation=-1;
     GLint roughnessLocation=-1,metallicLocation=-1,modelLocation=-1;
 
@@ -260,6 +261,12 @@ class QuestRenderer {
         if(result==ANDROID_IMAGE_DECODER_SUCCESS) {
             auto header=AImageDecoder_getHeaderInfo(decoder);
             width=AImageDecoderHeaderInfo_getWidth(header);height=AImageDecoderHeaderInfo_getHeight(header);
+            const int panoramaLayout=object==-1?int(swift.objectValue(-1,3)):-1;
+            const int panoramaRatio=panoramaLayout==1?1:(panoramaLayout==2?4:2);
+            if(panoramaLayout>=0 && width!=height*panoramaRatio) {
+                __android_log_print(ANDROID_LOG_ERROR,logTag,"Invalid 360 image dimensions: %s (%dx%d)",filename.c_str(),width,height);
+                width=0;
+            }
             if(width<=0 || height<=0 || width>8192 || height>8192)result=-1;
             else result=AImageDecoder_setAndroidBitmapFormat(decoder,ANDROID_BITMAP_FORMAT_RGBA_8888);
             if(result==ANDROID_IMAGE_DECODER_SUCCESS) {
@@ -268,7 +275,8 @@ class QuestRenderer {
                 if(result==ANDROID_IMAGE_DECODER_SUCCESS) {
                     glGenTextures(1,&texture);glBindTexture(GL_TEXTURE_2D,texture);
                     glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels.data());
-                    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+                    // Packed stereo eyes must never blend across eye boundaries in mipmaps.
+                    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,panoramaLayout>=0?GL_LINEAR:GL_LINEAR_MIPMAP_LINEAR);
                     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
                     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
                     glGenerateMipmap(GL_TEXTURE_2D);
@@ -353,7 +361,7 @@ class QuestRenderer {
     }
     void geometry(const std::vector<float>& vertices,const Matrix& matrix,const std::array<float,4>& color,
                   GLuint texture=0,float roughness=.5f,float metallic=0,bool lit=false,
-                  const Matrix& model=Matrix::identity(),bool spherical=false,float repeatU=1,float repeatV=1) {
+                  const Matrix& model=Matrix::identity(),bool spherical=false,float repeatU=1,float repeatV=1,int panoramaLayout=-1,int panoramaEye=0) {
         if(vertices.empty() || color[3]<=0)return;
         std::vector<float> data;data.reserve(vertices.size()/3*8);
         for(size_t i=0;i+8<vertices.size();i+=9) {
@@ -362,18 +370,28 @@ class QuestRenderer {
             float nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
             float length=std::sqrt(nx*nx+ny*ny+nz*nz);
             if(length>1e-8f){nx/=length;ny/=length;nz/=length;}else{nx=0;ny=0;nz=1;}
+            // Unwrap each triangle across the longitude seam before interpolation.
+            std::array<float,3> longitude{};
+            if(spherical) {
+                for(int v=0;v<3;++v)longitude[v]=std::atan2(vertices[i+v*3+2],vertices[i+v*3])/(2*3.14159265f)+.5f;
+                auto bounds=std::minmax_element(longitude.begin(),longitude.end());
+                if(*bounds.second-*bounds.first>.5f)for(float& u:longitude)if(u<.5f)u+=1;
+                for(int v=0;v<3;++v)if(std::abs(vertices[i+v*3+1])>.49999f)
+                    longitude[v]=(longitude[(v+1)%3]+longitude[(v+2)%3])/2;
+            }
             for(int vertex=0;vertex<3;++vertex) {
                 float x=vertices[i+vertex*3],y=vertices[i+vertex*3+1],z=vertices[i+vertex*3+2];
                 float u=x+.5f,v=y+.5f;
                 if(std::abs(ny)>std::abs(nx) && std::abs(ny)>std::abs(nz)){u=x+.5f;v=z+.5f;}
                 else if(std::abs(nx)>std::abs(nz)){u=z+.5f;v=y+.5f;}
-                if(spherical){u=std::atan2(z,x)/(2*3.14159265f)+.5f;v=std::acos(std::clamp(y*2,-1.f,1.f))/3.14159265f;}
+                if(spherical){u=longitude[vertex];v=std::acos(std::clamp(y*2,-1.f,1.f))/3.14159265f;}
                 data.insert(data.end(),{x,y,z,nx,ny,nz,u*repeatU,(1-v)*repeatV});
             }
         }
         glUniformMatrix4fv(matrixLocation,1,GL_FALSE,matrix.m.data());
         glUniformMatrix4fv(modelLocation,1,GL_FALSE,model.m.data());
         glUniform4fv(colorLocation,1,color.data());
+        glUniform1i(panoramaLayoutLocation,panoramaLayout);glUniform1i(panoramaEyeLocation,panoramaEye);
         glUniform1i(texturedLocation,texture?1:0);glUniform1i(lightingLocation,lit?1:0);
         glUniform1f(roughnessLocation,std::clamp(roughness,0.f,1.f));glUniform1f(metallicLocation,std::clamp(metallic,0.f,1.f));
         glActiveTexture(GL_TEXTURE0);glBindTexture(GL_TEXTURE_2D,texture);glUniform1i(textureLocation,0);
@@ -520,10 +538,22 @@ void main(){gl_Position=matrix*vec4(position,1.0);surfaceNormal=transpose(invers
         const char* fs=R"(#version 300 es
 precision highp float;
 uniform vec4 color;uniform sampler2D baseTexture;
+uniform int panoramaLayout;uniform int panoramaEye;
 uniform int textured;uniform int lighting;uniform float roughness;uniform float metallic;
 in vec3 surfaceNormal;in vec2 textureUV;out vec4 outputColor;
 void main(){
- vec4 base=color;if(textured==1)base*=texture(baseTexture,textureUV);
+ vec2 uv=textureUV;
+ if(panoramaLayout>=0){
+   // Decoder rows begin at the image top. Sphere UVs begin at the bottom.
+   vec2 texel=1.0/vec2(textureSize(baseTexture,0));
+   uv=vec2(fract(uv.x),clamp(1.0-uv.y,texel.y*.5,1.0-texel.y*.5));
+   if(panoramaLayout==1){
+     uv.y=clamp((uv.y+float(panoramaEye))*.5,float(panoramaEye)*.5+texel.y*.5,float(panoramaEye+1)*.5-texel.y*.5);
+   } else if(panoramaLayout==2){
+     uv.x=clamp((uv.x+float(panoramaEye))*.5,float(panoramaEye)*.5+texel.x*.5,float(panoramaEye+1)*.5-texel.x*.5);
+   }
+ }
+ vec4 base=color;if(textured==1)base*=texture(baseTexture,uv);
  vec3 result=base.rgb;
  if(lighting==1){
    vec3 n=normalize(surfaceNormal);if(!gl_FrontFacing)n=-n;
@@ -541,6 +571,7 @@ void main(){
         glDeleteShader(vertex);glDeleteShader(fragment);
         GLint linked=0;glGetProgramiv(program,GL_LINK_STATUS,&linked);if(!linked)throw std::runtime_error("shader program link");
         matrixLocation=glGetUniformLocation(program,"matrix");colorLocation=glGetUniformLocation(program,"color");
+        panoramaLayoutLocation=glGetUniformLocation(program,"panoramaLayout");panoramaEyeLocation=glGetUniformLocation(program,"panoramaEye");
         textureLocation=glGetUniformLocation(program,"baseTexture");texturedLocation=glGetUniformLocation(program,"textured");
         lightingLocation=glGetUniformLocation(program,"lighting");roughnessLocation=glGetUniformLocation(program,"roughness");
         metallicLocation=glGetUniformLocation(program,"metallic");modelLocation=glGetUniformLocation(program,"model");
@@ -659,7 +690,8 @@ void main(){
                         Matrix model=Matrix::translation(views[i].pose.position.x,views[i].pose.position.y,views[i].pose.position.z)*Matrix::scale(100,100,100);
                         glDepthMask(GL_FALSE);
                         geometry(meshFor(1,{}),Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
-                                 color,textureFor(-1),1,0,false,model,true,12,6);
+                                 color,textureFor(-1),1,0,false,model,true,swift.objectValue(-1,1),swift.objectValue(-1,2),
+                                 int(swift.objectValue(-1,3)),int(i));
                         glDepthMask(GL_TRUE);
                     }
                     drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose));

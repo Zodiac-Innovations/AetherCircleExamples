@@ -109,8 +109,11 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
 
     /// Bridge index -1 is reserved for the environment, outside scene interaction.
     var environmentMaterial: AetherMaterial? {
-        if case .materialVR(let material) = environmentEngine.mode { return material }
-        return nil
+        switch environmentEngine.mode {
+        case .materialVR(let material): return material
+        case .image360(let name, _): return .texture(baseColorTexture: name)
+        default: return nil
+        }
     }
 
     func prepareRenderScene() {
@@ -194,7 +197,6 @@ public func aethercircleSwiftObjectCount() -> Int32 {
 
 @_cdecl("aethercircle_swift_object_primitive")
 public func aethercircleSwiftObjectPrimitive(_ index: Int32) -> Int32 {
-    if index == -1 { return QuestSwiftRuntime.shared.environmentMaterial == nil ? 0 : 1 }
     guard let object = QuestSwiftRuntime.shared.object(at: index) else {
         return -1
     }
@@ -226,6 +228,28 @@ public func aethercircleSwiftObjectValue(
     _ index: Int32,
     _ value: Int32
 ) -> Float {
+    if index == -1 {
+        let runtime = QuestSwiftRuntime.shared
+        switch value {
+        case 0: return runtime.environmentMaterial == nil ? 0 : 1
+        case 1:
+            if case .materialVR = runtime.environmentEngine.mode { return 12 }
+            return 1
+        case 2:
+            if case .materialVR = runtime.environmentEngine.mode { return 6 }
+            return 1
+        case 3:
+            if case .image360(_, let layout) = runtime.environmentEngine.mode {
+                switch layout {
+                case .mono: return 0
+                case .stereoTopBottom: return 1
+                case .stereoSideBySide: return 2
+                }
+            }
+            return -1
+        default: return 0
+        }
+    }
     guard let object = QuestSwiftRuntime.shared.object(at: index) else {
         return 0
     }

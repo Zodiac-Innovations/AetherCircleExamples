@@ -25,5 +25,19 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
 
     /// An unlit inward-facing globe. Base-color textures repeat around the user.
     case materialVR(AetherMaterial)
+
+    /// A complete equirectangular photograph, wrapped once around the user.
+    /// Stereo layouts contain distinct left- and right-eye views.
+    case image360(String, layout: AetherImage360Layout = .mono)
 }
 
+
+/// Explicit packing of equirectangular 360-degree photographs.
+public enum AetherImage360Layout: String, Sendable, Codable, Hashable, CaseIterable {
+    /// A single 2:1 panorama, shown to both eyes.
+    case mono
+    /// A square image: left eye on top, right eye on bottom.
+    case stereoTopBottom
+    /// A 4:1 image: left eye on the left, right eye on the right.
+    case stereoSideBySide
+}

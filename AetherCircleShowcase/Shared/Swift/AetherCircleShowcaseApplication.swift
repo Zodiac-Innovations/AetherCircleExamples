@@ -325,6 +325,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         for (index, pattern) in patterns.shuffled().prefix(3).enumerated() {
             choices.append((pattern.0, "pattern-\(index + 1)", .materialVR(pattern.1)))
         }
+        choices.append(("360 Venice", "photo-mono", .image360("environment-venice-360.jpg")))
+        choices.append(("Stereo 360", "photo-stereo", .image360("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
         var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
         for (index, choice) in choices.enumerated() {
             objects.append(AetherButtonObject(
@@ -334,7 +336,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: 0, y: 1.72 - AetherFloat(index) * 0.20, z: sceneDepth),
+                position: AetherPosition3D(x: index % 2 == 0 ? -0.46 : 0.46, y: 1.65 - AetherFloat(index / 2) * 0.25, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: { self.world.environmentEngine.mode = choice.2 }
             ))
