@@ -5,7 +5,7 @@ public enum AetherImageGalleryLayout {
     public static let maximumImageCount = 8
     public static let radius: AetherFloat = 4
     /// A 40-degree image width leaves a five-degree gap between adjacent slots.
-    public static let maximumWidth: AetherFloat = 2 * radius * tan(20 * .pi / 180)
+    public static let maximumWidth: AetherFloat = 2 * radius * AetherFloat(tan(Double(20) * Double.pi / 180))
     public static let maximumHeight: AetherFloat = 3
 
     /// Positive angles are to the viewer's right. Extra input images are ignored.
