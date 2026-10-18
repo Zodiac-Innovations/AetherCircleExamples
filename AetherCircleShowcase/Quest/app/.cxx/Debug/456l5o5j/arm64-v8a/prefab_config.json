@@ -1,7 +1,0 @@
-{
-  "enabled": true,
-  "prefabPath": "/Users/steve/.gradle/caches/modules-2/files-2.1/com.google.prefab/cli/2.1.0/aa32fec809c44fa531f01dcfb739b5b3304d3050/cli-2.1.0-all.jar",
-  "packages": [
-    "/Users/steve/.gradle/caches/9.5.0/transforms/640c23ae8c2436172ab537ced7a0c61e/transformed/openxr_loader_for_android-1.1.63/prefab"
-  ]
-}
