@@ -19,6 +19,6 @@ public struct AetherPanoramaGeometry: Sendable {
     /// Normalized image coordinates: u runs left to right, v bottom to top.
     public func position(u: AetherFloat, v: AetherFloat) -> AetherVector3 {
         let angle = (u - 0.5) * horizontalRadians
-        return AetherVector3(x: sin(angle), y: (v - 0.5) * heightAtUnitRadius, z: -cos(angle))
+        return AetherVector3(x: AetherFloat(sin(Double(angle))), y: (v - 0.5) * heightAtUnitRadius, z: -AetherFloat(cos(Double(angle))))
     }
 }
