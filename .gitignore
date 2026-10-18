@@ -78,3 +78,7 @@ fastlane/test_output
 
 # Android Studio local project settings
 **/.idea/
+
+# Quest Swift cross-compilation cache and generated native libraries
+**/.build-aethercircle-*/
+**/Quest/app/src/main/jniLibs/
