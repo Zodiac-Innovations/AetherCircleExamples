@@ -87,7 +87,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     /// One registered example is embedded; the other must arrive over HTTPS.
     private func registerEnvironmentImages() {
         #if os(visionOS)
-        if #available(visionOS 26.0, *) { registerSpatialDemo() }
+        if #available(visionOS 26.0, *), world.platform.canDecodeStereoHEIC { registerSpatialDemo() }
         #endif
         if let data = world.platform.resourceRetrieve(name: "environment-stereo-360-sbs", type: .image) {
             world.assetEngine.registerImage(key: EnvironmentImageKey.stereo, data: data)
@@ -406,7 +406,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             if choice.1 == "spatial-photo" {
                 let registry = world.assetEngine.imageRegistry
-                let supported = world.environmentEngine.supports(choice.2)
+                let supported = world.platform.canDecodeStereoHEIC
                 button.availabilityCheck = { supported && registry.entry(for: EnvironmentImageKey.spatial) != nil }
                 button.refreshAvailability()
             }

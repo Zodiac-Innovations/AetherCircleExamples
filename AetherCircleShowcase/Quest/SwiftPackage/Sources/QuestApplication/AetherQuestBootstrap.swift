@@ -67,6 +67,7 @@ private final class QuestPlatform: AetherPlatform, @unchecked Sendable {
     let appBuild = "{{BUILD}}"
     var platformName: String { "Meta Quest" }
     var platformType: AetherPlatformType { .quest }
+    var canDecodeStereoHEIC: Bool { false }
     var deviceType: AetherDeviceType { .headset }
     var deviceManufacturer: String { "Meta" }
     let automationRunner = AetherAutomationRunner()

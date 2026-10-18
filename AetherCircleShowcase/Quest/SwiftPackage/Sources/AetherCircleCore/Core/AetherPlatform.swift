@@ -81,6 +81,9 @@ public protocol AetherPlatform: AnyObject, Sendable {
     var appearanceMode: String { get }
     var deviceClass: String { get }
     var platformType: AetherPlatformType { get }
+    /// True when the platform can decode both eyes of a native stereo HEIC photo.
+    /// Ordinary single-image HEIC decoding alone does not satisfy this capability.
+    var canDecodeStereoHEIC: Bool { get }
     var deviceType: AetherDeviceType { get }
     var orientation: AetherOrientation { get }
 
@@ -176,6 +179,7 @@ public protocol AetherPlatform: AnyObject, Sendable {
 }
 
 public extension AetherPlatform {
+    var canDecodeStereoHEIC: Bool { false }
     var canRunAutomation: Bool { false }
     @discardableResult
     func runScript(_ script: AetherAutomationScript) async throws -> Bool {
