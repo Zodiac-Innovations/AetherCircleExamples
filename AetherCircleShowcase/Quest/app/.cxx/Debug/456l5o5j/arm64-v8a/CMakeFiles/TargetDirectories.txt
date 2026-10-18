@@ -1,0 +1,5 @@
+/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a/CMakeFiles/android_native_app_glue.dir
+/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a/CMakeFiles/aethercircle_quest.dir
+/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a/CMakeFiles/AetherCircleShowcaseQuest.dir
+/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a/CMakeFiles/edit_cache.dir
+/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a/CMakeFiles/rebuild_cache.dir

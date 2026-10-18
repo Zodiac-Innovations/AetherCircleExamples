@@ -1,0 +1,19 @@
+{
+  "": {
+    "swift-dependencies": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/primary.swiftdeps"
+  },
+  "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/Sources/QuestApplication/AetherQuestBootstrap.swift": {
+    "dependencies": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherQuestBootstrap.d",
+    "object": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherQuestBootstrap.swift.o",
+    "swiftmodule": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherQuestBootstrap~partial.swiftmodule",
+    "swift-dependencies": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherQuestBootstrap.swiftdeps",
+    "diagnostics": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherQuestBootstrap.dia"
+  },
+  "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/Sources/QuestApplication/Shared/AetherCircleShowcaseApplication.swift": {
+    "dependencies": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherCircleShowcaseApplication.d",
+    "object": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherCircleShowcaseApplication.swift.o",
+    "swiftmodule": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherCircleShowcaseApplication~partial.swiftmodule",
+    "swift-dependencies": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherCircleShowcaseApplication.swiftdeps",
+    "diagnostics": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/SwiftPackage/.build-aethercircle-android-aarch64/aarch64-unknown-linux-android32/debug/QuestApplication.build/AetherCircleShowcaseApplication.dia"
+  }
+}

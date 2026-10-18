@@ -1,0 +1,32 @@
+{
+	"bmi-installation" : null,
+	"compiler-frontend-variant" : "GNU",
+	"compiler-id" : "Clang",
+	"compiler-simulate-id" : "",
+	"config" : "Debug",
+	"cxx-modules" : {},
+	"database-info" : null,
+	"dir-cur-bld" : "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a",
+	"dir-cur-src" : "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/src/main/cpp",
+	"dir-top-bld" : "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a",
+	"dir-top-src" : "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/src/main/cpp",
+	"exports" : [],
+	"forward-modules-from-target-dirs" : [],
+	"include-dirs" : 
+	[
+		"/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/src/main/cpp/../../../../AetherCircle/Sources/AetherCircleQuest/include",
+		"/Users/steve/Library/Android/sdk/ndk/29.0.14206865/sources/android/native_app_glue",
+		"/Users/steve/.gradle/caches/9.5.0/transforms/640c23ae8c2436172ab537ced7a0c61e/transformed/openxr_loader_for_android-1.1.63/prefab/modules/headers/include"
+	],
+	"language" : "CXX",
+	"linked-target-dirs" : [],
+	"module-dir" : "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a/CMakeFiles/AetherCircleShowcaseQuest.dir",
+	"sources" : 
+	{
+		"CMakeFiles/AetherCircleShowcaseQuest.dir/main.cpp.o" : 
+		{
+			"language" : "CXX",
+			"source" : "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/src/main/cpp/main.cpp"
+		}
+	}
+}

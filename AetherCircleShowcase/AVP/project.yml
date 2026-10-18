@@ -8,8 +8,8 @@ fileGroups:
   - Info.plist
 packages:
   AetherCircle:
-    url: https://github.com/Zodiac-Innovations/AetherCircleDevelopment.git
-    branch: main
+    url: "https://github.com/Zodiac-Innovations/AetherCircleDevelopment.git"
+    branch: "main"
 targets:
   AetherCircleShowcase:
     type: application

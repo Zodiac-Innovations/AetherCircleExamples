@@ -1,0 +1,15 @@
+-lswiftSwiftOnoneSupport
+-lswiftCore
+-lswift_Concurrency
+-lswift_StringProcessing
+-lswift_RegexParser
+-lswift_Builtin_float
+-lswift_math
+-lswiftAndroid
+-lBlocksRuntime
+-ldispatch
+-lswiftDispatch
+-lFoundation
+-lFoundationEssentials
+-lFoundationInternationalization
+-lm

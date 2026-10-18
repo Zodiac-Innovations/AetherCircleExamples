@@ -1,0 +1,6 @@
+R_DEF: Internal format may change without notice
+local
+drawable appicon
+string app_name
+string copyright
+style AetherCircleQuestTheme

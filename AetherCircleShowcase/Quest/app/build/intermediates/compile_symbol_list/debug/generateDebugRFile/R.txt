@@ -1,0 +1,4 @@
+int drawable appicon 0x0
+int string app_name 0x0
+int string copyright 0x0
+int style AetherCircleQuestTheme 0x0

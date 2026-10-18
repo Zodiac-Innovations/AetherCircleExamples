@@ -1,0 +1,5 @@
+com.zodiacinnovations.aethercircleshowcase
+drawable appicon
+string app_name
+string copyright
+style AetherCircleQuestTheme

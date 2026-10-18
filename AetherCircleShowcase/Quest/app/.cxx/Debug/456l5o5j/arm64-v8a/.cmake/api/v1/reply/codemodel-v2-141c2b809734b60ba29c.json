@@ -1,0 +1,78 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10.0"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "AetherCircleShowcaseQuest",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "AetherCircleShowcaseQuest::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-AetherCircleShowcaseQuest-Debug-ae195293e5ded1095ccc.json",
+					"name" : "AetherCircleShowcaseQuest",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "aethercircle_quest::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-aethercircle_quest-Debug-cb3d517652c48f597221.json",
+					"name" : "aethercircle_quest",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "android_native_app_glue::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-android_native_app_glue-Debug-72e45a63f4578648e614.json",
+					"name" : "android_native_app_glue",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a",
+		"source" : "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/src/main/cpp"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

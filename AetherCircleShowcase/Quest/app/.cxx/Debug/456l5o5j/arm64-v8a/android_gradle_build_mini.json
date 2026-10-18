@@ -1,0 +1,41 @@
+{
+  "buildFiles": [
+    "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/steve/Library/Android/sdk/cmake/3.31.6/bin/ninja",
+      "-C",
+      "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/steve/Library/Android/sdk/cmake/3.31.6/bin/ninja",
+    "-C",
+    "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "AetherCircleShowcaseQuest::@6890427a1f51a3e7e1df": {
+      "artifactName": "AetherCircleShowcaseQuest",
+      "abi": "arm64-v8a",
+      "output": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/build/intermediates/cxx/Debug/456l5o5j/obj/arm64-v8a/libAetherCircleShowcaseQuest.so",
+      "runtimeFiles": [
+        "/Users/steve/.gradle/caches/9.5.0/transforms/640c23ae8c2436172ab537ced7a0c61e/transformed/openxr_loader_for_android-1.1.63/prefab/modules/openxr_loader/libs/android.arm64-v8a/libopenxr_loader.so"
+      ]
+    },
+    "aethercircle_quest::@6890427a1f51a3e7e1df": {
+      "artifactName": "aethercircle_quest",
+      "abi": "arm64-v8a",
+      "output": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a/libaethercircle_quest.a",
+      "runtimeFiles": []
+    },
+    "android_native_app_glue::@6890427a1f51a3e7e1df": {
+      "artifactName": "android_native_app_glue",
+      "abi": "arm64-v8a",
+      "output": "/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/app/.cxx/Debug/456l5o5j/arm64-v8a/libandroid_native_app_glue.a",
+      "runtimeFiles": []
+    }
+  }
+}

@@ -1,0 +1,4 @@
+com.zodiacinnovations.aethercircleshowcase:string/copyright = 0x7f020001
+com.zodiacinnovations.aethercircleshowcase:style/AetherCircleQuestTheme = 0x7f030000
+com.zodiacinnovations.aethercircleshowcase:string/app_name = 0x7f020000
+com.zodiacinnovations.aethercircleshowcase:drawable/appicon = 0x7f010000

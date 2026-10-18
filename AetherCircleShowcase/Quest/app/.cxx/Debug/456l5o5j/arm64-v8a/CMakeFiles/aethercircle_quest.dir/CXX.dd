@@ -1,0 +1,3 @@
+ninja_dyndep_version = 1.0
+build CMakeFiles/aethercircle_quest.dir/Users/steve/Development/ZI/AetherCircleExamples/AetherCircleShowcase/Quest/AetherCircle/Sources/AetherCircleQuest/AetherCircleQuest.cpp.o: dyndep
+
