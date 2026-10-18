@@ -353,7 +353,7 @@ class QuestRenderer {
     }
     void geometry(const std::vector<float>& vertices,const Matrix& matrix,const std::array<float,4>& color,
                   GLuint texture=0,float roughness=.5f,float metallic=0,bool lit=false,
-                  const Matrix& model=Matrix::identity(),bool spherical=false) {
+                  const Matrix& model=Matrix::identity(),bool spherical=false,float repeatU=1,float repeatV=1) {
         if(vertices.empty() || color[3]<=0)return;
         std::vector<float> data;data.reserve(vertices.size()/3*8);
         for(size_t i=0;i+8<vertices.size();i+=9) {
@@ -368,7 +368,7 @@ class QuestRenderer {
                 if(std::abs(ny)>std::abs(nx) && std::abs(ny)>std::abs(nz)){u=x+.5f;v=z+.5f;}
                 else if(std::abs(nx)>std::abs(nz)){u=z+.5f;v=y+.5f;}
                 if(spherical){u=std::atan2(z,x)/(2*3.14159265f)+.5f;v=std::acos(std::clamp(y*2,-1.f,1.f))/3.14159265f;}
-                data.insert(data.end(),{x,y,z,nx,ny,nz,u,1-v});
+                data.insert(data.end(),{x,y,z,nx,ny,nz,u*repeatU,(1-v)*repeatV});
             }
         }
         glUniformMatrix4fv(matrixLocation,1,GL_FALSE,matrix.m.data());
@@ -651,6 +651,17 @@ void main(){
                     if(usePassthrough)glClearColor(0,0,0,0);else glClearColor(.025f,.035f,.065f,1);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
                     glUseProgram(program);glBindVertexArray(vao);glBindBuffer(GL_ARRAY_BUFFER,vbo);
                     drawCalls=0;
+                    // Draw a head-centered globe first, without writing depth or receiving lighting.
+                    if(swift.objectValue(-1,0)>0) {
+                        std::array<float,4> color{};
+                        for(int c=0;c<3;++c)color[c]=swift.objectColor(-1,c);
+                        color[3]=1;
+                        Matrix model=Matrix::translation(views[i].pose.position.x,views[i].pose.position.y,views[i].pose.position.z)*Matrix::scale(100,100,100);
+                        glDepthMask(GL_FALSE);
+                        geometry(meshFor(1,{}),Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
+                                 color,textureFor(-1),1,0,false,model,true,12,6);
+                        glDepthMask(GL_TRUE);
+                    }
                     drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose));
                     if(placementReady && !loggedDrawing && i==0) {
                         GLenum error=glGetError();
@@ -682,5 +693,6 @@ void main(){
         if(layerCount && !loggedFrame){log("First stereo Showcase frame submitted.");loggedFrame=true;}
     }
 };
+
 
 

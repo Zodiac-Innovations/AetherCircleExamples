@@ -27,7 +27,7 @@ private final class QuestGraphicEngine: AetherGraphicEngine {
 }
 
 private final class QuestEnvironmentEngine: AetherEnvironmentEngine {
-    var mode: AetherEnvironmentMode = .fullVR
+    var mode: AetherEnvironmentMode = .blankVR
 }
 
 private final class QuestAssetEngine: AetherAssetEngine {
@@ -106,6 +106,12 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
     private var application: AetherApplication?
     var renderObjects: [AetherBasicObject] = []
     var renderParents: [Int32] = []
+
+    /// Bridge index -1 is reserved for the environment, outside scene interaction.
+    var environmentMaterial: AetherMaterial? {
+        if case .materialVR(let material) = environmentEngine.mode { return material }
+        return nil
+    }
 
     func prepareRenderScene() {
         renderObjects.removeAll(keepingCapacity: true)
@@ -188,6 +194,7 @@ public func aethercircleSwiftObjectCount() -> Int32 {
 
 @_cdecl("aethercircle_swift_object_primitive")
 public func aethercircleSwiftObjectPrimitive(_ index: Int32) -> Int32 {
+    if index == -1 { return QuestSwiftRuntime.shared.environmentMaterial == nil ? 0 : 1 }
     guard let object = QuestSwiftRuntime.shared.object(at: index) else {
         return -1
     }
@@ -249,10 +256,9 @@ public func aethercircleSwiftObjectColor(
     _ index: Int32,
     _ component: Int32
 ) -> Float {
-    guard let object = QuestSwiftRuntime.shared.object(at: index) else {
-        return 0
-    }
-    let color = QuestSwiftRuntime.shared.assetEngine.surface(for: object.material).baseColor
+    let runtime = QuestSwiftRuntime.shared
+    guard let material = index == -1 ? runtime.environmentMaterial : runtime.object(at: index)?.material else { return 0 }
+    let color = runtime.assetEngine.surface(for: material).baseColor
     switch component {
     case 0: return color.red
     case 1: return color.green
@@ -350,9 +356,8 @@ public func aethercircleSwiftObjectTexture(
     _ index: Int32, _ buffer: UnsafeMutablePointer<CChar>?, _ capacity: Int32
 ) -> Int32 {
     let runtime = QuestSwiftRuntime.shared
-    let filename = runtime.object(at: index).flatMap {
-        runtime.assetEngine.surface(for: $0.material).baseColorTexture
-    } ?? ""
+    let material = index == -1 ? runtime.environmentMaterial : runtime.object(at: index)?.material
+    let filename = material.flatMap { runtime.assetEngine.surface(for: $0).baseColorTexture } ?? ""
     let bytes = Array(filename.utf8)
     if let buffer, capacity > 0 {
         let count = min(bytes.count, Int(capacity) - 1)
@@ -370,4 +375,5 @@ public func aethercircleSwiftSetPassthroughSupported(_ supported: Int32) {
 public func aethercircleSwiftPassthroughRequested() -> Int32 {
     QuestSwiftRuntime.shared.environmentEngine.mode == .passthrough ? 1 : 0
 }
+
 

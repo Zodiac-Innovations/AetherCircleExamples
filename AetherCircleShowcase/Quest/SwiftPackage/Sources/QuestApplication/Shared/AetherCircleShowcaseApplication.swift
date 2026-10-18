@@ -250,6 +250,17 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             action: { self.showAutomationScene() }
         )
 
+        let environmentButton = AetherButtonObject(
+            name: "Environment Button", autoID: "showcase.environment",
+            title: "Environment",
+            size: AetherSize3D(x: 0.70, y: 0.16, z: 0.04),
+            sizing: .fitTextToButton,
+            material: Material.button, textMaterial: Material.white,
+            position: AetherPosition3D(x: 0, y: 0.62, z: sceneDepth),
+            targetAppearance: .goldenGlow,
+            action: { self.showEnvironmentScene() }
+        )
+
         let quit = AetherQuitButtonObject(
             name: "Quit",
             flavor: .doubleSided,
@@ -264,7 +275,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             panelButtonMaterial: Material.button,
             position: AetherPosition3D(
                 x: 0,
-                y: 0.58,
+                y: 0.38,
                 z: sceneDepth
             ),
             targetAppearance: .goldenGlow,
@@ -288,10 +299,47 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                     panelButton,
                     materialButton,
                     automationButton,
+                    environmentButton,
                     quit,
                 ]
             )
         )
+    }
+
+    /// Environment changes persist when navigating to other Showcase sections.
+    private func showEnvironmentScene() {
+        var choices: [(String, String, AetherEnvironmentMode)] = [
+            ("Passthrough", "passthrough", .passthrough),
+            ("Teal", "teal", .materialVR(.color(AetherColor(red: 0, green: 0.5, blue: 0.5)))),
+            ("Black", "black", .materialVR(.color(.black))),
+            ("White", "white", .materialVR(.color(.white))),
+        ]
+        let patterns: [(String, AetherMaterial)] = [
+            ("Dark Walnut", Material.darkWalnut),
+            ("Blue Granite", Material.blueGranite),
+            ("Carbon Fiber", Material.carbonFiber),
+            ("Blue Fabric", Material.blueFabric),
+            ("Carrara Marble", Material.carraraMarble),
+            ("Sci-Fi Panel", Material.scifiPanel),
+        ]
+        for (index, pattern) in patterns.shuffled().prefix(3).enumerated() {
+            choices.append((pattern.0, "pattern-\(index + 1)", .materialVR(pattern.1)))
+        }
+        var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
+        for (index, choice) in choices.enumerated() {
+            objects.append(AetherButtonObject(
+                name: choice.0 + " Environment Button",
+                autoID: "showcase.environment." + choice.1,
+                title: choice.0,
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button, textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 1.72 - AetherFloat(index) * 0.20, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: { self.world.environmentEngine.mode = choice.2 }
+            ))
+        }
+        world.graphicEngine.changeToScene(AetherScene(name: "Environment", objects: objects))
     }
 
     private enum TourMode: String, Sendable {
@@ -358,7 +406,11 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                             // A repeated press does not interrupt the running tour.
                         } catch {
                             print("Showcase automation failed: \(error)")
+<<<<<<< HEAD
+                            _ = try? await platform.runTextScript("interaction on")
+=======
                             try? await platform.runTextScript("interaction on", turnsOffInteraction: false)
+>>>>>>> 0396e80715a428cc1b68ba7c6ff814f6b126779c
                         }
                     }
                 }
@@ -1208,4 +1260,5 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
     }
 }
+
 

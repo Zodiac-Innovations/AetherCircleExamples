@@ -24,5 +24,6 @@ public final class AetherEnvironmentDummy: AetherEnvironmentEngine {
     
     public init() { }
     
-    public var mode: AetherEnvironmentMode = .fullVR
+    public var mode: AetherEnvironmentMode = .blankVR
 }
+
