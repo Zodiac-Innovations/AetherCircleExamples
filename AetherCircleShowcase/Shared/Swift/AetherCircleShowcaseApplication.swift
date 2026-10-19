@@ -926,7 +926,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             ],
             size: AetherSize3D(
                 x: 1.08,
-                y: 1.55,
+                y: 1.24,
                 z: 0.04
             ),
             spacing: 0,
@@ -944,7 +944,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
         let pagePosition = AetherPosition3D(
             x: 0,
-            y: -0.06,
+            y: 0.12,
             z: 0.09
         )
         pageOne.position = pagePosition
