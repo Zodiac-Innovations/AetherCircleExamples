@@ -266,8 +266,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
         let arrangement = AetherBaseArrangement(
             title: "AetherCircle Showcase",
+            closeAction: { [weak self] in self?.quitApp() },
             elements: [menu, quit],
-            width: 1.4,
+            width: 2.8,
             contentHeight: 1.22,
             position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
             name: "Home Arrangement",
@@ -316,7 +317,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.yosemite-01", "showcase.gallery.yosemite-02"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
         choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((3...10).map { String(format: "environment-yosemite-%02d.jpg", $0) }, material: .color(.black))))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: floorPatterns[0].1, sky: Material.blue)))
-        var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
+        var objects: [AetherBasicObject] = []
         for (index, choice) in choices.enumerated() {
             let button = AetherButtonObject(
                 name: choice.0 + " Environment Button",
@@ -365,7 +366,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             objects.append(button)
         }
-        world.graphicEngine.changeToScene(AetherScene(name: "Environment", objects: objects))
+        world.graphicEngine.changeToScene(makeSectionScene(title: "Environment", elements: objects, width: 2.8))
     }
 
     private enum TourMode: String, Sendable {
@@ -384,15 +385,13 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             material: Material.white,
             position: AetherPosition3D(x: 0, y: 1.72, z: sceneDepth)
         )
-        world.graphicEngine.changeToScene(AetherScene(
-            name: "Automation",
-            objects: [
-                makeTitle("Automation", y: 2.05),
+        world.graphicEngine.changeToScene(makeSectionScene(
+            title: "Automation",
+            elements: [
                 description,
                 makeTourButton("Run Script Object", mode: .scriptObject, y: 1.43),
                 makeTourButton("Run Text Script", mode: .textScript, y: 1.18),
                 makeTourButton("Run Command Objects", mode: .commandObjects, y: 0.93),
-                makeHomeButton(),
             ]
         ))
     }
@@ -591,10 +590,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             0,
             0.62,
         ]
-        var objects: [AetherBasicObject] = [
-            makeTitle("Materials", y: 2.05),
-            makeHomeButton(),
-        ]
+        var objects: [AetherBasicObject] = []
         var availablePrimitives = AetherPrimitive.visibleCases.shuffled()
 
         for (index, selection) in selectedMaterials.enumerated() {
@@ -639,10 +635,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         world.graphicEngine.changeToScene(
-            AetherScene(
-                name: "Materials",
-                objects: objects
-            )
+            makeSectionScene(title: "Materials", elements: objects, width: 2.8)
         )
     }
 
@@ -741,27 +734,18 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             targetAppearance: .goldenGlow
         )
 
-        let pageOneHome = makePanelHomeButton(
-            name: "Panel Page One Home"
-        )
-        pageOneHome.position = AetherPosition3D(
-            x: -0.20,
-            y: 0,
-            z: 0
-        )
         let pageOneNext = makePanelNextButton(
             name: "Panel Page One Next"
         )
         pageOneNext.autoID = "showcase.panels.next"
         pageOneNext.position = AetherPosition3D(
-            x: 0.20,
+            x: 0,
             y: 0,
             z: 0
         )
         let pageOneNavigation = AetherCompositeObject(
             name: "Panel Page One Navigation",
             objects: [
-                pageOneHome,
                 pageOneNext,
             ],
             position: AetherPosition3D(
@@ -883,14 +867,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             z: 0.06
         )
 
-        let pageTwoHome = makePanelHomeButton(
-            name: "Panel Page Two Home"
-        )
-        pageTwoHome.position = AetherPosition3D(
-            x: -0.20,
-            y: 0,
-            z: 0
-        )
         let pageTwoNext = makePanelNextButton(
             name: "Panel Page Two Next"
         )
@@ -903,7 +879,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         let pageTwoNavigation = AetherCompositeObject(
             name: "Panel Page Two Navigation",
             objects: [
-                pageTwoHome,
                 pageTwoNext,
             ],
             position: AetherPosition3D(
@@ -1026,33 +1001,11 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         world.graphicEngine.changeToScene(
-            AetherScene(
-                name: "Panel Objects",
-                objects: [
-                    panel,
-                    messagePanel,
-                    yesNoPanel,
-                ]
+            makeSectionScene(
+                title: "Panel Objects",
+                elements: [panel, messagePanel, yesNoPanel],
+                width: 1.8
             )
-        )
-    }
-
-    private func makePanelHomeButton(
-        name: String
-    ) -> AetherButtonObject {
-        AetherButtonObject(
-            homeAction,
-            name: name,
-            autoID: "showcase.home",
-            flavor: .default,
-            size: AetherSize3D(
-                x: 0.34,
-                y: 0.12,
-                z: 0.04
-            ),
-            material: Material.orange,
-            textMaterial: Material.white,
-            targetAppearance: .goldenGlow
         )
     }
 
@@ -1127,13 +1080,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     private func showPrimitiveObjectsScene() {
-        var objects: [AetherBasicObject] = [
-            makeTitle(
-                "Primitive Objects",
-                y: 2.10
-            ),
-            makeHomeButton(),
-        ]
+        var objects: [AetherBasicObject] = []
 
         let primitives = AetherPrimitive.visibleCases
         let columns = 5
@@ -1183,34 +1130,47 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         world.graphicEngine.changeToScene(
-            AetherScene(
-                name: "Primitive Objects",
-                objects: objects
-            )
+            makeSectionScene(title: "Primitive Objects", elements: objects, width: 2.8)
         )
     }
 
-    private func makeTitle(
-        _ text: String,
-        y: AetherFloat
-    ) -> AetherTextObject {
-        AetherTextObject(
-            name: text + " Title",
-            text: text,
-            characterHeight: 0.16,
-            extrusionDepth: 0.018,
-            material: Material.white,
-            position: AetherPosition3D(
-                x: 0,
-                y: y,
-                z: sceneDepth
-            )
+    /// Converts each section's authored positions to a single movable arrangement.
+    /// Back remains a normal bottom content button until bar navigation is adopted.
+    private func makeSectionScene(
+        title: String, elements: [AetherBasicObject], width: AetherFloat = 2.4
+    ) -> AetherScene {
+        let titleY: AetherFloat = 2.10
+        let contentY = titleY - 0.26
+        let highest = elements.map { $0.position.y + max($0.size.y / 2, 0.08) }.max() ?? contentY
+        let lift = contentY - highest
+        for element in elements { element.position.y += lift }
+        let lowest = elements.map { $0.position.y - max($0.size.y / 2, 0.08) }.min() ?? 1
+        let backY = lowest - 0.20
+        let back = makeHomeButton()
+        back.position = AetherPosition3D(x: 0, y: backY, z: sceneDepth)
+        let contents = elements + [back]
+        for object in contents {
+            object.position.y -= contentY
+            object.position.z -= sceneDepth
+        }
+        let arrangement = AetherBaseArrangement(
+            title: title,
+            closeAction: { [weak self] in self?.quitApp() },
+            elements: contents,
+            width: width,
+            contentHeight: max(0, contentY - backY + 0.08),
+            position: AetherPosition3D(x: 0, y: titleY, z: sceneDepth),
+            name: title + " Arrangement",
+            autoID: "showcase." + title.lowercased().replacingOccurrences(of: " ", with: "-") + "-arrangement"
         )
+        // Initial placement follows the same floor clearance as later dragging.
+        arrangement.move(to: arrangement.position)
+        return AetherScene(name: title, objects: [arrangement])
     }
 
     private func makeHomeButton() -> AetherButtonObject {
         AetherButtonObject(
-            homeAction,
+            AetherTitleAction("Back", action: homeAction.action),
             name: "Home Button",
             autoID: "showcase.home",
             flavor: .default,
