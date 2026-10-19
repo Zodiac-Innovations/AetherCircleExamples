@@ -95,12 +95,16 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         if #available(visionOS 26.0, *), world.platform.canDecodeStereoHEIC { registerSpatialDemo() }
         #endif
         for name in ["yosemite-01", "yosemite-02"] {
-            if let data = world.platform.resourceRetrieve(name: "environment-" + name + ".jpg", type: .image) {
+            if let data = world.platform.resourceRetrieve(name: "environment-" + name, type: .image) {
                 world.assetEngine.registerImage(key: "showcase.gallery." + name, data: data)
+            } else {
+                print("Showcase: missing bundled image environment-\(name).jpg")
             }
         }
-        if let data = world.platform.resourceRetrieve(name: "environment-kiara-360.jpg", type: .image) {
+        if let data = world.platform.resourceRetrieve(name: "environment-kiara-360", type: .image) {
             world.assetEngine.registerImage(key: EnvironmentImageKey.embeddedMono, data: data)
+        } else {
+            print("Showcase: missing bundled image environment-kiara-360.jpg")
         }
         environmentDownloadTask?.cancel()
         let registry = world.assetEngine.imageRegistry
@@ -1250,11 +1254,14 @@ extension AetherCircleShowcaseApplication {
     /// Creates a genuine stereo HEIC at startup, then exercises registered-image loading.
     @available(visionOS 26.0, *)
     private func registerSpatialDemo() {
-        guard let leftData = world.platform.resourceRetrieve(name: "environment-spatial-left.jpg", type: .image),
-              let rightData = world.platform.resourceRetrieve(name: "environment-spatial-right.jpg", type: .image),
+        guard let leftData = world.platform.resourceRetrieve(name: "environment-spatial-left", type: .image),
+              let rightData = world.platform.resourceRetrieve(name: "environment-spatial-right", type: .image),
               let left = CGImageSourceCreateWithData(leftData as CFData, nil),
               let right = CGImageSourceCreateWithData(rightData as CFData, nil),
-              let image = CGImageSourceCreateImageAtIndex(left, 0, nil) else { return }
+              let image = CGImageSourceCreateImageAtIndex(left, 0, nil) else {
+            print("Showcase: spatial sample source JPEGs are missing or unreadable.")
+            return
+        }
         let width = Double(image.width), height = Double(image.height)
         let focal = width * 0.5 / tan(80.0 * .pi / 360)
         let intrinsics: [Double] = [focal, 0, width / 2, 0, focal, height / 2, 0, 0, 1]
@@ -1276,7 +1283,10 @@ extension AetherCircleShowcaseApplication {
         }
         let encoded = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(encoded, UTType.heic.identifier as CFString, 2,
-            [kCGImagePropertyPrimaryImage: 0] as CFDictionary) else { return }
+            [kCGImagePropertyPrimaryImage: 0] as CFDictionary) else {
+            print("Showcase: HEIC encoder unavailable; spatial sample cannot be registered.")
+            return
+        }
         CGImageDestinationAddImageFromSource(destination, left, 0, properties(isLeft: true))
         CGImageDestinationAddImageFromSource(destination, right, 0, properties(isLeft: false))
         guard CGImageDestinationFinalize(destination) else {
