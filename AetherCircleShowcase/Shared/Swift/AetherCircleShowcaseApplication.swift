@@ -920,7 +920,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         let panel = AetherPanelObject(
             name: "Panel Objects Demonstration",
             flavor: .default,
-            title: "Panel Objects",
             objects: [
                 pageOne,
                 pageTwo,
@@ -937,7 +936,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             position: AetherPosition3D(
                 x: 0,
                 y: 1.42,
-                z: -1.55
+                z: sceneDepth
             ),
             onClose: {
                 self.showHomeScene()
@@ -1009,7 +1008,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             makeSectionScene(
                 title: "Panel Objects",
                 elements: [panel, messagePanel, yesNoPanel],
-                width: 1.8,
+                width: panel.panelSize.x,
                 flavor: .lightPanel
             )
         )
