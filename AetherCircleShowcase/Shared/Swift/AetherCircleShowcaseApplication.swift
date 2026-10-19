@@ -272,7 +272,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             contentHeight: 1.22,
             position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
             name: "Home Arrangement",
-            autoID: "showcase.home-arrangement"
+            autoID: "showcase.home-arrangement",
+            barFlavor: .default
         )
 
         world.graphicEngine.changeToScene(
@@ -366,7 +367,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             objects.append(button)
         }
-        world.graphicEngine.changeToScene(makeSectionScene(title: "Environment", elements: objects, width: 2.8))
+        world.graphicEngine.changeToScene(makeSectionScene(title: "Environment", elements: objects, width: 2.8, flavor: .floatingTitle))
     }
 
     private enum TourMode: String, Sendable {
@@ -635,7 +636,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         world.graphicEngine.changeToScene(
-            makeSectionScene(title: "Materials", elements: objects, width: 2.8)
+            makeSectionScene(title: "Materials", elements: objects, width: 2.8, flavor: .darkPanel)
         )
     }
 
@@ -1004,7 +1005,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             makeSectionScene(
                 title: "Panel Objects",
                 elements: [panel, messagePanel, yesNoPanel],
-                width: 1.8
+                width: 1.8,
+                flavor: .lightPanel
             )
         )
     }
@@ -1130,14 +1132,15 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         world.graphicEngine.changeToScene(
-            makeSectionScene(title: "Primitive Objects", elements: objects, width: 2.8)
+            makeSectionScene(title: "Primitive Objects", elements: objects, width: 2.8, flavor: .floatingTitle)
         )
     }
 
     /// Converts each section's authored positions to a single movable arrangement.
     /// Back remains a normal bottom content button until bar navigation is adopted.
     private func makeSectionScene(
-        title: String, elements: [AetherBasicObject], width: AetherFloat = 2.4
+        title: String, elements: [AetherBasicObject], width: AetherFloat = 2.4,
+        flavor: AetherArrangementBarFlavor = .default
     ) -> AetherScene {
         let titleY: AetherFloat = 2.10
         let contentY = titleY - 0.26
@@ -1161,7 +1164,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             contentHeight: max(0, contentY - backY + 0.08),
             position: AetherPosition3D(x: 0, y: titleY, z: sceneDepth),
             name: title + " Arrangement",
-            autoID: "showcase." + title.lowercased().replacingOccurrences(of: " ", with: "-") + "-arrangement"
+            autoID: "showcase." + title.lowercased().replacingOccurrences(of: " ", with: "-") + "-arrangement",
+            barFlavor: flavor
         )
         // Initial placement follows the same floor clearance as later dragging.
         arrangement.move(to: arrangement.position)
