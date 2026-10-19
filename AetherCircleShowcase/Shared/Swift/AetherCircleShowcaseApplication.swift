@@ -273,7 +273,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
             name: "Home Arrangement",
             autoID: "showcase.home-arrangement",
-            barFlavor: .default
+            barFlavor: .floatingTitle
         )
 
         world.graphicEngine.changeToScene(
@@ -367,7 +367,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             objects.append(button)
         }
-        world.graphicEngine.changeToScene(makeSectionScene(title: "Environment", elements: objects, width: 2.8, flavor: .floatingTitle))
+        world.graphicEngine.changeToScene(makeSectionScene(title: "Environment", elements: objects, width: 2.8, flavor: .default))
     }
 
     private enum TourMode: String, Sendable {
@@ -1132,7 +1132,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         world.graphicEngine.changeToScene(
-            makeSectionScene(title: "Primitive Objects", elements: objects, width: 2.8, flavor: .floatingTitle)
+            makeSectionScene(title: "Primitive Objects", elements: objects, width: 2.8, flavor: .default)
         )
     }
 
