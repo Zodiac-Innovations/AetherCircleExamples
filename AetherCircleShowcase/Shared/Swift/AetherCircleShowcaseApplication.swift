@@ -219,7 +219,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         let menu = AetherListButton(
             [
                 AetherTitleAction("Materials") { [weak self] in self?.showMaterialsScene() },
-                AetherTitleAction("Environment") { [weak self] in self?.showEnvironmentScene() },
+                AetherTitleAction("Environment A") { [weak self] in self?.showEnvironmentScene() },
+                AetherTitleAction("Environment B") { [weak self] in self?.showEnvironmentScene(isMedia: true) },
                 AetherTitleAction("Primitive Objects") { [weak self] in self?.showPrimitiveObjectsScene() },
                 AetherTitleAction("Panel Objects") { [weak self] in self?.showPanelObjectsScene() },
                 AetherTitleAction("Automation") { [weak self] in self?.showAutomationScene() },
@@ -234,7 +235,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             rowSpacing: 0.06
         )
         // Preserve the stable identifiers used by all three automation examples.
-        let menuIDs = ["materials", "environment", "primitives", "panels", "automation"]
+        let menuIDs = ["materials", "environment", "environment-b", "primitives", "panels", "automation"]
         for (button, menuID) in zip(menu.buttons, menuIDs) {
             button.autoID = "showcase." + menuID
         }
@@ -291,7 +292,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     /// Environment changes persist when navigating to other Showcase sections.
-    private func showEnvironmentScene() {
+    private func showEnvironmentScene(isMedia: Bool = false) {
         var choices: [(String, String, AetherEnvironmentMode)] = [
             ("Passthrough", "passthrough", .passthrough),
             ("Teal", "teal", .materialVR(.color(AetherColor(red: 0, green: 0.5, blue: 0.5)))),
@@ -342,6 +343,21 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Room · Six Materials", "room-six", .room(studio, materials: AetherRoomMaterials(
             floor: Material.carraraMarble, front: Material.blueFabric, right: Material.darkWalnut,
             back: Material.greenMoss, left: Material.blueGranite, ceiling: Material.brushedSteel))))
+        choices.append(("Grass + Day Sky", "sky-grass", .skyFloor(
+            skyFile: "environment-day-sky.jpg",
+            floor: .texture(baseColorTexture: "environment-grass-floor.jpg", roughness: 0.95))))
+        choices.append(("Sand + Sunset", "sky-sand", .skyFloor(
+            skyFile: "environment-sunset-sky.jpg",
+            floor: .texture(baseColorTexture: "environment-sand-floor.jpg", roughness: 0.9))))
+        // A: materials and walkable spaces. B: recorded media and photo galleries.
+        choices = choices.filter { choice in
+            switch choice.2 {
+            case .passthrough, .blankVR, .materialVR, .floorMaterial, .cyberFloor, .room, .skyFloor:
+                return !isMedia
+            default:
+                return isMedia
+            }
+        }
         var objects: [AetherBasicObject] = []
         for (index, choice) in choices.enumerated() {
             let button = AetherButtonObject(
@@ -351,7 +367,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: (AetherFloat(index % 4) - 1.5) * 0.84, y: 1.68 - AetherFloat(index / 4) * 0.23, z: sceneDepth),
+                position: AetherPosition3D(x: AetherFloat(index % 3 - 1) * 0.86, y: 1.68 - AetherFloat(index / 3) * 0.23, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: {
                     if choice.1 == "image-mono",
@@ -398,7 +414,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             objects.append(button)
         }
-        world.graphicEngine.changeToScene(makeSectionScene(title: "Environment", elements: objects, width: 3.6, flavor: .default))
+        world.graphicEngine.changeToScene(makeSectionScene(title: isMedia ? "Environment B" : "Environment A", elements: objects, width: 2.8, flavor: .default))
     }
 
     private enum TourMode: String, Sendable {

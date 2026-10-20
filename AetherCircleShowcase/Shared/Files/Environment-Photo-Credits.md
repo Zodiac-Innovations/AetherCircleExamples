@@ -226,3 +226,43 @@ The photos were downloaded at a reduced Wikimedia preview resolution and proport
 - Duration: 16 seconds. Format: mono equirectangular, complete 360 × 180-degree coverage (2:1).
 - Bundled in Shared/Files; no internet connection or downloaded fallback needed. Plays on a user-centered globe and loops. The sample is intentionally silent. Other supported files may contain audio.
 - NASA media guidelines: https://www.nasa.gov/nasa-brand-center/images-and-media/
+
+## Sky Floor examples — four new CC0 images
+
+Each Sky Floor button uses its own sky and ground image, separate from the other
+photo and material demonstrations. Both skies retain their full 360 × 180-degree
+coverage and wrap once; ground textures repeat once per meter. No images were
+cropped, recolored, or generated. Only color/diffuse maps are included for these
+two floor materials; relief and normal-map data are not bundled.
+
+| Bundled file | Source title | Creator(s) | Preparation |
+|---|---|---|---|
+| environment-day-sky.jpg | Kloofendal 48d Partly Cloudy (Pure Sky) | Greg Zaal (original), Jarod Guest (sky edits) | Tonemapped 8192 × 4096 JPEG resized to 2048 × 1024 and recompressed |
+| environment-sunset-sky.jpg | Qwantani Sunset (Pure Sky) | Greg Zaal (photography), Jarod Guest (processing) | Tonemapped 8192 × 4096 JPEG resized to 2048 × 1024 and recompressed |
+| environment-grass-floor.jpg | Leafy Grass | Charlotte Baglioni | 1K diffuse map, 1024 × 1024, recompressed RGB JPEG |
+| environment-sand-floor.jpg | Sand 03 | Charlotte Baglioni | 1K diffuse map, 1024 × 1024, recompressed RGB JPEG |
+
+All four: **CC0 1.0 public-domain dedication**,
+https://creativecommons.org/publicdomain/zero/1.0/.
+Each source below states the CC0 license; Poly Haven's asset license is described
+at https://polyhaven.com/license.
+
+### Day sky
+- Source: https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky
+- Original: https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/kloofendal_48d_partly_cloudy_puresky.jpg
+- Used only by Grass + Day Sky (Environment A).
+
+### Sunset sky
+- Source: https://polyhaven.com/a/qwantani_sunset_puresky
+- Original: https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/qwantani_sunset_puresky.jpg
+- Used only by Sand + Sunset (Environment A).
+
+### Grass ground
+- Source: https://polyhaven.com/a/leafy_grass
+- Download: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/leafy_grass/leafy_grass_diff_1k.jpg
+- Used only by Grass + Day Sky (Environment A).
+
+### Sand ground
+- Source: https://polyhaven.com/a/sand_03
+- Download: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sand_03/sand_03_diff_1k.jpg
+- Used only by Sand + Sunset (Environment A).
