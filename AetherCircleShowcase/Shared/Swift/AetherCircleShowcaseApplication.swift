@@ -227,10 +227,11 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             ],
             name: "Showcase Menu",
             autoID: "showcase.menu",
+            numberItemPerColumn: 4,
             size: AetherSize3D(x: 0.70, y: 0.16, z: 0.04),
             material: Material.button,
             textMaterial: Material.white,
-            position: .zero,
+            position: AetherPosition3D(x: -0.39, y: 0, z: 0),
             targetAppearance: .goldenGlow,
             rowSpacing: 0.06
         )
@@ -343,6 +344,11 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Room · Six Materials", "room-six", .room(studio, materials: AetherRoomMaterials(
             floor: Material.carraraMarble, front: Material.blueFabric, right: Material.darkWalnut,
             back: Material.greenMoss, left: Material.blueGranite, ceiling: Material.brushedSteel))))
+        choices.append(("Cylinder Room", "room-cylinder", .cylinderRoom(
+            diameter: 7000, height: 3200, floor: Material.darkWalnut,
+            walls: Material.sandstone, ceiling: .color(.white))))
+        choices.append(("Dome Room", "room-dome", .domeRoom(
+            diameter: 8000, height: 4000, floor: Material.carraraMarble, dome: Material.blueFabric)))
         choices.append(("Stars", "particles-stars", .particleField(.stars())))
         choices.append(("Snow", "particles-snow", .particleField(.snow())))
         choices.append(("Rain", "particles-rain", .particleField(.rain())))
@@ -356,7 +362,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         // A: materials and walkable spaces. B: recorded media and photo galleries.
         choices = choices.filter { choice in
             switch choice.2 {
-            case .passthrough, .blankVR, .materialVR, .floorMaterial, .cyberFloor, .room, .skyFloor, .particleField:
+            case .passthrough, .blankVR, .materialVR, .floorMaterial, .cyberFloor, .room, .cylinderRoom, .domeRoom, .skyFloor, .particleField:
                 return !isMedia
             default:
                 return isMedia

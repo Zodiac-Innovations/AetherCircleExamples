@@ -5,7 +5,7 @@ keeps the current environment; only an environment button changes it.
 
 | Section | Kinds |
 |---|---|
-| Environment A | Passthrough, solid colors, material patterns, Floor + Sky, Cyber Floors, Rooms, photographic sky with ground, stars, snow, rain, fireflies |
+| Environment A | Passthrough, solid colors, material patterns, Floor + Sky, Cyber Floors, rectangular/cylinder/dome rooms, photographic sky with ground, stars, snow, rain, fireflies |
 | Environment B | Bundled/registered/internet 360 photos, 360 video, panoramas, Apple spatial photo, Yosemite galleries |
 
 Environment A includes two `skyFloor` examples:
@@ -78,3 +78,29 @@ motion are generated in code; they require no downloaded images or credits.
 After updating the development framework and Showcase, regenerate an existing
 Quest project with `aethercircle quest create -d` to pick up the new native
 bridge and rendering support.
+
+## Circular rooms
+
+```swift
+.cylinderRoom(diameter: 7000, height: 3200,
+              floor: .named("wood"), walls: .named("stone"), ceiling: .color(.white))
+.domeRoom(diameter: 8000, height: 4000,
+          floor: .named("marble"), dome: .color(.blue))
+```
+
+Both environments are world-fixed, with the circular floor centered at X/Z=0
+and Y=0. Dimensions are millimeters. The cylinder has independent floor, wall,
+and ceiling materials. The dome has a floor and a continuous half-ellipsoid
+roof; setting height to half the diameter gives a hemisphere. You can move
+inside either room using tracked movement. These visual surfaces do not impose
+physical collision boundaries; stay within your headset's tracked play area.
+
+Curved walls have smooth inward normals. Floor and ceiling are circular discs;
+textures repeat approximately once per meter, with the wrap seam at negative Z.
+`AetherCurvedRoom` exposes shared meshes and normalized dimensions for renderers.
+Dimensions are bounded to 100–1,000,000 mm; nonfinite values use 6000 mm diameter
+or 3000 mm height. There are no external assets required by either environment.
+
+Showcase Environment A includes **Cylinder Room**, **Dome Room**, and the four
+particle examples **Stars**, **Snow**, **Rain**, and **Fireflies**. The home menu
+uses four items per column, forming two columns with Quit below the menu.
