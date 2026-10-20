@@ -295,6 +295,9 @@ class QuestRenderer {
     GLint textureLocation=-1,texturedLocation=-1,lightingLocation=-1;
     GLint roughnessLocation=-1,metallicLocation=-1,modelLocation=-1;
 
+    float cyberGridCell=0;
+    std::vector<float> cyberGridVertices;
+
     GLuint textureFor(int object) {
         int length=swift.objectTexture(object,nullptr,0);
         if(length<=0)return 0;
@@ -845,10 +848,37 @@ void main(){
                         std::array<float,4> color{};for(int c=0;c<4;++c)color[c]=swift.objectColor(-2,c);
                         const float x=(views[0].pose.position.x+views[1].pose.position.x)*.5f;
                         const float z=(views[0].pose.position.z+views[1].pose.position.z)*.5f;
-                        Matrix model=Matrix::translation(std::floor(x/256)*256,0,std::floor(z/256)*256)*Matrix::scale(2048,1,2048);
+                        const float extent=swift.objectValue(-2,1);
+                        Matrix model=Matrix::translation(std::floor(x/256)*256,0,std::floor(z/256)*256)*Matrix::scale(extent,1,extent);
                         static const std::vector<float> floor={-.5f,0,-.5f, -.5f,0,.5f, .5f,0,.5f, -.5f,0,-.5f, .5f,0,.5f, .5f,0,-.5f};
                         geometry(floor,Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
-                                 color,textureFor(-2),swift.objectValue(-2,14),swift.objectValue(-2,15),true,model,false,2048,2048);
+                                 color,textureFor(-2),swift.objectValue(-2,14),swift.objectValue(-2,15),true,model,false,extent,extent);
+                    }
+                    if(swift.objectValue(-3,0)>0) {
+                        const float cell=swift.objectValue(-3,1);
+                        const int count=int(swift.objectValue(-3,3));
+                        if(cyberGridCell!=cell) {
+                            cyberGridCell=cell;cyberGridVertices.clear();
+                            const float half=count*cell,line=swift.objectValue(-3,2)*.5f;
+                            auto quad=[&](float x0,float z0,float x1,float z1) {
+                                cyberGridVertices.insert(cyberGridVertices.end(),{
+                                    x0,.001f,z0, x0,.001f,z1, x1,.001f,z1,
+                                    x0,.001f,z0, x1,.001f,z1, x1,.001f,z0});
+                            };
+                            for(int n=-count;n<=count;++n) {
+                                const float c=n*cell;
+                                quad(c-line,-half,c+line,half);
+                                quad(-half,c-line,half,c+line);
+                            }
+                        }
+                        const float step=swift.objectValue(-3,4);
+                        const float x=(views[0].pose.position.x+views[1].pose.position.x)*.5f;
+                        const float z=(views[0].pose.position.z+views[1].pose.position.z)*.5f;
+                        Matrix model=Matrix::translation(std::floor(x/step)*step,0,std::floor(z/step)*step);
+                        std::array<float,4> color{};for(int c=0;c<4;++c)color[c]=swift.objectColor(-3,c);
+                        geometry(cyberGridVertices,Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
+                                 color,textureFor(-3),swift.objectValue(-3,14),swift.objectValue(-3,15),true,
+                                 model,false,1/cell,1/cell);
                     }
                     // Finite room surfaces are anchored with scene objects and write depth.
                     // Local XY quads face inward after the shared surface rotation.

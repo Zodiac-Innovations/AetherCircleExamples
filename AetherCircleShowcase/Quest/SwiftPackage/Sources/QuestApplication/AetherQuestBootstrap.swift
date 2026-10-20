@@ -177,7 +177,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
             case .file(let name): return .texture(baseColorTexture: name)
             case .data: return .color(.white)
             }
-        case .floorMaterial(_, let sky): return sky
+        case .floorMaterial(_, let sky), .cyberFloor(let sky, _, _, _): return sky
         default: return nil
         }
     }
@@ -187,6 +187,13 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         case .image360Image(let key, _), .panoramaImage(let key, _): return key
         default: return nil
         }
+    }
+
+    var cyberGrid: AetherCyberFloorGrid? {
+        if case .cyberFloor(_, _, _, let width) = environmentEngine.mode {
+            return AetherCyberFloorGrid(squareWidth: width)
+        }
+        return nil
     }
 
     /// Room surfaces use -20...-25, separate from scene interaction and galleries.
@@ -201,12 +208,16 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
            case .room(_, let materials) = environmentEngine.mode { return materials[surface] }
         if index == -1 { return environmentMaterial }
         if index == -2 { return floorMaterial }
+        if index == -3, case .cyberFloor(_, _, let lines, _) = environmentEngine.mode { return lines }
         return object(at: index)?.material
     }
 
     /// Bridge index -2 is the floor; it is never a tappable scene object.
     var floorMaterial: AetherMaterial? {
-        if case .floorMaterial(let floor, _) = environmentEngine.mode { return floor }
+        switch environmentEngine.mode {
+        case .floorMaterial(let floor, _), .cyberFloor(_, let floor, _, _): return floor
+        default: break
+        }
         return nil
     }
 
@@ -324,6 +335,20 @@ public func aethercircleSwiftObjectValue(
     _ index: Int32,
     _ value: Int32
 ) -> Float {
+    if index == -3 {
+        let runtime = QuestSwiftRuntime.shared
+        guard let grid = runtime.cyberGrid, let material = runtime.material(at: index) else { return 0 }
+        switch value {
+        case 0: return 1
+        case 1: return grid.cellWidth
+        case 2: return grid.lineWidth
+        case 3: return Float(AetherCyberFloorGrid.halfCellCount)
+        case 4: return grid.rebaseStep
+        case 14: return runtime.assetEngine.surface(for: material).roughness
+        case 15: return runtime.assetEngine.surface(for: material).metallic
+        default: return 0
+        }
+    }
     if index <= -20 && index >= -25 {
         let runtime = QuestSwiftRuntime.shared
         guard let room = runtime.room,
@@ -364,6 +389,7 @@ public func aethercircleSwiftObjectValue(
         guard let material = runtime.floorMaterial else { return 0 }
         switch value {
         case 0: return 1
+        case 1: return runtime.cyberGrid?.floorExtent ?? 2048
         case 14: return runtime.assetEngine.surface(for: material).roughness
         case 15: return runtime.assetEngine.surface(for: material).metallic
         default: return 0
@@ -378,12 +404,14 @@ public func aethercircleSwiftObjectValue(
             if case .photo2DImages = runtime.environmentEngine.mode { return 12 }
             if case .materialVR = runtime.environmentEngine.mode { return 12 }
             if case .floorMaterial = runtime.environmentEngine.mode { return 12 }
+            if case .cyberFloor = runtime.environmentEngine.mode { return 12 }
             return 1
         case 2:
             if case .photo2DFiles = runtime.environmentEngine.mode { return 6 }
             if case .photo2DImages = runtime.environmentEngine.mode { return 6 }
             if case .materialVR = runtime.environmentEngine.mode { return 6 }
             if case .floorMaterial = runtime.environmentEngine.mode { return 6 }
+            if case .cyberFloor = runtime.environmentEngine.mode { return 6 }
             return 1
         case 3:
             switch runtime.environmentEngine.mode {
@@ -398,6 +426,7 @@ public func aethercircleSwiftObjectValue(
             }
         case 4:
             if case .floorMaterial = runtime.environmentEngine.mode { return 1 }
+            if case .cyberFloor = runtime.environmentEngine.mode { return 1 }
             return runtime.environmentEngine.mode.placement == .userCentered ? 1 : 0
         case 6: return Float(runtime.galleryNames.count)
         case 5:

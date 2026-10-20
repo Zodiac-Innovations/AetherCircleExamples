@@ -56,6 +56,9 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     /// A world-fixed tiled floor at y=0 beneath a sky with no translation parallax.
     case floorMaterial(floor: AetherMaterial, sky: AetherMaterial)
 
+    /// Distant sky and a world-fixed floor with square grid lines. Width is millimeters.
+    case cyberFloor(sky: AetherMaterial, floor: AetherMaterial, lines: AetherMaterial, squareWidth: AetherFloat = 1000)
+
     /// Six world-fixed interior surfaces, with room dimensions in millimeters.
     case room(AetherRoom, materials: AetherRoomMaterials)
 
@@ -63,7 +66,7 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     /// from its case so an application cannot accidentally mix both behaviors.
     public var placement: AetherEnvironmentPlacement {
         switch self {
-        case .passthrough, .blankVR, .floorMaterial, .room: return .worldFixed
+        case .passthrough, .blankVR, .floorMaterial, .cyberFloor, .room: return .worldFixed
         case .materialVR, .image360File, .image360Image, .panoramaFile, .panoramaImage, .spatialPhotoFile, .spatialPhotoImage, .photo2DFiles, .photo2DImages: return .userCentered
         }
     }
