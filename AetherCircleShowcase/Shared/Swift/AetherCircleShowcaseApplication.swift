@@ -1,6 +1,5 @@
 import AetherCircleCore
 import Foundation
-import Dispatch
 #if os(visionOS)
 import ImageIO
 import UniformTypeIdentifiers
@@ -218,10 +217,10 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private func showHomeScene() {
         let menu = AetherListButton(
             [
+                AetherTitleAction("Primitive Objects") { [weak self] in self?.showPrimitiveObjectsScene() },
                 AetherTitleAction("Materials") { [weak self] in self?.showMaterialsScene() },
                 AetherTitleAction("Environment A") { [weak self] in self?.showEnvironmentScene() },
                 AetherTitleAction("Environment B") { [weak self] in self?.showEnvironmentScene(isMedia: true) },
-                AetherTitleAction("Primitive Objects") { [weak self] in self?.showPrimitiveObjectsScene() },
                 AetherTitleAction("Panel Objects") { [weak self] in self?.showPanelObjectsScene() },
                 AetherTitleAction("Automation") { [weak self] in self?.showAutomationScene() },
             ],
@@ -235,8 +234,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             targetAppearance: .goldenGlow,
             rowSpacing: 0.06
         )
-        // Preserve the stable identifiers used by all three automation examples.
-        let menuIDs = ["materials", "environment", "environment-b", "primitives", "panels", "automation"]
+        // Keep navigation identifiers stable when changing the menu order.
+        let menuIDs = ["primitives", "materials", "environment", "environment-b", "panels", "automation"]
         for (button, menuID) in zip(menu.buttons, menuIDs) {
             button.autoID = "showcase." + menuID
         }
@@ -428,28 +427,17 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     private enum TourMode: String, Sendable {
-        case scriptObject
-        case textScript
-        case commandObjects
+        case environments
+        case sections
     }
 
-    /// Three entry points demonstrate the same tour and timing.
+    /// Two typed-script tours; both return Home before the runner starts.
     private func showAutomationScene() {
-        let description = AetherTextObject(
-            name: "Automation Description",
-            text: "Tour screens and test controls in 45 seconds.",
-            characterHeight: 0.045,
-            extrusionDepth: 0.006,
-            material: Material.white,
-            position: AetherPosition3D(x: 0, y: 1.72, z: sceneDepth)
-        )
         world.graphicEngine.changeToScene(makeSectionScene(
             title: "Automation",
             elements: [
-                description,
-                makeTourButton("Run Script Object", mode: .scriptObject, y: 1.43),
-                makeTourButton("Run Text Script", mode: .textScript, y: 1.18),
-                makeTourButton("Run Command Objects", mode: .commandObjects, y: 0.93),
+                makeTourButton("Tour Environments A + B", mode: .environments, y: 1.43),
+                makeTourButton("Tour Primitives, Materials + Panels", mode: .sections, y: 1.18),
             ]
         ))
     }
@@ -461,59 +449,89 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             name: title + " Button",
             autoID: "showcase.run-" + mode.rawValue,
             title: title,
-            size: AetherSize3D(x: 0.95, y: 0.16, z: 0.04),
+            size: AetherSize3D(x: 1.55, y: 0.16, z: 0.04),
             sizing: .fitTextToButton,
             material: Material.button,
             textMaterial: Material.white,
             position: AetherPosition3D(x: 0, y: y, z: sceneDepth),
             targetAppearance: .goldenGlow,
             action: {
+                let script = mode == .environments ? self.environmentTour : Self.sectionTour
                 let platform = self.world.platform
-                if mode == .commandObjects {
-                    // Synchronous invoke/wait calls run on a dedicated worker.
-                    // Navigation is dispatched back to the platform frame thread.
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        Self.runCommandObjectTour(on: platform)
-                    }
-                } else {
-                    Task {
-                        do {
-                            switch mode {
-                            case .scriptObject:
-                                try await platform.runScript(Self.showcaseTour)
-                            case .textScript:
-                                try await platform.runTextScript(Self.showcaseTourScript)
-                            case .commandObjects: break
-                            }
-                        } catch AetherAutomationError.alreadyRunning {
-                            // A repeated press does not interrupt the running tour.
-                        } catch {
-                            print("Showcase automation failed: \(error)")
-                            
-                            _ = try? await platform.runTextScript("interaction on")
-                        }
+                // Navigate first, before runScript can disable input or execute commands.
+                self.showHomeScene()
+                Task {
+                    do {
+                        try await platform.runScript(script)
+                    } catch AetherAutomationError.alreadyRunning {
+                        // The runner owns interaction until its current tour completes.
+                    } catch {
+                        print("Showcase automation failed: \(error)")
                     }
                 }
             }
         )
     }
 
-    /// Builds a typed script directly rather than parsing the text version.
-    private static var showcaseTour: AetherAutomationScript {
+    /// At most 50 seconds of waits, leaving headroom for frame-driven commands.
+    /// Unavailable media entries are omitted, including Apple spatial photos on Quest.
+    private var environmentTour: AetherAutomationScript {
+        var commands: [AetherAutomationCommand] = [
+            .wait(1), .message("Environment A: materials, rooms and particles"),
+            .activate(.autoID("showcase.environment")), .wait(1),
+        ]
+        let environmentsA = [
+            "passthrough", "teal", "black", "white", "pattern-1", "pattern-2", "pattern-3",
+            "floor-material", "cyber-floor", "cyber-floor-silver", "room-matching", "room-six",
+            "room-cylinder", "room-dome", "particles-stars", "particles-snow", "particles-rain",
+            "particles-fireflies", "sky-grass", "sky-sand",
+        ]
+        for target in environmentsA {
+            commands += [.activate(.autoID("showcase.environment." + target)), .wait(1.2)]
+        }
+        commands += [
+            .activate(.autoID("showcase.home")), .activate(.autoID("showcase.environment-b")),
+            .message("Environment B: photographs, panoramas and video"), .wait(1),
+        ]
+        let registry = world.assetEngine.imageRegistry
+        var environmentsB: [String] = []
+        if world.platform.resourceExists(name: "environment-nasa-360", type: .custom("mp4")) {
+            environmentsB.append("video-360")
+        }
+        environmentsB += ["file-mono", "file-stereo"]
+        if registry.entry(for: EnvironmentImageKey.mono) != nil { environmentsB.append("image-mono") }
+        if registry.entry(for: EnvironmentImageKey.embeddedMono) != nil { environmentsB.append("image-stereo") }
+        environmentsB += ["panorama-auto", "panorama-override"]
+        if world.platform.canDecodeStereoHEIC, registry.entry(for: EnvironmentImageKey.spatial) != nil {
+            environmentsB.append("spatial-photo")
+        }
+        environmentsB.append("gallery-files")
+        if registry.entry(for: "showcase.gallery.yosemite-01") != nil,
+           registry.entry(for: "showcase.gallery.yosemite-02") != nil {
+            environmentsB.append("gallery-images")
+        }
+        environmentsB.append("gallery-eight")
+        for target in environmentsB {
+            commands += [.activate(.autoID("showcase.environment." + target)), .wait(2)]
+        }
+        commands += [
+            .activate(.autoID("showcase.home")), .activate(.autoID("showcase.environment")),
+            .activate(.autoID("showcase.environment.passthrough")),
+            .activate(.autoID("showcase.home")), .message("Environment tour complete"), .wait(1),
+        ]
+        return AetherAutomationScript(commands: commands, turnsOffInteraction: true)
+    }
+
+    /// 42 seconds of waits. Demonstrates all three other sections and checks controls.
+    private static var sectionTour: AetherAutomationScript {
         AetherAutomationScript(commands: [
-            .setUserInteractionEnabled(false),
+            .wait(1),
+            .activate(.autoID("showcase.primitives")), .message("Primitive Objects"), .wait(12),
             .activate(.autoID("showcase.home")),
-            .message("Home: starting the Showcase tour"),
-            .wait(10),
-            .activate(.autoID("showcase.primitives")),
-            .message("Primitive Objects"),
-            .wait(10),
+            .activate(.autoID("showcase.materials")), .message("Materials"), .wait(12),
             .activate(.autoID("showcase.home")),
-            .activate(.autoID("showcase.panels")),
-            .message("Panel Objects: buttons and dialogs"),
-            .wait(5),
+            .activate(.autoID("showcase.panels")), .message("Panel Objects"), .wait(8),
             .activate(.autoID("showcase.panels.next")),
-            .message("Checking checkbox and integer values"),
             .check(.autoID("showcase.toggle.checkbox"), "true"),
             .activate(.autoID("showcase.toggle.checkbox")),
             .check(.autoID("showcase.toggle.checkbox"), "false"),
@@ -522,105 +540,10 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             .check(.autoID("showcase.integer"), "4"),
             .activate(.autoID("showcase.integer")),
             .check(.autoID("showcase.integer"), "5"),
-            .message("All control checks passed"),
-            .wait(5),
-            .activate(.autoID("showcase.home")),
-            .activate(.autoID("showcase.materials")),
-            .message("Materials"),
-            .wait(10),
-            .activate(.autoID("showcase.home")),
-            .message("Tour complete: quitting in five seconds"),
-            .wait(5),
-            .setUserInteractionEnabled(true),
-            .activate(.autoID("showcase.quit")),
-            .activate(.name("Quit Confirmation Yes")),
+            .message("Panel control checks passed"), .wait(8),
+            .activate(.autoID("showcase.home")), .message("Section tour complete"), .wait(1),
         ], turnsOffInteraction: true)
     }
-
-    /// Each object executes synchronously when invoke() is called.
-    private static func runCommandObjectTour(on platform: any AetherPlatform) {
-        let commands: [any AetherAutomationInvocable] = [
-            AetherAutomationInteraction(platform: platform, enabled: false),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
-            AetherAutomationMessage(platform: platform, text: "Home: starting the Showcase tour"),
-            AetherAutomationWait(seconds: 10),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.primitives")),
-            AetherAutomationMessage(platform: platform, text: "Primitive Objects"),
-            AetherAutomationWait(seconds: 10),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.panels")),
-            AetherAutomationMessage(platform: platform, text: "Panel Objects: buttons and dialogs"),
-            AetherAutomationWait(seconds: 5),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.panels.next")),
-            AetherAutomationMessage(platform: platform, text: "Checking checkbox and integer values"),
-            AetherAutomationCheck(platform: platform, target: .autoID("showcase.toggle.checkbox"), expected: "true"),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.toggle.checkbox")),
-            AetherAutomationCheck(platform: platform, target: .autoID("showcase.toggle.checkbox"), expected: "false"),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.toggle.checkbox")),
-            AetherAutomationCheck(platform: platform, target: .autoID("showcase.toggle.checkbox"), expected: "true"),
-            AetherAutomationCheck(platform: platform, target: .autoID("showcase.integer"), expected: "4"),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.integer")),
-            AetherAutomationCheck(platform: platform, target: .autoID("showcase.integer"), expected: "5"),
-            AetherAutomationMessage(platform: platform, text: "All control checks passed"),
-            AetherAutomationWait(seconds: 5),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.materials")),
-            AetherAutomationMessage(platform: platform, text: "Materials"),
-            AetherAutomationWait(seconds: 10),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.home")),
-            AetherAutomationMessage(platform: platform, text: "Tour complete: quitting in five seconds"),
-            AetherAutomationWait(seconds: 5),
-            AetherAutomationInteraction(platform: platform, enabled: true),
-            AetherAutomationTap(platform: platform, target: .autoID("showcase.quit")),
-            AetherAutomationTap(platform: platform, target: .name("Quit Confirmation Yes")),
-        ]
-        do {
-            for command in commands { try command.invoke() }
-        } catch AetherAutomationError.alreadyRunning {
-            // Leave any existing tour in control of input.
-        } catch {
-            print("Showcase command invocation failed: \(error)")
-            try? AetherAutomationInteraction(platform: platform, enabled: true).invoke()
-        }
-    }
-
-    /// Each navigation target resolves in the current scene, including nested
-    /// panel navigation. Quit uses the normal confirmation dialog.
-    private static let showcaseTourScript = """
-    interaction off
-    tap autoID showcase.home
-    message 'Home: starting the Showcase tour'
-    wait 10
-    tap autoID showcase.primitives
-    message 'Primitive Objects'
-    wait 10
-    tap autoID showcase.home
-    tap autoID showcase.panels
-    message 'Panel Objects: buttons and dialogs'
-    wait 5
-    tap autoID showcase.panels.next
-    message 'Checking checkbox and integer values'
-    check autoID showcase.toggle.checkbox true
-    tap autoID showcase.toggle.checkbox
-    check autoID showcase.toggle.checkbox false
-    tap autoID showcase.toggle.checkbox
-    check autoID showcase.toggle.checkbox true
-    check autoID showcase.integer 4
-    tap autoID showcase.integer
-    check autoID showcase.integer 5
-    message 'All control checks passed'
-    wait 5
-    tap autoID showcase.home
-    tap autoID showcase.materials
-    message 'Materials'
-    wait 10
-    tap autoID showcase.home
-    message 'Tour complete: quitting in five seconds'
-    wait 5
-    interaction on
-    tap autoID showcase.quit
-    tap name 'Quit Confirmation Yes'
-    """
 
     private func showMaterialsScene() {
         let availableMaterials: [(String, AetherMaterial)] = [
