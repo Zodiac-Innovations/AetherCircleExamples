@@ -343,6 +343,10 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Room · Six Materials", "room-six", .room(studio, materials: AetherRoomMaterials(
             floor: Material.carraraMarble, front: Material.blueFabric, right: Material.darkWalnut,
             back: Material.greenMoss, left: Material.blueGranite, ceiling: Material.brushedSteel))))
+        choices.append(("Stars", "particles-stars", .particleField(.stars())))
+        choices.append(("Snow", "particles-snow", .particleField(.snow())))
+        choices.append(("Rain", "particles-rain", .particleField(.rain())))
+        choices.append(("Fireflies", "particles-fireflies", .particleField(.fireflies())))
         choices.append(("Grass + Day Sky", "sky-grass", .skyFloor(
             skyFile: "environment-day-sky.jpg",
             floor: .texture(baseColorTexture: "environment-grass-floor.jpg", roughness: 0.95))))
@@ -352,7 +356,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         // A: materials and walkable spaces. B: recorded media and photo galleries.
         choices = choices.filter { choice in
             switch choice.2 {
-            case .passthrough, .blankVR, .materialVR, .floorMaterial, .cyberFloor, .room, .skyFloor:
+            case .passthrough, .blankVR, .materialVR, .floorMaterial, .cyberFloor, .room, .skyFloor, .particleField:
                 return !isMedia
             default:
                 return isMedia

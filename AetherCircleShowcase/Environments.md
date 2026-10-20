@@ -5,7 +5,7 @@ keeps the current environment; only an environment button changes it.
 
 | Section | Kinds |
 |---|---|
-| Environment A | Passthrough, solid colors, material patterns, Floor + Sky, Cyber Floors, Rooms, photographic sky with ground |
+| Environment A | Passthrough, solid colors, material patterns, Floor + Sky, Cyber Floors, Rooms, photographic sky with ground, stars, snow, rain, fireflies |
 | Environment B | Bundled/registered/internet 360 photos, 360 video, panoramas, Apple spatial photo, Yosemite galleries |
 
 Environment A includes two `skyFloor` examples:
@@ -34,3 +34,47 @@ Home automation identifiers remain stable: `showcase.environment` opens
 Environment A, while `showcase.environment-b` opens Environment B. Existing
 per-demo `showcase.environment.*` identifiers remain unchanged. Both pages retain
 Home/navigation and the arrangement's minimize/restore controls.
+
+## Particle fields
+
+Four procedural presets share one configurable environment:
+
+```swift
+.particleField(.stars())
+.particleField(.snow())
+.particleField(.rain())
+.particleField(.fireflies())
+```
+
+The matching shorthand values are `.particleStar`, `.particleSnow`,
+`.particleRain`, and `.particleFireFlies`.
+
+```swift
+var snowfall = AetherParticleField.snow(count: 350)
+snowfall.speed = 0.8
+snowfall.drift = 0.4
+snowfall.volume = .init(x: 30, y: 12, z: 30)
+snowfall.material = .color(.white)
+let environment = AetherEnvironmentMode.particleField(snowfall)
+```
+
+Settings include style, particle count (0–2000), size, volume, material,
+direction, speed, drift, rotation speed, opacity, twinkle, background, optional
+floor, placement, and deterministic seed. Spatial settings use meters and
+motion uses seconds. Renderers normalize edited or decoded settings before use.
+Materials are unlit and use their base color and optional base-color texture;
+roughness and metallic do not affect particles.
+
+Stars form a distant sphere that follows viewer translation without turning
+with the head. Snow, rain and fireflies use world-fixed volumes: you can walk
+among them. Particles recycle at distant volume boundaries and the optional
+ground extends beyond a normal tracked play area. Snow uses six-arm flakes,
+rain uses falling streaks, and fireflies drift and pulse. Particles have no
+collisions or interaction targets. Changing environments clears the field.
+Quest batches particles into at most fifteen opacity groups per eye.
+
+All four examples appear in Showcase **Environment A**. Their geometry and
+motion are generated in code; they require no downloaded images or credits.
+After updating the development framework and Showcase, regenerate an existing
+Quest project with `aethercircle quest create -d` to pick up the new native
+bridge and rendering support.
