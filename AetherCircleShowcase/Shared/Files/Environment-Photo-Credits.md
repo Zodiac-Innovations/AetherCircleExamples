@@ -1,4 +1,4 @@
-# Environment photo credits
+# Environment photo and video credits
 
 The bundled files ship with Showcase and work offline; the Internet 360 Mono button downloads Spruit Sunrise at startup. They are separate assets with the licenses below; the project source-code license does not replace their licenses.
 
@@ -214,3 +214,15 @@ The photos were downloaded at a reduced Wikimedia preview resolution and proport
 - Original image: https://upload.wikimedia.org/wikipedia/commons/c/c7/Yosemite_National_Park_-_HCP_-_October_07%2C_2022_-_174.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original
 - Packaged size: 1280 × 960 pixels.
 - Used only by: Gallery 8, slot 8.
+
+## environment-nasa-360.mp4 — Video 360 NASA
+
+- Title: Experience NASA's Artemis II Moon Launch in 360°.
+- Creator/credit: NASA. This demo is not endorsed by NASA.
+- Original publisher: https://www.youtube.com/watch?v=9LFBFRH51Jo
+- Source and public-domain declaration: https://commons.wikimedia.org/wiki/File:Experience_NASA%27s_Artemis_II_Moon_Launch_in_360%C2%B0_(20260402).webm
+- License/status: public domain as a work of the United States federal government (NASA); the file page's PD-USGov-NASA declaration applies to the video, not merely Commons metadata.
+- Changes: extracted seconds 10–26 of the source's 1080p VP9 derivative; proportionally resized from 1920 × 960 to 1280 × 640, converted to H.264 Main / YUV420P / 24 fps in an MP4 container, and removed audio. No cropping, reframing, artificial depth, or camera rotation added.
+- Duration: 16 seconds. Format: mono equirectangular, complete 360 × 180-degree coverage (2:1).
+- Bundled in Shared/Files; no internet connection or downloaded fallback needed. Plays on a user-centered globe and loops. The sample is intentionally silent. Other supported files may contain audio.
+- NASA media guidelines: https://www.nasa.gov/nasa-brand-center/images-and-media/

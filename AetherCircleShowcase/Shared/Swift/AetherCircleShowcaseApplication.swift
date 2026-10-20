@@ -311,6 +311,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         for (index, pattern) in shuffledPatterns.prefix(3).enumerated() {
             choices.append((pattern.0, "pattern-\(index + 1)", .materialVR(pattern.1)))
         }
+        choices.append(("Video 360 NASA", "video-360", .video360File("environment-nasa-360.mp4")))
         choices.append(("File 360 Mono", "file-mono", .image360File("environment-venice-360.jpg")))
         choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
         choices.append(("Internet 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
@@ -365,6 +366,13 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                     }
                 }
             )
+            if choice.1 == "video-360" {
+                let platform = world.platform
+                button.availabilityCheck = {
+                    platform.resourceExists(name: "environment-nasa-360", type: .custom("mp4"))
+                }
+                button.refreshAvailability()
+            }
             if choice.1 == "image-mono" {
                 let registry = world.assetEngine.imageRegistry
                 button.availabilityCheck = { registry.entry(for: EnvironmentImageKey.mono) != nil }
