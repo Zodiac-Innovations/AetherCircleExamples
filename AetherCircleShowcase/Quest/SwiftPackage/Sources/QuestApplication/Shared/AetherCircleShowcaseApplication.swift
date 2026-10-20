@@ -95,12 +95,16 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         if #available(visionOS 26.0, *), world.platform.canDecodeStereoHEIC { registerSpatialDemo() }
         #endif
         for name in ["yosemite-01", "yosemite-02"] {
-            if let data = world.platform.resourceRetrieve(name: "environment-" + name + ".jpg", type: .image) {
+            if let data = world.platform.resourceRetrieve(name: "environment-" + name, type: .image) {
                 world.assetEngine.registerImage(key: "showcase.gallery." + name, data: data)
+            } else {
+                print("Showcase: missing bundled image environment-\(name).jpg")
             }
         }
-        if let data = world.platform.resourceRetrieve(name: "environment-kiara-360.jpg", type: .image) {
+        if let data = world.platform.resourceRetrieve(name: "environment-kiara-360", type: .image) {
             world.assetEngine.registerImage(key: EnvironmentImageKey.embeddedMono, data: data)
+        } else {
+            print("Showcase: missing bundled image environment-kiara-360.jpg")
         }
         environmentDownloadTask?.cancel()
         let registry = world.assetEngine.imageRegistry
@@ -212,11 +216,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     private func showHomeScene() {
-        let title = makeTitle(
-            "AetherCircle Showcase",
-            y: 2.05
-        )
-
         let menu = AetherListButton(
             [
                 AetherTitleAction("Materials") { [weak self] in self?.showMaterialsScene() },
@@ -230,7 +229,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             size: AetherSize3D(x: 0.70, y: 0.16, z: 0.04),
             material: Material.button,
             textMaterial: Material.white,
-            position: AetherPosition3D(x: 0, y: 1.72, z: sceneDepth),
+            position: .zero,
             targetAppearance: .goldenGlow,
             rowSpacing: 0.06
         )
@@ -254,8 +253,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             panelButtonMaterial: Material.button,
             position: AetherPosition3D(
                 x: 0,
-                y: 0.52,
-                z: sceneDepth
+                y: -1.12,
+                z: 0
             ),
             targetAppearance: .goldenGlow,
             quitAction: {
@@ -269,13 +268,23 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             z: 0
         )
 
+        let arrangement = AetherBaseArrangement(
+            title: "AetherCircle Showcase",
+            closeAction: { [weak self] in self?.quitApp() },
+            elements: [menu, quit],
+            width: 2.8,
+            contentHeight: 1.22,
+            position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
+            name: "Home Arrangement",
+            autoID: "showcase.home-arrangement",
+            barFlavor: .floatingTitle
+        )
+
         world.graphicEngine.changeToScene(
             AetherScene(
                 name: "Showcase Home",
                 objects: [
-                    title,
-                    menu,
-                    quit,
+                    arrangement,
                 ]
             )
         )
@@ -313,7 +322,16 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.yosemite-01", "showcase.gallery.yosemite-02"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
         choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((3...10).map { String(format: "environment-yosemite-%02d.jpg", $0) }, material: .color(.black))))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: floorPatterns[0].1, sky: Material.blue)))
-        var objects: [AetherBasicObject] = [makeTitle("Environment", y: 2.10), makeHomeButton()]
+        // Millimeters: a 5 x 3 x 6 metre room with a matching-wall convenience call.
+        choices.append(("Room · Matching Walls", "room-matching", .room(
+            width: 5000, height: 3000, depth: 6000,
+            floor: Material.darkWalnut, walls: Material.sandstone, ceiling: .color(.white))))
+        // A second room exercises an independent material on every surface.
+        let studio = AetherRoom(width: 6000, height: 3500, depth: 7000)
+        choices.append(("Room · Six Materials", "room-six", .room(studio, materials: AetherRoomMaterials(
+            floor: Material.carraraMarble, front: Material.blueFabric, right: Material.darkWalnut,
+            back: Material.greenMoss, left: Material.blueGranite, ceiling: Material.brushedSteel))))
+        var objects: [AetherBasicObject] = []
         for (index, choice) in choices.enumerated() {
             let button = AetherButtonObject(
                 name: choice.0 + " Environment Button",
@@ -322,7 +340,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: AetherFloat(index % 3 - 1) * 0.86, y: 1.68 - AetherFloat(index / 3) * 0.23, z: sceneDepth),
+                position: AetherPosition3D(x: (AetherFloat(index % 4) - 1.5) * 0.84, y: 1.68 - AetherFloat(index / 4) * 0.23, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: {
                     if choice.1 == "image-mono",
@@ -362,7 +380,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             objects.append(button)
         }
-        world.graphicEngine.changeToScene(AetherScene(name: "Environment", objects: objects))
+        world.graphicEngine.changeToScene(makeSectionScene(title: "Environment", elements: objects, width: 3.6, flavor: .default))
     }
 
     private enum TourMode: String, Sendable {
@@ -381,15 +399,13 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             material: Material.white,
             position: AetherPosition3D(x: 0, y: 1.72, z: sceneDepth)
         )
-        world.graphicEngine.changeToScene(AetherScene(
-            name: "Automation",
-            objects: [
-                makeTitle("Automation", y: 2.05),
+        world.graphicEngine.changeToScene(makeSectionScene(
+            title: "Automation",
+            elements: [
                 description,
                 makeTourButton("Run Script Object", mode: .scriptObject, y: 1.43),
                 makeTourButton("Run Text Script", mode: .textScript, y: 1.18),
                 makeTourButton("Run Command Objects", mode: .commandObjects, y: 0.93),
-                makeHomeButton(),
             ]
         ))
     }
@@ -588,10 +604,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             0,
             0.62,
         ]
-        var objects: [AetherBasicObject] = [
-            makeTitle("Materials", y: 2.05),
-            makeHomeButton(),
-        ]
+        var objects: [AetherBasicObject] = []
         var availablePrimitives = AetherPrimitive.visibleCases.shuffled()
 
         for (index, selection) in selectedMaterials.enumerated() {
@@ -636,10 +649,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         world.graphicEngine.changeToScene(
-            AetherScene(
-                name: "Materials",
-                objects: objects
-            )
+            makeSectionScene(title: "Materials", elements: objects, width: 2.8, flavor: .darkPanel)
         )
     }
 
@@ -738,27 +748,18 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             targetAppearance: .goldenGlow
         )
 
-        let pageOneHome = makePanelHomeButton(
-            name: "Panel Page One Home"
-        )
-        pageOneHome.position = AetherPosition3D(
-            x: -0.20,
-            y: 0,
-            z: 0
-        )
         let pageOneNext = makePanelNextButton(
             name: "Panel Page One Next"
         )
         pageOneNext.autoID = "showcase.panels.next"
         pageOneNext.position = AetherPosition3D(
-            x: 0.20,
+            x: 0,
             y: 0,
             z: 0
         )
         let pageOneNavigation = AetherCompositeObject(
             name: "Panel Page One Navigation",
             objects: [
-                pageOneHome,
                 pageOneNext,
             ],
             position: AetherPosition3D(
@@ -880,14 +881,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             z: 0.06
         )
 
-        let pageTwoHome = makePanelHomeButton(
-            name: "Panel Page Two Home"
-        )
-        pageTwoHome.position = AetherPosition3D(
-            x: -0.20,
-            y: 0,
-            z: 0
-        )
         let pageTwoNext = makePanelNextButton(
             name: "Panel Page Two Next"
         )
@@ -900,7 +893,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         let pageTwoNavigation = AetherCompositeObject(
             name: "Panel Page Two Navigation",
             objects: [
-                pageTwoHome,
                 pageTwoNext,
             ],
             position: AetherPosition3D(
@@ -937,14 +929,13 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         let panel = AetherPanelObject(
             name: "Panel Objects Demonstration",
             flavor: .default,
-            title: "Panel Objects",
             objects: [
                 pageOne,
                 pageTwo,
             ],
             size: AetherSize3D(
                 x: 1.08,
-                y: 1.55,
+                y: 1.24,
                 z: 0.04
             ),
             spacing: 0,
@@ -954,7 +945,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             position: AetherPosition3D(
                 x: 0,
                 y: 1.42,
-                z: -1.55
+                z: sceneDepth
             ),
             onClose: {
                 self.showHomeScene()
@@ -962,7 +953,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
         let pagePosition = AetherPosition3D(
             x: 0,
-            y: -0.06,
+            y: 0.12,
             z: 0.09
         )
         pageOne.position = pagePosition
@@ -1023,33 +1014,12 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         world.graphicEngine.changeToScene(
-            AetherScene(
-                name: "Panel Objects",
-                objects: [
-                    panel,
-                    messagePanel,
-                    yesNoPanel,
-                ]
+            makeSectionScene(
+                title: "Panel Objects",
+                elements: [panel, messagePanel, yesNoPanel],
+                width: panel.panelSize.x,
+                flavor: .lightPanel
             )
-        )
-    }
-
-    private func makePanelHomeButton(
-        name: String
-    ) -> AetherButtonObject {
-        AetherButtonObject(
-            homeAction,
-            name: name,
-            autoID: "showcase.home",
-            flavor: .default,
-            size: AetherSize3D(
-                x: 0.34,
-                y: 0.12,
-                z: 0.04
-            ),
-            material: Material.orange,
-            textMaterial: Material.white,
-            targetAppearance: .goldenGlow
         )
     }
 
@@ -1124,13 +1094,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     private func showPrimitiveObjectsScene() {
-        var objects: [AetherBasicObject] = [
-            makeTitle(
-                "Primitive Objects",
-                y: 2.10
-            ),
-            makeHomeButton(),
-        ]
+        var objects: [AetherBasicObject] = []
 
         let primitives = AetherPrimitive.visibleCases
         let columns = 5
@@ -1180,34 +1144,49 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         world.graphicEngine.changeToScene(
-            AetherScene(
-                name: "Primitive Objects",
-                objects: objects
-            )
+            makeSectionScene(title: "Primitive Objects", elements: objects, width: 2.8, flavor: .default)
         )
     }
 
-    private func makeTitle(
-        _ text: String,
-        y: AetherFloat
-    ) -> AetherTextObject {
-        AetherTextObject(
-            name: text + " Title",
-            text: text,
-            characterHeight: 0.16,
-            extrusionDepth: 0.018,
-            material: Material.white,
-            position: AetherPosition3D(
-                x: 0,
-                y: y,
-                z: sceneDepth
-            )
+    /// Converts each section's authored positions to a single movable arrangement.
+    /// Back remains a normal bottom content button until bar navigation is adopted.
+    private func makeSectionScene(
+        title: String, elements: [AetherBasicObject], width: AetherFloat = 2.4,
+        flavor: AetherArrangementBarFlavor = .default
+    ) -> AetherScene {
+        let titleY: AetherFloat = 2.10
+        let contentY = titleY - 0.26
+        let highest = elements.map { $0.position.y + max($0.size.y / 2, 0.08) }.max() ?? contentY
+        let lift = contentY - highest
+        for element in elements { element.position.y += lift }
+        let lowest = elements.map { $0.position.y - max($0.size.y / 2, 0.08) }.min() ?? 1
+        let backY = lowest - 0.20
+        let back = makeHomeButton()
+        back.position = AetherPosition3D(x: 0, y: backY, z: sceneDepth)
+        let contents = elements + [back]
+        for object in contents {
+            object.position.y -= contentY
+            object.position.z -= sceneDepth
+        }
+        let arrangement = AetherBaseArrangement(
+            title: title,
+            closeAction: { [weak self] in self?.quitApp() },
+            elements: contents,
+            width: width,
+            contentHeight: max(0, contentY - backY + 0.08),
+            position: AetherPosition3D(x: 0, y: titleY, z: sceneDepth),
+            name: title + " Arrangement",
+            autoID: "showcase." + title.lowercased().replacingOccurrences(of: " ", with: "-") + "-arrangement",
+            barFlavor: flavor
         )
+        // Initial placement follows the same floor clearance as later dragging.
+        arrangement.move(to: arrangement.position)
+        return AetherScene(name: title, objects: [arrangement])
     }
 
     private func makeHomeButton() -> AetherButtonObject {
         AetherButtonObject(
-            homeAction,
+            AetherTitleAction("Back", action: homeAction.action),
             name: "Home Button",
             autoID: "showcase.home",
             flavor: .default,
@@ -1283,11 +1262,14 @@ extension AetherCircleShowcaseApplication {
     /// Creates a genuine stereo HEIC at startup, then exercises registered-image loading.
     @available(visionOS 26.0, *)
     private func registerSpatialDemo() {
-        guard let leftData = world.platform.resourceRetrieve(name: "environment-spatial-left.jpg", type: .image),
-              let rightData = world.platform.resourceRetrieve(name: "environment-spatial-right.jpg", type: .image),
+        guard let leftData = world.platform.resourceRetrieve(name: "environment-spatial-left", type: .image),
+              let rightData = world.platform.resourceRetrieve(name: "environment-spatial-right", type: .image),
               let left = CGImageSourceCreateWithData(leftData as CFData, nil),
               let right = CGImageSourceCreateWithData(rightData as CFData, nil),
-              let image = CGImageSourceCreateImageAtIndex(left, 0, nil) else { return }
+              let image = CGImageSourceCreateImageAtIndex(left, 0, nil) else {
+            print("Showcase: spatial sample source JPEGs are missing or unreadable.")
+            return
+        }
         let width = Double(image.width), height = Double(image.height)
         let focal = width * 0.5 / tan(80.0 * .pi / 360)
         let intrinsics: [Double] = [focal, 0, width / 2, 0, focal, height / 2, 0, 0, 1]
@@ -1309,7 +1291,10 @@ extension AetherCircleShowcaseApplication {
         }
         let encoded = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(encoded, UTType.heic.identifier as CFString, 2,
-            [kCGImagePropertyPrimaryImage: 0] as CFDictionary) else { return }
+            [kCGImagePropertyPrimaryImage: 0] as CFDictionary) else {
+            print("Showcase: HEIC encoder unavailable; spatial sample cannot be registered.")
+            return
+        }
         CGImageDestinationAddImageFromSource(destination, left, 0, properties(isLeft: true))
         CGImageDestinationAddImageFromSource(destination, right, 0, properties(isLeft: false))
         guard CGImageDestinationFinalize(destination) else {

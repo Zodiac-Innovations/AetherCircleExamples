@@ -76,7 +76,7 @@ inline std::array<unsigned char,7> glyph(char c) {
     G('4',2,6,10,18,31,2,2); G('5',31,16,16,30,1,1,30);
     G('6',14,16,16,30,17,17,14); G('7',31,1,2,4,8,8,8);
     G('8',14,17,17,14,17,17,14); G('9',14,17,17,15,1,1,14);
-    G('-',0,0,0,31,0,0,0); G('.',0,0,0,0,0,12,12);
+    G('+',0,4,4,31,4,4,0); G('-',0,0,0,31,0,0,0); G('.',0,0,0,0,0,12,12);
     G(':',0,12,12,0,12,12,0); G('?',14,17,1,2,4,0,4);
     G(' ',0,0,0,0,0,0,0);
 #undef G
@@ -120,6 +120,14 @@ class QuestRenderer {
     std::array<bool,2> rayVisible{},triggerArmed{},loggedController{};
     std::array<int,2> targets{{-1,-1}};
     std::array<float,2> rayLengths{{3,3}};
+    std::array<bool,2> arrangementDragging{};
+    std::array<std::array<float,3>,2> arrangementDragStart{};
+    std::array<float,2> arrangementDragDistance{};
+
+    void endArrangementDrag(int hand) {
+        swift.endArrangementDrag(hand);
+        arrangementDragging[hand]=false;
+    }
 
     void updateTransforms() {
         const int count=swift.objectCount();
@@ -187,23 +195,34 @@ class QuestRenderer {
         }
         return far>=0?near:-1;
     }
+    void refreshArrangementHover() {
+        if(swift.arrangementHover(targets[0],targets[1])) {
+            targets={-1,-1};updateTransforms();
+        }
+    }
     void updateControllers(XrTime time) {
         targets={-1,-1};rayVisible={false,false};
-        if(!swift.userInteractionEnabled() || !focused || !placementReady) {triggerArmed={false,false};return;}
+        if(!swift.userInteractionEnabled() || !focused || !placementReady) {
+            for(int hand=0;hand<2;++hand)endArrangementDrag(hand);
+            triggerArmed={false,false};refreshArrangementHover();return;
+        }
         XrActiveActionSet active{actionSet,XR_NULL_PATH};
         XrActionsSyncInfo sync{XR_TYPE_ACTIONS_SYNC_INFO};sync.countActiveActionSets=1;sync.activeActionSets=&active;
         XrResult result=xrSyncActions(session,&sync);
-        if(result==XR_SESSION_NOT_FOCUSED)return;
+        if(result==XR_SESSION_NOT_FOCUSED) {
+            for(int hand=0;hand<2;++hand)endArrangementDrag(hand);
+            refreshArrangementHover();return;
+        }
         xrCheck(result,"sync controllers");
         for(int hand=0;hand<2;++hand) {
             XrActionStateGetInfo get{XR_TYPE_ACTION_STATE_GET_INFO};get.subactionPath=handPaths[hand];get.action=aimAction;
             XrActionStatePose poseState{XR_TYPE_ACTION_STATE_POSE};xrCheck(xrGetActionStatePose(session,&get,&poseState),"controller pose state");
             get.action=triggerAction;
             XrActionStateFloat trigger{XR_TYPE_ACTION_STATE_FLOAT};xrCheck(xrGetActionStateFloat(session,&get,&trigger),"controller trigger state");
-            if(!poseState.isActive || !trigger.isActive){triggerArmed[hand]=false;continue;}
+            if(!poseState.isActive || !trigger.isActive){endArrangementDrag(hand);triggerArmed[hand]=false;continue;}
             XrSpaceLocation location{XR_TYPE_SPACE_LOCATION};xrCheck(xrLocateSpace(aimSpaces[hand],space,time,&location),"locate controller");
             const XrSpaceLocationFlags valid=XR_SPACE_LOCATION_POSITION_VALID_BIT|XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
-            if((location.locationFlags&valid)!=valid){triggerArmed[hand]=false;continue;}
+            if((location.locationFlags&valid)!=valid){endArrangementDrag(hand);triggerArmed[hand]=false;continue;}
             if(!loggedController[hand]) {
                 __android_log_print(ANDROID_LOG_INFO,logTag,"Controller %s tracking active.",hand==0?"left":"right");
                 loggedController[hand]=true;
@@ -214,11 +233,29 @@ class QuestRenderer {
             float nearest=10;
             for(int i=0;i<swift.objectCount();++i) {
                 if(swift.objectPrimitive(i)==2 || swift.objectValue(i,12)==0)continue;
-                // Hit test currently rendered box geometry only.
-                int primitive=swift.objectPrimitive(i);if(primitive!=0 && primitive!=3)continue;
+                // Hit test boxes and rounded chrome caps using their local bounds.
+                int primitive=swift.objectPrimitive(i);if(primitive!=0 && primitive!=1 && primitive!=3)continue;
                 float hit=boxHit(sceneOrigin*transforms[i],aims[hand],
                     {swift.objectValue(i,3),swift.objectValue(i,4),swift.objectValue(i,5)});
                 if(hit>=0 && hit<nearest) {nearest=hit;targets[hand]=swift.objectTarget(i);}
+            }
+            if(arrangementDragging[hand]) {
+                if(trigger.currentState<.35f) {
+                    endArrangementDrag(hand);triggerArmed[hand]=true;
+                } else {
+                    const float distance=arrangementDragDistance[hand];
+                    float delta[3];
+                    for(int k=0;k<3;++k)
+                        delta[k]=aims[hand].m[12+k]-aims[hand].m[8+k]*distance-arrangementDragStart[hand][k];
+                    // Convert the world-space displacement to scene coordinates.
+                    float local[3]={0,0,0};
+                    for(int axis=0;axis<3;++axis)
+                        for(int k=0;k<3;++k)local[axis]+=sceneOrigin.m[axis*4+k]*delta[k];
+                    swift.updateArrangementDrag(hand,local[0],local[1],local[2]);
+                    rayLengths[hand]=distance;
+                    updateTransforms();
+                }
+                continue;
             }
             if(nearest<10)rayLengths[hand]=nearest;
             if(trigger.currentState<.35f)triggerArmed[hand]=true;
@@ -226,16 +263,26 @@ class QuestRenderer {
                 triggerArmed[hand]=false;
                 if(targets[hand]>=0) {
                     __android_log_print(ANDROID_LOG_INFO,logTag,"Controller activated target %d.",targets[hand]);
+                    if(swift.beginArrangementDrag(targets[hand],hand)) {
+                        arrangementDragging[hand]=true;
+                        arrangementDragDistance[hand]=nearest;
+                        for(int k=0;k<3;++k)
+                            arrangementDragStart[hand][k]=aims[hand].m[12+k]-aims[hand].m[8+k]*nearest;
+                        continue;
+                    }
+                    // Scene navigation invalidates active drag targets.
+                    for(int other=0;other<2;++other)endArrangementDrag(other);
                     swift.activate(targets[hand]);
                     // A callback can replace the scene and invalidate every index.
                     targets={-1,-1};
                     if(!swift.userInteractionEnabled()) {
                         rayVisible={false,false};triggerArmed={false,false};
                     }
-                    updateTransforms();return;
+                    refreshArrangementHover();updateTransforms();return;
                 }
             }
         }
+        refreshArrangementHover();
     }
 
 
@@ -479,7 +526,11 @@ class QuestRenderer {
             auto a=point(column,0),b=point(column+1,0),c=point(column,1),d=point(column+1,1);
             triangle(a,b,c);triangle(b,d,c);
         }
-        Matrix model=Matrix::translation(center.x,center.y,center.z)*Matrix::scale(50,50,50);
+        // Match the launch-facing heading used by the UI. Keep panorama
+        // centering independent of scene translation so it remains head-centered.
+        Matrix heading=sceneOrigin;
+        heading.m[12]=heading.m[13]=heading.m[14]=0;
+        Matrix model=Matrix::translation(center.x,center.y,center.z)*heading*Matrix::scale(50,50,50);
         geometry(vertices,camera*model,{1,1,1,1},texture,1,0,false,model,false,1,1,3,0,radians,height);
     }
 
@@ -799,6 +850,24 @@ void main(){
                         geometry(floor,Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
                                  color,textureFor(-2),swift.objectValue(-2,14),swift.objectValue(-2,15),true,model,false,2048,2048);
                     }
+                    // Finite room surfaces are anchored with scene objects and write depth.
+                    // Local XY quads face inward after the shared surface rotation.
+                    static const std::vector<float> roomPanel={
+                        -.5f,-.5f,0, .5f,-.5f,0, .5f,.5f,0,
+                        -.5f,-.5f,0, .5f,.5f,0, -.5f,.5f,0
+                    };
+                    for(int surface=0;surface<6;++surface) {
+                        const int roomIndex=-20-surface;
+                        auto roomValue=[&](int field){return swift.objectValue(roomIndex,field);};
+                        if(roomValue(0)<=0)continue;
+                        std::array<float,4> color{};
+                        for(int c=0;c<4;++c)color[c]=swift.objectColor(roomIndex,c);
+                        Matrix model=sceneOrigin*Matrix::translation(roomValue(1),roomValue(2),roomValue(3))*
+                            Matrix::euler(roomValue(6),roomValue(7),0)*Matrix::scale(roomValue(4),roomValue(5),1);
+                        geometry(roomPanel,Matrix::projection(views[i].fov)*Matrix::view(views[i].pose)*model,
+                                 color,textureFor(roomIndex),roomValue(14),roomValue(15),true,model,false,
+                                 roomValue(4),roomValue(5));
+                    }
                     drawScene(Matrix::projection(views[i].fov)*Matrix::view(views[i].pose));
                     if(placementReady && !loggedDrawing && i==0) {
                         GLenum error=glGetError();
@@ -830,6 +899,3 @@ void main(){
         if(layerCount && !loggedFrame){log("First stereo Showcase frame submitted.");loggedFrame=true;}
     }
 };
-
-
-

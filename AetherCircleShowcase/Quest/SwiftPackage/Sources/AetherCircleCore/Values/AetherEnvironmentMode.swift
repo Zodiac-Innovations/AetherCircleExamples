@@ -56,11 +56,14 @@ public enum AetherEnvironmentMode: Sendable, Codable, Hashable {
     /// A world-fixed tiled floor at y=0 beneath a sky with no translation parallax.
     case floorMaterial(floor: AetherMaterial, sky: AetherMaterial)
 
+    /// Six world-fixed interior surfaces, with room dimensions in millimeters.
+    case room(AetherRoom, materials: AetherRoomMaterials)
+
     /// Each environment has exactly one placement behavior. This is derived
     /// from its case so an application cannot accidentally mix both behaviors.
     public var placement: AetherEnvironmentPlacement {
         switch self {
-        case .passthrough, .blankVR, .floorMaterial: return .worldFixed
+        case .passthrough, .blankVR, .floorMaterial, .room: return .worldFixed
         case .materialVR, .image360File, .image360Image, .panoramaFile, .panoramaImage, .spatialPhotoFile, .spatialPhotoImage, .photo2DFiles, .photo2DImages: return .userCentered
         }
     }
@@ -86,4 +89,23 @@ public enum AetherImage360Layout: String, Sendable, Codable, Hashable, CaseItera
     case stereoTopBottom
     /// A 4:1 image: left eye on the left, right eye on the right.
     case stereoSideBySide
+}
+
+
+public extension AetherEnvironmentMode {
+    /// Convenience constructor with matching materials on all four walls.
+    static func room(width: AetherFloat, height: AetherFloat, depth: AetherFloat,
+                     floor: AetherMaterial, walls: AetherMaterial, ceiling: AetherMaterial) -> Self {
+        .room(AetherRoom(width: width, height: height, depth: depth),
+              materials: AetherRoomMaterials(floor: floor, walls: walls, ceiling: ceiling))
+    }
+
+    /// Convenience constructor with six independent surface materials.
+    static func room(width: AetherFloat, height: AetherFloat, depth: AetherFloat,
+                     floor: AetherMaterial, front: AetherMaterial, right: AetherMaterial,
+                     back: AetherMaterial, left: AetherMaterial, ceiling: AetherMaterial) -> Self {
+        .room(AetherRoom(width: width, height: height, depth: depth),
+              materials: AetherRoomMaterials(floor: floor, front: front, right: right,
+                                             back: back, left: left, ceiling: ceiling))
+    }
 }

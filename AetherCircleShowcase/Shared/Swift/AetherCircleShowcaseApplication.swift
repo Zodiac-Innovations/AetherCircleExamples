@@ -322,6 +322,15 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.yosemite-01", "showcase.gallery.yosemite-02"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
         choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((3...10).map { String(format: "environment-yosemite-%02d.jpg", $0) }, material: .color(.black))))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: floorPatterns[0].1, sky: Material.blue)))
+        // Millimeters: a 5 x 3 x 6 metre room with a matching-wall convenience call.
+        choices.append(("Room · Matching Walls", "room-matching", .room(
+            width: 5000, height: 3000, depth: 6000,
+            floor: Material.darkWalnut, walls: Material.sandstone, ceiling: .color(.white))))
+        // A second room exercises an independent material on every surface.
+        let studio = AetherRoom(width: 6000, height: 3500, depth: 7000)
+        choices.append(("Room · Six Materials", "room-six", .room(studio, materials: AetherRoomMaterials(
+            floor: Material.carraraMarble, front: Material.blueFabric, right: Material.darkWalnut,
+            back: Material.greenMoss, left: Material.blueGranite, ceiling: Material.brushedSteel))))
         var objects: [AetherBasicObject] = []
         for (index, choice) in choices.enumerated() {
             let button = AetherButtonObject(
@@ -331,7 +340,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: AetherFloat(index % 3 - 1) * 0.86, y: 1.68 - AetherFloat(index / 3) * 0.23, z: sceneDepth),
+                position: AetherPosition3D(x: (AetherFloat(index % 4) - 1.5) * 0.84, y: 1.68 - AetherFloat(index / 4) * 0.23, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: {
                     if choice.1 == "image-mono",
@@ -371,7 +380,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             objects.append(button)
         }
-        world.graphicEngine.changeToScene(makeSectionScene(title: "Environment", elements: objects, width: 2.8, flavor: .default))
+        world.graphicEngine.changeToScene(makeSectionScene(title: "Environment", elements: objects, width: 3.6, flavor: .default))
     }
 
     private enum TourMode: String, Sendable {

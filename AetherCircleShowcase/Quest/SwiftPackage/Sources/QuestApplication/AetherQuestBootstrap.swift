@@ -189,6 +189,21 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
         }
     }
 
+    /// Room surfaces use -20...-25, separate from scene interaction and galleries.
+    var room: AetherRoom? {
+        if case .room(let room, _) = environmentEngine.mode { return room }
+        return nil
+    }
+
+    func material(at index: Int32) -> AetherMaterial? {
+        if index <= -20, index >= -25,
+           let surface = AetherRoom.Surface(rawValue: Int(-index - 20)),
+           case .room(_, let materials) = environmentEngine.mode { return materials[surface] }
+        if index == -1 { return environmentMaterial }
+        if index == -2 { return floorMaterial }
+        return object(at: index)?.material
+    }
+
     /// Bridge index -2 is the floor; it is never a tappable scene object.
     var floorMaterial: AetherMaterial? {
         if case .floorMaterial(let floor, _) = environmentEngine.mode { return floor }
@@ -246,6 +261,7 @@ private final class QuestSwiftRuntime: @unchecked Sendable {
 
     func stop() {
         platformServices.automationRunner.stop()
+        questArrangementDrags.removeAll()
         application?.stop()
         application = nil
         graphicEngine.scene = AetherScene()
@@ -308,6 +324,27 @@ public func aethercircleSwiftObjectValue(
     _ index: Int32,
     _ value: Int32
 ) -> Float {
+    if index <= -20 && index >= -25 {
+        let runtime = QuestSwiftRuntime.shared
+        guard let room = runtime.room,
+              let surface = AetherRoom.Surface(rawValue: Int(-index - 20)),
+              let material = runtime.material(at: index) else { return 0 }
+        let center = room.center(of: surface), size = room.size(of: surface)
+        let rotation = room.rotation(of: surface)
+        switch value {
+        case 0: return 1
+        case 1: return center.x
+        case 2: return center.y
+        case 3: return center.z
+        case 4: return size.x
+        case 5: return size.y
+        case 6: return rotation.x
+        case 7: return rotation.y
+        case 14: return runtime.assetEngine.surface(for: material).roughness
+        case 15: return runtime.assetEngine.surface(for: material).metallic
+        default: return 0
+        }
+    }
     if index <= -10 && index >= -17 {
         let runtime = QuestSwiftRuntime.shared
         let slot = Int(-index - 10)
@@ -402,7 +439,7 @@ public func aethercircleSwiftObjectColor(
     _ component: Int32
 ) -> Float {
     let runtime = QuestSwiftRuntime.shared
-    guard let material = index == -1 ? runtime.environmentMaterial : (index == -2 ? runtime.floorMaterial : runtime.object(at: index)?.material) else { return 0 }
+    guard let material = runtime.material(at: index) else { return 0 }
     let color = runtime.assetEngine.surface(for: material).baseColor
     switch component {
     case 0: return color.red
@@ -501,7 +538,7 @@ public func aethercircleSwiftObjectTexture(
     _ index: Int32, _ buffer: UnsafeMutablePointer<CChar>?, _ capacity: Int32
 ) -> Int32 {
     let runtime = QuestSwiftRuntime.shared
-    let material = index == -1 ? runtime.environmentMaterial : (index == -2 ? runtime.floorMaterial : runtime.object(at: index)?.material)
+    let material = runtime.material(at: index)
     var filename = material.flatMap { runtime.assetEngine.surface(for: $0).baseColorTexture } ?? ""
     if index <= -10 && index >= -17, case .file(let name)? = runtime.galleryImage(at: index) { filename = name }
     if let key = runtime.registeredImageKey(at: index),
@@ -548,4 +585,65 @@ public func aethercircleSwiftObjectTextureBytes(
         }
     }
     return Int32(data.count)
+}
+
+private struct QuestArrangementDrag {
+    let arrangement: AetherBaseArrangement
+    let start: AetherPosition3D
+}
+nonisolated(unsafe) private var questArrangementDrags: [Int32: QuestArrangementDrag] = [:]
+
+/// Returns 1 when a trigger press starts dragging an arrangement's move bar.
+@_cdecl("aethercircle_swift_begin_arrangement_drag")
+public func aethercircleSwiftBeginArrangementDrag(_ index: Int32, _ hand: Int32) -> Int32 {
+    let runtime = QuestSwiftRuntime.shared
+    guard runtime.platformServices.isUserInteractionEnabled,
+          let target = runtime.object(at: index),
+          let bar = AetherArrangementBar.containing(target.id, in: runtime.graphicEngine.scene.objects),
+          let arrangement = bar.movementArrangement(for: target.id),
+          !questArrangementDrags.values.contains(where: { $0.arrangement === arrangement }) else { return 0 }
+    questArrangementDrags[hand] = QuestArrangementDrag(arrangement: arrangement, start: arrangement.position)
+    return 1
+}
+
+@_cdecl("aethercircle_swift_update_arrangement_drag")
+public func aethercircleSwiftUpdateArrangementDrag(
+    _ hand: Int32, _ x: Float, _ y: Float, _ z: Float
+) {
+    guard QuestSwiftRuntime.shared.platformServices.isUserInteractionEnabled,
+          let drag = questArrangementDrags[hand] else { return }
+    drag.arrangement.move(to: AetherPosition3D(
+        x: drag.start.x + x, y: drag.start.y + y, z: drag.start.z + z
+    ))
+}
+
+@_cdecl("aethercircle_swift_end_arrangement_drag")
+public func aethercircleSwiftEndArrangementDrag(_ hand: Int32) {
+    questArrangementDrags.removeValue(forKey: hand)
+}
+
+/// Resolves both hands before changing visibility, since rebuilding changes render indices.
+/// Returns 1 when the caller must refresh its transform cache.
+@_cdecl("aethercircle_swift_arrangement_hover")
+public func aethercircleSwiftArrangementHover(_ left: Int32, _ right: Int32) -> Int32 {
+    let runtime = QuestSwiftRuntime.shared
+    let roots = runtime.graphicEngine.scene.objects
+    let bars = [left, right].compactMap { index -> AetherArrangementBar? in
+        guard runtime.platformServices.isUserInteractionEnabled,
+              let object = runtime.object(at: index) else { return nil }
+        return AetherArrangementBar.containing(object.id, in: roots)
+    }
+    var changed = false
+    func visit(_ object: AetherBasicObject) {
+        if let bar = object as? AetherArrangementBar {
+            let hovered = bars.contains { $0 === bar }
+            if bar.setHovered(hovered) { changed = true }
+        }
+        if let group = object as? AetherCompositeObject {
+            for child in group.children { visit(child) }
+        }
+    }
+    for root in roots { visit(root) }
+    if changed { runtime.prepareRenderScene() }
+    return changed ? 1 : 0
 }
