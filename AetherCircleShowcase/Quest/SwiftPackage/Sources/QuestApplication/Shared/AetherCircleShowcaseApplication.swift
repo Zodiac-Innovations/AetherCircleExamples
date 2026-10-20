@@ -322,10 +322,16 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.yosemite-01", "showcase.gallery.yosemite-02"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
         choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((3...10).map { String(format: "environment-yosemite-%02d.jpg", $0) }, material: .color(.black))))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: floorPatterns[0].1, sky: Material.blue)))
-        choices.append(("Cyber Floor", "cyber-floor", .cyberFloor(
+        choices.append(("Cyber Floor · Cyan", "cyber-floor", .cyberFloor(
             sky: .color(AetherColor(red: 0.015, green: 0.025, blue: 0.08)),
             floor: .color(AetherColor(red: 0.025, green: 0.035, blue: 0.055)),
             lines: Material.cyan, squareWidth: 1000)))
+        choices.append(("Cyber Floor · Silver", "cyber-floor-silver", .cyberFloor(
+            sky: .color(.white), floor: .color(.black),
+            lines: .surface(AetherMaterialSurface(
+                baseColor: AetherColor(red: 0.75, green: 0.75, blue: 0.75),
+                roughness: 0.3, metallic: 0.8)),
+            squareWidth: 1000)))
         // Millimeters: a 5 x 3 x 6 metre room with a matching-wall convenience call.
         choices.append(("Room · Matching Walls", "room-matching", .room(
             width: 5000, height: 3000, depth: 6000,
