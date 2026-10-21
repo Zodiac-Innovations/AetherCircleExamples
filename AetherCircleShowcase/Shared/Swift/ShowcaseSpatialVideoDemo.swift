@@ -21,7 +21,7 @@ enum ShowcaseSpatialVideoDemo {
         let reader = try AVAssetReader(asset: asset)
         let source = AVAssetReaderTrackOutput(track: track, outputSettings: [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-            kCVPixelBufferIOSurfacePropertiesKey as String: [String: Any](),
+            kCVPixelBufferIOSurfacePropertiesKey as String: [String: String](),
         ])
         source.alwaysCopiesSampleData = false
         reader.add(source)
@@ -40,7 +40,7 @@ enum ShowcaseSpatialVideoDemo {
         let attributes: [String: Any] = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
             kCVPixelBufferWidthKey as String: width, kCVPixelBufferHeightKey as String: height,
-            kCVPixelBufferIOSurfacePropertiesKey as String: [String: Any](),
+            kCVPixelBufferIOSurfacePropertiesKey as String: [String: String](),
         ]
         let adaptor = AVAssetWriterInputTaggedPixelBufferGroupAdaptor(assetWriterInput: inputTrack, sourcePixelBufferAttributes: attributes)
         writer.add(inputTrack)
