@@ -63,9 +63,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     /// Shared navigation action used by Home buttons throughout the Showcase.
-    private(set) lazy var homeAction = AetherTitleAction("Home") { [weak self] in
+    private(set) lazy var homeAction = AetherAction(title: "Home", action: { [weak self] in
         self?.showHomeScene()
-    }
+    })
 
     private let sceneDepth: AetherFloat = -1.7
     private var environmentDownloadTask: Task<Void, Never>?
@@ -221,15 +221,15 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     private func showHomeScene() {
         let menu = AetherListButton(
-            [
-                AetherTitleAction("Primitive Objects") { [weak self] in self?.showPrimitiveObjectsScene() },
-                AetherTitleAction("Materials") { [weak self] in self?.showMaterialsScene() },
-                AetherTitleAction("Environment A") { [weak self] in self?.showEnvironmentScene() },
-                AetherTitleAction("Environment B") { [weak self] in self?.showEnvironmentScene(isMedia: true) },
-                AetherTitleAction("Dialogs") { [weak self] in self?.showDialogsScene() },
-                AetherTitleAction("UI Elements") { [weak self] in self?.showUIElementsScene() },
-                AetherTitleAction("Automation") { [weak self] in self?.showAutomationScene() },
-            ],
+            AetherListActions([
+                AetherAction(title: "Primitive Objects", action: { [weak self] in self?.showPrimitiveObjectsScene() }),
+                AetherAction(title: "Materials", action: { [weak self] in self?.showMaterialsScene() }),
+                AetherAction(title: "Environment A", action: { [weak self] in self?.showEnvironmentScene() }),
+                AetherAction(title: "Environment B", action: { [weak self] in self?.showEnvironmentScene(isMedia: true) }),
+                AetherAction(title: "Dialogs", action: { [weak self] in self?.showDialogsScene() }),
+                AetherAction(title: "UI Elements", action: { [weak self] in self?.showUIElementsScene() }),
+                AetherAction(title: "Automation", action: { [weak self] in self?.showAutomationScene() }),
+            ]),
             name: "Showcase Menu",
             autoID: "showcase.menu",
             numberItemPerColumn: 4,
@@ -256,17 +256,12 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             ),
             material: Material.red,
             textMaterial: Material.white,
-            panelMaterial: Material.panel,
-            panelButtonMaterial: Material.button,
             position: AetherPosition3D(
                 x: 0,
                 y: -1.12,
                 z: 0
             ),
-            targetAppearance: .goldenGlow,
-            quitAction: {
-                self.quitApp()
-            }
+            targetAppearance: .goldenGlow
         )
         quit.button.autoID = "showcase.quit"
         quit.button.rotationRate = AetherRotationRate3D(
@@ -277,7 +272,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
         let arrangement = AetherBaseArrangement(
             title: "AetherCircle Showcase",
-            closeAction: { [weak self] in self?.quitApp() },
             elements: [menu, quit],
             width: 2.8,
             contentHeight: 1.22,
@@ -387,7 +381,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 material: Material.button, textMaterial: Material.white,
                 position: AetherPosition3D(x: AetherFloat(index % 3 - 1) * 0.86, y: 1.68 - AetherFloat(index / 3) * 0.23, z: sceneDepth),
                 targetAppearance: .goldenGlow,
-                action: {
+                action: AetherAction(action: {
                     if choice.1 == "image-mono",
                        self.world.assetEngine.registeredImage(for: EnvironmentImageKey.mono) == nil { return }
                     if choice.1 == "floor-material" {
@@ -398,49 +392,49 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                     } else {
                         self.world.environmentEngine.mode = choice.2
                     }
-                }
+                })
             )
             if ["video-sbs", "video-tb"].contains(choice.1) {
                 let platform = world.platform
                 let supported = world.environmentEngine.supports(choice.2)
                 let file = choice.1 == "video-sbs" ? "environment-stereo-sbs" : "environment-stereo-tb"
-                button.availabilityCheck = { supported && platform.resourceExists(name: file, type: .custom("mp4")) }
+                button.setAction(AetherAction(action: button.action?.action, enabled: { supported && platform.resourceExists(name: file, type: .custom("mp4")) }))
                 button.refreshAvailability()
             }
             if choice.1 == "video-spatial" {
                 let cache = world.platform.cacheEngine
                 let supported = world.environmentEngine.supports(choice.2)
-                button.availabilityCheck = { supported && (try? cache.fileURL(for: Self.spatialVideoDemoKey)) != nil }
+                button.setAction(AetherAction(action: button.action?.action, enabled: { supported && (try? cache.fileURL(for: Self.spatialVideoDemoKey)) != nil }))
                 button.refreshAvailability()
             }
             if choice.1 == "video-360" {
                 let platform = world.platform
-                button.availabilityCheck = {
+                button.setAction(AetherAction(action: button.action?.action, enabled: {
                     platform.resourceExists(name: "environment-nasa-360", type: .custom("mp4"))
-                }
+                }))
                 button.refreshAvailability()
             }
             if choice.1 == "image-mono" {
                 let registry = world.assetEngine.imageRegistry
-                button.availabilityCheck = { registry.entry(for: EnvironmentImageKey.mono) != nil }
+                button.setAction(AetherAction(action: button.action?.action, enabled: { registry.entry(for: EnvironmentImageKey.mono) != nil }))
                 button.refreshAvailability()
             }
             if choice.1 == "image-stereo" {
                 let registry = world.assetEngine.imageRegistry
-                button.availabilityCheck = { registry.entry(for: EnvironmentImageKey.embeddedMono) != nil }
+                button.setAction(AetherAction(action: button.action?.action, enabled: { registry.entry(for: EnvironmentImageKey.embeddedMono) != nil }))
                 button.refreshAvailability()
             }
             if choice.1 == "gallery-images" {
                 let registry = world.assetEngine.imageRegistry
-                button.availabilityCheck = {
+                button.setAction(AetherAction(action: button.action?.action, enabled: {
                     registry.entry(for: "showcase.gallery.yosemite-01") != nil && registry.entry(for: "showcase.gallery.yosemite-02") != nil
-                }
+                }))
                 button.refreshAvailability()
             }
             if choice.1 == "spatial-photo" {
                 let registry = world.assetEngine.imageRegistry
                 let supported = world.platform.canDecodeStereoHEIC
-                button.availabilityCheck = { supported && registry.entry(for: EnvironmentImageKey.spatial) != nil }
+                button.setAction(AetherAction(action: button.action?.action, enabled: { supported && registry.entry(for: EnvironmentImageKey.spatial) != nil }))
                 button.refreshAvailability()
             }
             objects.append(button)
@@ -477,7 +471,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             textMaterial: Material.white,
             position: AetherPosition3D(x: 0, y: y, z: sceneDepth),
             targetAppearance: .goldenGlow,
-            action: {
+            action: AetherAction(action: {
                 let script = mode == .environments ? self.environmentTour : Self.sectionTour
                 let platform = self.world.platform
                 // Navigate first, before runScript can disable input or execute commands.
@@ -491,7 +485,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                         print("Showcase automation failed: \(error)")
                     }
                 }
-            }
+            })
         )
     }
 
@@ -757,7 +751,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         back.position = AetherPosition3D(x: 0, y: -1.36, z: 0)
         let arrangement = AetherBaseArrangement(
             title: "Dialogs",
-            closeAction: { [weak self] in self?.quitApp() },
             elements: [pageOne, back],
             width: 1.08,
             contentHeight: 1.44,
@@ -781,9 +774,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             textMaterial: Material.white,
             buttonMaterial: Material.button,
             position: helperPosition,
-            onOK: { [weak arrangement] in
+            onOK: AetherAction(action: { [weak arrangement] in
                 arrangement?.isVisible = true
-            }
+            })
         )
         messagePanel.hide()
 
@@ -795,23 +788,23 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             textMaterial: Material.white,
             buttonMaterial: Material.button,
             position: helperPosition,
-            yesAction: { [weak arrangement] in
+            yesAction: AetherAction(action: { [weak arrangement] in
                 arrangement?.isVisible = true
-            },
-            noAction: { [weak arrangement] in
+            }),
+            noAction: AetherAction(action: { [weak arrangement] in
                 arrangement?.isVisible = true
-            }
+            })
         )
         yesNoPanel.hide()
 
-        messageButton.setAction { [weak arrangement] in
+        messageButton.setAction(AetherAction(action: { [weak arrangement] in
             arrangement?.isVisible = false
             messagePanel.show()
-        }
-        yesNoButton.setAction { [weak arrangement] in
+        }))
+        yesNoButton.setAction(AetherAction(action: { [weak arrangement] in
             arrangement?.isVisible = false
             yesNoPanel.show()
-        }
+        }))
 
         world.graphicEngine.changeToScene(
             AetherScene(name: "Dialogs", objects: [arrangement, messagePanel, yesNoPanel])
@@ -1051,7 +1044,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
         let arrangement = AetherBaseArrangement(
             title: title,
-            closeAction: { [weak self] in self?.quitApp() },
             elements: contents,
             width: width,
             contentHeight: max(0, contentY - backY + 0.08),
@@ -1067,7 +1059,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     private func makeHomeButton() -> AetherButtonObject {
         AetherButtonObject(
-            AetherTitleAction("Back", action: homeAction.action),
+            AetherAction(title: "Back", action: homeAction.action),
             name: "Home Button",
             autoID: "showcase.home",
             flavor: .default,
@@ -1128,11 +1120,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         return Bool.random() ? speed : -speed
     }
 
-    private func quitApp() {
-        if world.platform.canQuitApp {
-            world.platform.quitApp()
-        }
-    }
 }
 
 
@@ -1211,6 +1198,3 @@ extension AetherCircleShowcaseApplication {
     }
 }
 #endif
-
-
-

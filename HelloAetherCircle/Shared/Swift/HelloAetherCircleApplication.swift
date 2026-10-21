@@ -44,10 +44,7 @@ public final class HelloAetherCircleApplication: AetherApplication {
                 y: 0.95,
                 z: -1.5
             ),
-            targetAppearance: .goldenGlow,
-            quitAction: {
-                self.quitApp()
-            }
+            targetAppearance: .goldenGlow
         )
 
         let scene = AetherScene(
@@ -61,9 +58,5 @@ public final class HelloAetherCircleApplication: AetherApplication {
         world.graphicEngine.changeToScene(scene)
     }
 
-    private func quitApp() {
-        if world.platform.canQuitApp {
-            world.platform.quitApp()
-        }
-    }
 }
+
