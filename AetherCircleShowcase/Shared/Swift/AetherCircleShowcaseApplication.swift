@@ -1,3 +1,5 @@
+// MARK: - Imports
+
 import AetherCircleCore
 import Foundation
 #if os(visionOS)
@@ -5,8 +7,14 @@ import ImageIO
 import UniformTypeIdentifiers
 #endif
 
+// MARK: - Application Object
+
+/// Showcase of AetherCircle framework
 public final class AetherCircleShowcaseApplication: AetherApplication {
 
+    // MARK: - Constants
+
+    /// Material Keys for the app
     private enum MaterialKey {
         static let red = "showcase_red"
         static let green = "showcase_green"
@@ -33,6 +41,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         static let scifiPanel = "showcase_scifi_panel"
     }
 
+    /// Material for the app
     private enum Material {
         static let red = AetherMaterial.named(MaterialKey.red)
         static let green = AetherMaterial.named(MaterialKey.green)
@@ -62,13 +71,21 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         static let button = AetherMaterial.defaultButton
     }
 
-    private lazy var navigationActions: [AetherAction] = [
+    /// List of keys for various images
+    private enum EnvironmentImageKey {
+        static let spatial = "showcase.environment.spatial"
+        static let mono = "showcase.environment.mono"
+        static let embeddedMono = "showcase.environment.kiara"
+    }
+
+    /// List of actions used on Home Page
+    private lazy var homeActions: [AetherAction] = [
         AetherAction(
             key: "showcase.voice.primitives",
-            title: "Primitive Objects",
-            audioCommand: "primitive objects",
+            title: "Primitives",
+            audioCommand: "primitive",
             action: { [weak self] in
-                self?.showPrimitiveObjectsScene()
+                self?.showPrimitiveScene()
             }
         ),
         AetherAction(
@@ -89,8 +106,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         ),
         AetherAction(
             key: "showcase.voice.environment-b",
-            title: "Environment B",
-            audioCommand: "environment b",
+            title: "Media",
+            audioCommand: "media",
             action: { [weak self] in
                 self?.showEnvironmentScene(isMedia: true)
             }
@@ -121,33 +138,42 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
     ]
 
+    /// Depth of various arrangement in the world
     private let sceneDepth: AetherFloat = -1.7
+    
+    /// Download Task for Eviroment
     private var environmentDownloadTask: Task<Void, Never>?
+    
+    /// Download Task for Video
     private var spatialVideoDemoTask: Task<Void, Never>?
+    
+    /// Spatial Video key
     private static let spatialVideoDemoKey = "showcase.environment.spatial-video"
+
+    // MARK: - App Functions
+
+    public override func start() {
+        world.platform.configureVoice(AetherVoiceConfiguration(wakePhrase: "Showcase"))
+
+        world.environmentEngine.mode = .passthrough
+
+        registerMaterials()
+        registerEnvironmentImages()
+        homeActions.forEach { $0.register() }
+
+        AetherAction.setHomeAction { [weak self] in self?.showHomeScene() }
+    }
 
     public override func stop() {
         world.platform.configureVoice(nil)
+        
         spatialVideoDemoTask?.cancel()
         spatialVideoDemoTask = nil
         environmentDownloadTask?.cancel()
         environmentDownloadTask = nil
     }
 
-    public override func start() {
-        AetherAction.setHomeAction { [weak self] in self?.showHomeScene() }
-        world.environmentEngine.mode = .passthrough
-        registerMaterials()
-        registerEnvironmentImages()
-        navigationActions.forEach { $0.register() }
-        world.platform.configureVoice(AetherVoiceConfiguration(wakePhrase: "Showcase"))
-    }
-
-    private enum EnvironmentImageKey {
-        static let spatial = "showcase.environment.spatial"
-        static let mono = "showcase.environment.mono"
-        static let embeddedMono = "showcase.environment.kiara"
-    }
+    // MARK: - New Functions
 
     /// One registered example is embedded; the other must arrive over HTTPS.
     private func registerEnvironmentImages() {
@@ -295,9 +321,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     private func showHomeScene() {
         let menu = AetherListButton(
-            AetherListActions(navigationActions),
+            AetherListActions(homeActions),
             name: "Showcase Menu",
-            autoID: "showcase.menu",
             numberItemPerColumn: 4,
             size: AetherSize3D(x: 0.70, y: 0.16, z: 0.04),
             material: Material.button,
@@ -306,17 +331,15 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             targetAppearance: .goldenGlow,
             rowSpacing: 0.06
         )
+        
         // Keep navigation identifiers stable when changing the menu order.
         let menuIDs = ["primitives", "materials", "environment", "environment-b", "dialogs", "ui-elements", "automation"]
         for (button, menuID) in zip(menu.buttons, menuIDs) {
             button.autoID = "showcase." + menuID
         }
 
-        let quit = AetherQuitButtonObject(
-            position: .zero
-        )
-        quit.button.autoID = "showcase.quit"
-
+        let quit = AetherQuitButtonObject( position: .zero)
+        
         let arrangement = AetherBaseArrangement(
             title: "AetherCircle Showcase",
             elements: [menu, quit],
@@ -485,7 +508,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             objects.append(button)
         }
-        world.graphicEngine.changeToScene(makeSectionScene(title: isMedia ? "Environment B" : "Environment A", elements: objects, width: 2.8, flavor: .default))
+        world.graphicEngine.changeToScene(makeSectionScene(title: isMedia ? "Media" : "Environment A", elements: objects, width: 2.8, flavor: .default))
     }
 
     private enum TourMode: String, Sendable {
@@ -553,7 +576,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
         commands += [
             .activate(.autoID("showcase.home")), .activate(.autoID("showcase.environment-b")),
-            .message("Environment B: photographs, panoramas and video"), .wait(1),
+            .message("Media: photographs, panoramas and video"), .wait(1),
         ]
         let registry = world.assetEngine.imageRegistry
         var environmentsB: [String] = []
@@ -597,7 +620,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private static var sectionTour: AetherAutomationScript {
         AetherAutomationScript(commands: [
             .wait(1),
-            .activate(.autoID("showcase.primitives")), .message("Primitive Objects"), .wait(12),
+            .activate(.autoID("showcase.primitives")), .message("Primitive"), .wait(12),
             .activate(.autoID("showcase.home")),
             .activate(.autoID("showcase.materials")), .message("Materials"), .wait(12),
             .activate(.autoID("showcase.home")),
@@ -1012,7 +1035,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         return row
     }
 
-    private func showPrimitiveObjectsScene() {
+    private func showPrimitiveScene() {
         var objects: [AetherBasicObject] = []
 
         let primitives = AetherPrimitive.visibleCases

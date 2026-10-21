@@ -17,9 +17,6 @@ targets:
     info:
       path: Info.plist
       properties:
-        AetherVoiceControlEnabled: true
-        NSMicrophoneUsageDescription: "Say Showcase followed by a navigation command to control the app."
-        NSSpeechRecognitionUsageDescription: "Recognize spoken Showcase navigation commands."
         NSHumanReadableCopyright: "© 2026 Zodiac Innovations. All rights reserved."
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: true

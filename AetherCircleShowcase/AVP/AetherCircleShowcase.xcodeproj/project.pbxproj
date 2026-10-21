@@ -16,18 +16,28 @@
 /* Begin PBXFileReference section */
 		2E6C96FFADAA556057EF9E2B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		66A03AE1F5531B8BB8B254C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		92961DA3C28717DD99BEA399 /* AetherCircleShowcase.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; name = AetherCircleShowcase.app; path = "AetherCircle Showcase.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		92961DA3C28717DD99BEA399 /* AetherCircleShowcase.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AetherCircleShowcase.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C659489B009445EDA2DC8013 /* AetherCircleShowcaseAVPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AetherCircleShowcaseAVPApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		63052BA56FDE96F2BC22EF88 /* Swift */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			name = Swift;
 			path = Swift;
 			sourceTree = "<group>";
 		};
 		884056D51B8660DDE3893864 /* Files */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			name = Files;
 			path = Files;
 			sourceTree = "<group>";
 		};
@@ -87,6 +97,8 @@
 		F6F18BF53ED22D802C7D4830 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				2E6C96FFADAA556057EF9E2B /* Assets.xcassets */,
+				66A03AE1F5531B8BB8B254C8 /* Info.plist */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -115,8 +127,8 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				63052BA56FDE96F2BC22EF88 /* Swift */,
 				884056D51B8660DDE3893864 /* Files */,
+				63052BA56FDE96F2BC22EF88 /* Swift */,
 			);
 			name = AetherCircleShowcase;
 			packageProductDependencies = (
@@ -135,6 +147,8 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = C63396CE56770D2E1E7E5CAB /* Build configuration list for PBXProject "AetherCircleShowcase" */;
 			developmentRegion = en;
