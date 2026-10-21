@@ -90,7 +90,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         world.environmentEngine.mode = .passthrough
         registerMaterials()
         registerEnvironmentImages()
-        showHomeScene()
         navigationActions.forEach { $0.register() }
         world.platform.configureVoice(AetherVoiceConfiguration(wakePhrase: "Showcase"))
     }
@@ -473,7 +472,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 let script = mode == .environments ? self.environmentTour : Self.sectionTour
                 let platform = self.world.platform
                 // Navigate first, before runScript can disable input or execute commands.
-                self.showHomeScene()
+                AetherAction.home.invoke()
                 Task {
                     do {
                         try await platform.runScript(script)
