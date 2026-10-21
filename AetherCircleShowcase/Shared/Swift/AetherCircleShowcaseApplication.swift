@@ -221,7 +221,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 AetherTitleAction("Materials") { [weak self] in self?.showMaterialsScene() },
                 AetherTitleAction("Environment A") { [weak self] in self?.showEnvironmentScene() },
                 AetherTitleAction("Environment B") { [weak self] in self?.showEnvironmentScene(isMedia: true) },
-                AetherTitleAction("Panel Objects") { [weak self] in self?.showPanelObjectsScene() },
+                AetherTitleAction("Dialogs") { [weak self] in self?.showDialogsScene() },
+                AetherTitleAction("UI Elements") { [weak self] in self?.showUIElementsScene() },
                 AetherTitleAction("Automation") { [weak self] in self?.showAutomationScene() },
             ],
             name: "Showcase Menu",
@@ -235,7 +236,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             rowSpacing: 0.06
         )
         // Keep navigation identifiers stable when changing the menu order.
-        let menuIDs = ["primitives", "materials", "environment", "environment-b", "panels", "automation"]
+        let menuIDs = ["primitives", "materials", "environment", "environment-b", "dialogs", "ui-elements", "automation"]
         for (button, menuID) in zip(menu.buttons, menuIDs) {
             button.autoID = "showcase." + menuID
         }
@@ -437,7 +438,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             title: "Automation",
             elements: [
                 makeTourButton("Tour Environments A + B", mode: .environments, y: 1.43),
-                makeTourButton("Tour Primitives, Materials + Panels", mode: .sections, y: 1.18),
+                makeTourButton("Tour Objects, Dialogs + UI", mode: .sections, y: 1.18),
             ]
         ))
     }
@@ -522,7 +523,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         return AetherAutomationScript(commands: commands, turnsOffInteraction: true)
     }
 
-    /// 42 seconds of waits. Demonstrates all three other sections and checks controls.
+    /// 42 seconds of waits. Demonstrates all four other sections and checks controls.
     private static var sectionTour: AetherAutomationScript {
         AetherAutomationScript(commands: [
             .wait(1),
@@ -530,8 +531,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             .activate(.autoID("showcase.home")),
             .activate(.autoID("showcase.materials")), .message("Materials"), .wait(12),
             .activate(.autoID("showcase.home")),
-            .activate(.autoID("showcase.panels")), .message("Panel Objects"), .wait(8),
-            .activate(.autoID("showcase.panels.next")),
+            .activate(.autoID("showcase.dialogs")), .message("Dialogs"), .wait(8),
+            .activate(.autoID("showcase.home")),
+            .activate(.autoID("showcase.ui-elements")), .message("UI Elements"),
             .check(.autoID("showcase.toggle.checkbox"), "true"),
             .activate(.autoID("showcase.toggle.checkbox")),
             .check(.autoID("showcase.toggle.checkbox"), "false"),
@@ -540,7 +542,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             .check(.autoID("showcase.integer"), "4"),
             .activate(.autoID("showcase.integer")),
             .check(.autoID("showcase.integer"), "5"),
-            .message("Panel control checks passed"), .wait(8),
+            .message("UI element checks passed"), .wait(8),
             .activate(.autoID("showcase.home")), .message("Section tour complete"), .wait(1),
         ], turnsOffInteraction: true)
     }
@@ -620,7 +622,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
     }
 
-    private func showPanelObjectsScene() {
+    private func showDialogsScene() {
         let pageOneDescription = AetherTextObject(
             name: "Panel Page One Description",
             text: "Panel and button flavors",
@@ -715,49 +717,78 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             targetAppearance: .goldenGlow
         )
 
-        let pageOneNext = makePanelNextButton(
-            name: "Panel Page One Next"
-        )
-        pageOneNext.autoID = "showcase.panels.next"
-        pageOneNext.position = AetherPosition3D(
-            x: 0,
-            y: 0,
-            z: 0
-        )
-        let pageOneNavigation = AetherCompositeObject(
-            name: "Panel Page One Navigation",
-            objects: [
-                pageOneNext,
-            ],
-            position: AetherPosition3D(
-                x: 0,
-                y: -0.51,
-                z: 0
-            )
-        )
-        pageOneNavigation.size = AetherSize3D(
-            x: 0.75,
-            y: 0.12,
-            z: 0.04
-        )
-
         let pageOne = AetherCompositeObject(
-            name: "Panel Objects Page One",
-            objects: [
-                pageOneDescription,
-                defaultButton,
-                doubleSidedButton,
-                messageButton,
-                yesNoButton,
-                pageOneNavigation,
-            ]
+            name: "Dialogs Content",
+            objects: [pageOneDescription, defaultButton, doubleSidedButton, messageButton, yesNoButton],
+            position: AetherPosition3D(x: 0, y: -0.65, z: 0.09)
         )
-        pageOne.size = AetherSize3D(
-            x: 0.90,
-            y: 1.08,
-            z: 0.12
+        pageOne.size = AetherSize3D(x: 0.90, y: 1.08, z: 0.12)
+        let back = makeHomeButton()
+        back.position = AetherPosition3D(x: 0, y: -1.36, z: 0)
+        let arrangement = AetherBaseArrangement(
+            title: "Dialogs",
+            closeAction: { [weak self] in self?.quitApp() },
+            elements: [pageOne, back],
+            width: 1.08,
+            contentHeight: 1.44,
+            position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
+            name: "Dialogs Arrangement",
+            autoID: "showcase.dialogs-arrangement",
+            barFlavor: .lightPanel
         )
+        arrangement.move(to: arrangement.position)
 
+        let helperPosition = AetherPosition3D(
+            x: 0,
+            y: 1.42,
+            z: -1.30
+        )
+        let messagePanel = AetherPanelObject.messagePanel(
+            name: "Message Panel Demonstration",
+            title: "Message Panel",
+            message: "This panel uses the standard message helper.",
+            material: Material.panel,
+            textMaterial: Material.white,
+            buttonMaterial: Material.button,
+            position: helperPosition,
+            onOK: { [weak arrangement] in
+                arrangement?.isVisible = true
+            }
+        )
+        messagePanel.hide()
+
+        let yesNoPanel = AetherPanelObject.yesNoPanel(
+            name: "Yes No Panel Demonstration",
+            title: "Yes / No Panel",
+            message: "Either choice closes this panel.",
+            material: Material.panel,
+            textMaterial: Material.white,
+            buttonMaterial: Material.button,
+            position: helperPosition,
+            yesAction: { [weak arrangement] in
+                arrangement?.isVisible = true
+            },
+            noAction: { [weak arrangement] in
+                arrangement?.isVisible = true
+            }
+        )
+        yesNoPanel.hide()
+
+        messageButton.setAction { [weak arrangement] in
+            arrangement?.isVisible = false
+            messagePanel.show()
+        }
+        yesNoButton.setAction { [weak arrangement] in
+            arrangement?.isVisible = false
+            yesNoPanel.show()
+        }
+
+        world.graphicEngine.changeToScene(
+            AetherScene(name: "Dialogs", objects: [arrangement, messagePanel, yesNoPanel])
+        )
+    }
+
+    private func showUIElementsScene() {
         let pageTwoDescription = AetherTextObject(
             name: "Panel Page Two Description",
             text: "Boolean and integer controls",
@@ -848,163 +879,16 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             z: 0.06
         )
 
-        let pageTwoNext = makePanelNextButton(
-            name: "Panel Page Two Next"
+        let controls = AetherCompositeObject(
+            name: "UI Elements Content",
+            objects: [pageTwoDescription, defaultToggleRow, checkboxToggleRow,
+                      radioToggleRow, switchToggleRow, intToggleRow],
+            position: AetherPosition3D(x: 0, y: 1.42, z: sceneDepth)
         )
-        pageTwoNext.autoID = "showcase.panels.next"
-        pageTwoNext.position = AetherPosition3D(
-            x: 0.20,
-            y: 0,
-            z: 0
-        )
-        let pageTwoNavigation = AetherCompositeObject(
-            name: "Panel Page Two Navigation",
-            objects: [
-                pageTwoNext,
-            ],
-            position: AetherPosition3D(
-                x: 0,
-                y: -0.62,
-                z: 0
-            )
-        )
-        pageTwoNavigation.size = AetherSize3D(
-            x: 0.75,
-            y: 0.12,
-            z: 0.04
-        )
-
-        let pageTwo = AetherCompositeObject(
-            name: "Panel Objects Page Two",
-            objects: [
-                pageTwoDescription,
-                defaultToggleRow,
-                checkboxToggleRow,
-                radioToggleRow,
-                switchToggleRow,
-                intToggleRow,
-                pageTwoNavigation,
-            ],
-            isVisible: false
-        )
-        pageTwo.size = AetherSize3D(
-            x: 0.90,
-            y: 1.30,
-            z: 0.12
-        )
-
-        let panel = AetherPanelObject(
-            name: "Panel Objects Demonstration",
-            flavor: .default,
-            objects: [
-                pageOne,
-                pageTwo,
-            ],
-            size: AetherSize3D(
-                x: 1.08,
-                y: 1.24,
-                z: 0.04
-            ),
-            spacing: 0,
-            hideAble: false,
-            material: Material.panel,
-            textMaterial: Material.white,
-            position: AetherPosition3D(
-                x: 0,
-                y: 1.42,
-                z: sceneDepth
-            ),
-            onClose: {
-                self.showHomeScene()
-            }
-        )
-        let pagePosition = AetherPosition3D(
-            x: 0,
-            y: 0.12,
-            z: 0.09
-        )
-        pageOne.position = pagePosition
-        pageTwo.position = pagePosition
-
-        pageOneNext.setAction {
-            pageOne.isVisible = false
-            pageTwo.isVisible = true
-        }
-        pageTwoNext.setAction {
-            pageTwo.isVisible = false
-            pageOne.isVisible = true
-        }
-
-        let helperPosition = AetherPosition3D(
-            x: 0,
-            y: 1.42,
-            z: -1.30
-        )
-        let messagePanel = AetherPanelObject.messagePanel(
-            name: "Message Panel Demonstration",
-            title: "Message Panel",
-            message: "This panel uses the standard message helper.",
-            material: Material.panel,
-            textMaterial: Material.white,
-            buttonMaterial: Material.button,
-            position: helperPosition,
-            onOK: { [weak panel] in
-                panel?.show()
-            }
-        )
-        messagePanel.hide()
-
-        let yesNoPanel = AetherPanelObject.yesNoPanel(
-            name: "Yes No Panel Demonstration",
-            title: "Yes / No Panel",
-            message: "Either choice closes this panel.",
-            material: Material.panel,
-            textMaterial: Material.white,
-            buttonMaterial: Material.button,
-            position: helperPosition,
-            yesAction: { [weak panel] in
-                panel?.show()
-            },
-            noAction: { [weak panel] in
-                panel?.show()
-            }
-        )
-        yesNoPanel.hide()
-
-        messageButton.setAction {
-            panel.hide()
-            messagePanel.show()
-        }
-        yesNoButton.setAction {
-            panel.hide()
-            yesNoPanel.show()
-        }
-
+        controls.size = AetherSize3D(x: 0.90, y: 1.30, z: 0.12)
         world.graphicEngine.changeToScene(
-            makeSectionScene(
-                title: "Panel Objects",
-                elements: [panel, messagePanel, yesNoPanel],
-                width: panel.panelSize.x,
-                flavor: .lightPanel
-            )
-        )
-    }
-
-    private func makePanelNextButton(
-        name: String
-    ) -> AetherButtonObject {
-        AetherButtonObject(
-            name: name,
-            flavor: .default,
-            title: "Next",
-            size: AetherSize3D(
-                x: 0.34,
-                y: 0.12,
-                z: 0.04
-            ),
-            material: Material.button,
-            textMaterial: Material.white,
-            targetAppearance: .goldenGlow
+            makeSectionScene(title: "UI Elements", elements: [controls],
+                             width: 1.08, flavor: .lightPanel)
         )
     }
 
