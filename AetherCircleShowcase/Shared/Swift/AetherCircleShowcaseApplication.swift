@@ -96,8 +96,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private func registerEnvironmentImages() {
         #if os(visionOS)
         if #available(visionOS 26.0, *), world.platform.canDecodeStereoHEIC { registerSpatialDemo() }
-        if #available(visionOS 26.0, *) { registerSpatialVideoDemo() }
         #endif
+        if world.platform.canPrepareSpatialVideo { registerSpatialVideoDemo() }
         for name in ["yosemite-01", "yosemite-02"] {
             if let data = world.platform.resourceRetrieve(name: "environment-" + name, type: .image) {
                 world.assetEngine.registerImage(key: "showcase.gallery." + name, data: data)
@@ -123,6 +123,23 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             } catch {
                 if !Task.isCancelled { print("Showcase: internet panorama download failed: \(error)") }
             }
+        }
+    }
+
+    /// Selects sample content; the platform handles encoding and cache publication.
+    private func registerSpatialVideoDemo() {
+        spatialVideoDemoTask?.cancel()
+        let platform = world.platform
+        let key = Self.spatialVideoDemoKey
+        spatialVideoDemoTask = Task<Void, Never>.detached(priority: .utility) { @Sendable [platform, key] in
+            do {
+                try await platform.registerSpatialVideo(
+                    key: key, resourceName: "environment-stereo-sbs",
+                    layout: .sideBySide, storage: .session
+                )
+            } catch is CancellationError {
+                // Stopping the app cancels preparation.
+            } catch { print("Showcase: MV-HEVC demo could not be prepared: \(error)") }
         }
     }
 
@@ -1126,31 +1143,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
 #if os(visionOS)
 extension AetherCircleShowcaseApplication {
-    /// Encodes the bundled genuine stereo footage into a native MV-HEVC cache entry.
-    @available(visionOS 26.0, *)
-    private func registerSpatialVideoDemo() {
-        spatialVideoDemoTask?.cancel()
-        // This visionOS-only preparation needs a file URL; resourceURL is not
-        // part of the shared AetherPlatform interface. Keep the movie on disk.
-        guard let source = Bundle.main.url(forResource: "environment-stereo-sbs", withExtension: "mp4")
-            ?? Bundle.main.url(forResource: "environment-stereo-sbs", withExtension: "mp4", subdirectory: "Files") else { return }
-        let cache = world.platform.cacheEngine
-        let key = Self.spatialVideoDemoKey
-        // Keep encoding in one task with explicit Sendable captures. Avoid
-        // inheriting the application's isolation or transferring a nested task.
-        spatialVideoDemoTask = Task<Void, Never>.detached(priority: .utility) { @Sendable [source, cache, key] in
-            let output = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mov")
-            defer { try? FileManager.default.removeItem(at: output) }
-            do {
-                try await ShowcaseSpatialVideoDemo.convert(input: source, output: output)
-                try Task.checkCancellation()
-                try cache.register(key: key, fileURL: output, storage: .session)
-            } catch is CancellationError {
-                // Stop cancels the encoder directly through the stored task.
-            } catch { print("Showcase: MV-HEVC demo could not be prepared: \(error)") }
-        }
-    }
-
     /// Adapted from Apple's Writing Spatial Photos sample (license in Shared/Files).
     /// Creates a genuine stereo HEIC at startup, then exercises registered-image loading.
     @available(visionOS 26.0, *)
