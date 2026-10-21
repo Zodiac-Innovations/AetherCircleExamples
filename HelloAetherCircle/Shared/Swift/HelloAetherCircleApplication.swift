@@ -38,11 +38,7 @@ public final class HelloAetherCircleApplication: AetherApplication {
             z: 0.15
         )
 
-        let quit = AetherButtonObject(
-            .askQuit,
-            flavor: .doubleSided,
-            size: AetherSize3D(x: 0.30, y: 0.12, z: 0.04),
-            material: .defaultQuitButton,
+        let quit = AetherQuitButtonObject(
             position: AetherPosition3D(
                 x: 0,
                 y: 0.95,

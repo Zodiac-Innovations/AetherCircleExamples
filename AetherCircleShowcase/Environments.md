@@ -1,5 +1,17 @@
 # Showcase environments
 
+Environment B includes three stereo movie screen demos: **3D Video · Side by
+Side**, **3D Video · Top + Bottom**, and **Apple MV-HEVC Video**. The first two
+use bundled H.264 clips with a distinct view for each eye. On visionOS 26+,
+Showcase builds a genuine MV-HEVC version into its session cache and enables
+the third demo when ready. Quest disables native MV-HEVC; its packed-video
+demos remain available. Asset provenance and Apple's license are in
+`Shared/Files/Environment-Photo-Credits.md` and `APPLE-STEREO-VIDEO-LICENSE.txt`.
+
+Both formats play on a three-meter-high screen four meters ahead, against
+black surroundings. They loop and follow viewer translation. They are 3D
+screen videos, separate from the existing mono 360 movie globe.
+
 The Home menu splits the demos into two collapsible sections. Changing sections
 keeps the current environment; only an environment button changes it.
 
@@ -104,3 +116,4 @@ or 3000 mm height. There are no external assets required by either environment.
 Showcase Environment A includes **Cylinder Room**, **Dome Room**, and the four
 particle examples **Stars**, **Snow**, **Rain**, and **Fireflies**. The home menu
 uses four items per column, forming two columns with Quit below the menu.
+

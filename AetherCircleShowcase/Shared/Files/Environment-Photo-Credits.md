@@ -1,5 +1,17 @@
 # Environment photo and video credits
 
+## Stereo video demos — environment-stereo-sbs.mp4 / environment-stereo-tb.mp4
+
+- Source: Apple's **Rendering stereoscopic video with RealityKit** sample.
+- Page: https://developer.apple.com/documentation/realitykit/rendering-stereoscopic-video-with-realitykit
+- Archive: https://docs-assets.developer.apple.com/published/4bf2d74e8473/RenderingStereoscopicVideoWithRealityKit.zip
+- Original asset: `RealityKit-Playback-AVSampleBufferVideoRenderer/Resources/sample.mov`.
+- Apple copyright and permission notice: `APPLE-STEREO-VIDEO-LICENSE.txt`, included unchanged from the sample.
+- This is genuine side-by-side stereo hummingbird footage, not a mono movie duplicated for both eyes.
+- Changes: the 3840 × 1080 source was resized to 1920 × 540, transcoded to silent H.264/yuv420p MP4 for broad hardware playback, and repacked to 960 × 1080 for top/bottom. Duration is about 4.33 seconds; eye order is preserved (left first/above).
+- On visionOS 26+, Showcase converts the SBS clip to a real two-layer MV-HEVC MOV in its session cache for the native format demo. No camera calibration metadata is invented.
+- Reproduction: `ffmpeg -i sample.mov -map 0:v:0 -vf scale=1920:540 -an -c:v libx264 -crf 23 -pix_fmt yuv420p -movflags +faststart environment-stereo-sbs.mp4`; split the SBS frame into equal left/right halves and vertically stack left above right for the TB export.
+
 The bundled files ship with Showcase and work offline; the Internet 360 Mono button downloads Spruit Sunrise at startup. They are separate assets with the licenses below; the project source-code license does not replace their licenses.
 
 ## environment-venice-360.jpg
@@ -266,3 +278,4 @@ at https://polyhaven.com/license.
 - Source: https://polyhaven.com/a/sand_03
 - Download: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sand_03/sand_03_diff_1k.jpg
 - Used only by Sand + Sunset (Environment A).
+
