@@ -1148,18 +1148,18 @@ extension AetherCircleShowcaseApplication {
         guard let source = Bundle.main.url(forResource: "environment-stereo-sbs", withExtension: "mp4")
             ?? Bundle.main.url(forResource: "environment-stereo-sbs", withExtension: "mp4", subdirectory: "Files") else { return }
         let cache = world.platform.cacheEngine
-        spatialVideoDemoTask = Task {
+        let key = Self.spatialVideoDemoKey
+        // Keep encoding in one task with explicit Sendable captures. Avoid
+        // inheriting the application's isolation or transferring a nested task.
+        spatialVideoDemoTask = Task<Void, Never>.detached(priority: .utility) { @Sendable [source, cache, key] in
             let output = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mov")
             defer { try? FileManager.default.removeItem(at: output) }
-            let encoder = Task.detached(priority: .utility) {
-                try await ShowcaseSpatialVideoDemo.convert(input: source, output: output)
-            }
             do {
-                try await withTaskCancellationHandler(operation: { try await encoder.value }, onCancel: { encoder.cancel() })
+                try await ShowcaseSpatialVideoDemo.convert(input: source, output: output)
                 try Task.checkCancellation()
-                try cache.register(key: Self.spatialVideoDemoKey, fileURL: output, storage: .session)
+                try cache.register(key: key, fileURL: output, storage: .session)
             } catch is CancellationError {
-                // Stop cancels both registration and the local encoder.
+                // Stop cancels the encoder directly through the stored task.
             } catch { print("Showcase: MV-HEVC demo could not be prepared: \(error)") }
         }
     }
@@ -1211,5 +1211,6 @@ extension AetherCircleShowcaseApplication {
     }
 }
 #endif
+
 
 
