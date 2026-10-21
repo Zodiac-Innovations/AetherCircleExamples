@@ -402,17 +402,15 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             )
             if ["video-sbs", "video-tb"].contains(choice.1) {
                 let platform = world.platform
-                let mode = choice.2
-                let engine = world.environmentEngine
+                let supported = world.environmentEngine.supports(choice.2)
                 let file = choice.1 == "video-sbs" ? "environment-stereo-sbs" : "environment-stereo-tb"
-                button.availabilityCheck = { engine.supports(mode) && platform.resourceExists(name: file, type: .custom("mp4")) }
+                button.availabilityCheck = { supported && platform.resourceExists(name: file, type: .custom("mp4")) }
                 button.refreshAvailability()
             }
             if choice.1 == "video-spatial" {
                 let cache = world.platform.cacheEngine
-                let engine = world.environmentEngine
-                let mode = choice.2
-                button.availabilityCheck = { engine.supports(mode) && (try? cache.fileURL(for: Self.spatialVideoDemoKey)) != nil }
+                let supported = world.environmentEngine.supports(choice.2)
+                button.availabilityCheck = { supported && (try? cache.fileURL(for: Self.spatialVideoDemoKey)) != nil }
                 button.refreshAvailability()
             }
             if choice.1 == "video-360" {
@@ -1145,7 +1143,10 @@ extension AetherCircleShowcaseApplication {
     @available(visionOS 26.0, *)
     private func registerSpatialVideoDemo() {
         spatialVideoDemoTask?.cancel()
-        guard let source = world.platform.resourceURL(name: "environment-stereo-sbs", type: .custom("mp4")) else { return }
+        // This visionOS-only preparation needs a file URL; resourceURL is not
+        // part of the shared AetherPlatform interface. Keep the movie on disk.
+        guard let source = Bundle.main.url(forResource: "environment-stereo-sbs", withExtension: "mp4")
+            ?? Bundle.main.url(forResource: "environment-stereo-sbs", withExtension: "mp4", subdirectory: "Files") else { return }
         let cache = world.platform.cacheEngine
         spatialVideoDemoTask = Task {
             let output = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mov")
@@ -1210,4 +1211,5 @@ extension AetherCircleShowcaseApplication {
     }
 }
 #endif
+
 
