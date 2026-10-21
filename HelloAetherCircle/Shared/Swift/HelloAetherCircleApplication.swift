@@ -45,9 +45,9 @@ public final class HelloAetherCircleApplication: AetherApplication {
                 z: -1.5
             ),
             targetAppearance: .goldenGlow,
-            quitAction: {
+            quitAction: AetherAction(action: {
                 self.quitApp()
-            }
+            })
         )
 
         let scene = AetherScene(
@@ -67,3 +67,4 @@ public final class HelloAetherCircleApplication: AetherApplication {
         }
     }
 }
+
