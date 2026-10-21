@@ -14,12 +14,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     // MARK: - Constants
 
-    /// Different Script
-    private enum ScriptMode: String, Sendable {
-        case environments
-        case sections
-    }
-
     /// Material Keys for the app
     private enum MaterialKey {
         static let red = "showcase_red"
@@ -604,36 +598,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     /// Make Script Button
-    private func makeScriptButton(
-        _ title: String, mode: ScriptMode, y: AetherFloat
-    ) -> AetherButtonObject {
-        AetherButtonObject(
-            name: title + " Button",
-            title: title,
-            size: AetherSize3D(x: 1.55, y: 0.16, z: 0.04),
-            sizing: .fitTextToButton,
-            material: Material.button,
-            textMaterial: Material.white,
-            position: AetherPosition3D(x: 0, y: y, z: sceneDepth),
-            targetAppearance: .goldenGlow,
-            action: AetherAction(action: {
-                let script = mode == .environments ? self.scriptForEnviroments : Self.scriptForUI
-                let platform = self.world.platform
-                // Navigate first, before runTextScript can disable input or execute commands.
-                AetherAction.home.invoke()
-                Task {
-                    do {
-                        try await platform.runTextScript(script, turnsOffInteraction: true)
-                    } catch AetherAutomationError.alreadyRunning {
-                        // The runner owns interaction until its current tour completes.
-                    } catch {
-                        print("Showcase automation failed: \(error)")
-                    }
-                }
-            })
-        )
-    }
-
     // MARK: - Show Functions
 
     /// Show Home Screen
@@ -828,8 +792,56 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         world.graphicEngine.changeToScene(makeSectionScene(
             title: "Automation",
             elements: [
-                makeScriptButton("Tour Environments", mode: .environments, y: 1.43),
-                makeScriptButton("Tour UI", mode: .sections, y: 1.18),
+                AetherButtonObject(
+                    name: "Tour Environments Button",
+                    title: "Tour Environments",
+                    size: AetherSize3D(x: 1.55, y: 0.16, z: 0.04),
+                    sizing: .fitTextToButton,
+                    material: Material.button,
+                    textMaterial: Material.white,
+                    position: AetherPosition3D(x: 0, y: 1.43, z: sceneDepth),
+                    targetAppearance: .goldenGlow,
+                    action: AetherAction(action: {
+                        let script = self.scriptForEnviroments
+                        let platform = self.world.platform
+                        // Return Home before the script starts and disables input.
+                        AetherAction.home.invoke()
+                        Task {
+                            do {
+                                try await platform.runTextScript(script, turnsOffInteraction: true)
+                            } catch AetherAutomationError.alreadyRunning {
+                                // The active tour retains ownership of interaction.
+                            } catch {
+                                print("Showcase automation failed: \(error)")
+                            }
+                        }
+                    })
+                ),
+                AetherButtonObject(
+                    name: "Tour UI Button",
+                    title: "Tour UI",
+                    size: AetherSize3D(x: 1.55, y: 0.16, z: 0.04),
+                    sizing: .fitTextToButton,
+                    material: Material.button,
+                    textMaterial: Material.white,
+                    position: AetherPosition3D(x: 0, y: 1.18, z: sceneDepth),
+                    targetAppearance: .goldenGlow,
+                    action: AetherAction(action: {
+                        let script = Self.scriptForUI
+                        let platform = self.world.platform
+                        // Return Home before the script starts and disables input.
+                        AetherAction.home.invoke()
+                        Task {
+                            do {
+                                try await platform.runTextScript(script, turnsOffInteraction: true)
+                            } catch AetherAutomationError.alreadyRunning {
+                                // The active tour retains ownership of interaction.
+                            } catch {
+                                print("Showcase automation failed: \(error)")
+                            }
+                        }
+                    })
+                ),
             ]
         ))
     }
