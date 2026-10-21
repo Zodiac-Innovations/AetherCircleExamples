@@ -107,7 +107,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             title: "Enviroments",
             audioCommand: "enviroments",
             action: { [weak self] in
-                self?.showEnvironmentScene()
+                self?.showEnviromentsScrene()
             }
         ),
         AetherAction(
@@ -115,7 +115,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             title: "Media",
             audioCommand: "media",
             action: { [weak self] in
-                self?.showEnvironmentScene(isMedia: true)
+                self?.showMediaScene()
             }
         ),
         AetherAction(
@@ -145,7 +145,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     ]
 
     /// At most 51 seconds of waits, leaving headroom for frame-driven commands.
-    /// Optional media entries are omitted.
+    /// Includes media commands; unavailable media stops the script.
     private var scriptForEnviroments: String {
         """
         wait 1
@@ -669,7 +669,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     /// Environment changes persist when navigating to other Showcase sections.
-    private func showEnvironmentScene(isMedia: Bool = false) {
+    private func showEnviromentsScrene() {
         var choices: [(String, String, AetherEnvironmentMode)] = [
             ("Passthrough", "passthrough", .passthrough),
             ("Teal", "teal", .materialVR(.color(AetherColor(red: 0, green: 0.5, blue: 0.5)))),
@@ -681,20 +681,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         for (index, pattern) in shuffledPatterns.prefix(3).enumerated() {
             choices.append((pattern.0, "pattern-\(index + 1)", .materialVR(pattern.1)))
         }
-        choices.append(("Video 360 NASA", "video-360", .video360File("environment-nasa-360.mp4")))
-        choices.append(("3D Video · Side by Side", "video-sbs", .spatialVideoFile("environment-stereo-sbs.mp4", layout: .sideBySide)))
-        choices.append(("3D Video · Top + Bottom", "video-tb", .spatialVideoFile("environment-stereo-tb.mp4", layout: .topBottom)))
-        choices.append(("Apple MV-HEVC Video", "video-spatial", .spatialVideoVideo(Self.spatialVideoDemoKey)))
-        choices.append(("File 360 Mono", "file-mono", .image360File("environment-venice-360.jpg")))
-        choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
-        choices.append(("Internet 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
-        choices.append(("Image 360 Kiara", "image-stereo", .image360Image(EnvironmentImageKey.embeddedMono)))
-        choices.append(("Panorama Auto", "panorama-auto", .panoramaFile("environment-hahneberg-panorama.jpg")))
-        choices.append(("Panorama Override", "panorama-override", .panoramaFile("environment-campus-panorama.jpg", horizontalDegrees: 180)))
-        choices.append(("Apple Spatial Photo", "spatial-photo", .spatialPhotoImage(EnvironmentImageKey.spatial)))
-        choices.append(("Yosemite Files", "gallery-files", .photo2DFiles(["environment-half-dome.jpg", "environment-el-capitan.jpg"], material: .color(.black))))
-        choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.yosemite-01", "showcase.gallery.yosemite-02"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
-        choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((3...10).map { String(format: "environment-yosemite-%02d.jpg", $0) }, material: .color(.black))))
         choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: floorPatterns[0].1, sky: Material.blue)))
         choices.append(("Cyber Floor · Cyan", "cyber-floor", .cyberFloor(
             sky: .color(AetherColor(red: 0.015, green: 0.025, blue: 0.08)),
@@ -730,15 +716,49 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         choices.append(("Sand + Sunset", "sky-sand", .skyFloor(
             skyFile: "environment-sunset-sky.jpg",
             floor: .texture(baseColorTexture: "environment-sand-floor.jpg", roughness: 0.9))))
-        // A: materials and walkable spaces. B: recorded media and photo galleries.
-        choices = choices.filter { choice in
-            switch choice.2 {
-            case .passthrough, .blankVR, .materialVR, .floorMaterial, .cyberFloor, .room, .cylinderRoom, .domeRoom, .skyFloor, .particleField:
-                return !isMedia
-            default:
-                return isMedia
-            }
+        var objects: [AetherBasicObject] = []
+        for (index, choice) in choices.enumerated() {
+            let button = AetherButtonObject(
+                name: choice.0 + " Environment Button",
+                title: choice.0,
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button, textMaterial: Material.white,
+                position: AetherPosition3D(x: AetherFloat(index % 3 - 1) * 0.86, y: 1.68 - AetherFloat(index / 3) * 0.23, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    if choice.1 == "floor-material" {
+                        let floor = floorPatterns.randomElement()?.1 ?? floorPatterns[0].1
+                        let sky = [Material.red, Material.green, Material.blue, Material.yellow,
+                                   Material.orange, Material.purple, Material.cyan, Material.pink].randomElement() ?? Material.blue
+                        self.world.environmentEngine.mode = .floorMaterial(floor: floor, sky: sky)
+                    } else {
+                        self.world.environmentEngine.mode = choice.2
+                    }
+                })
+            )
+            objects.append(button)
         }
+        world.graphicEngine.changeToScene(makeSectionScene(title: "Enviroments", elements: objects, width: 2.8, flavor: .default))
+    }
+
+    /// Show recorded media and photo galleries.
+    private func showMediaScene() {
+        var choices: [(String, String, AetherEnvironmentMode)] = []
+        choices.append(("Video 360 NASA", "video-360", .video360File("environment-nasa-360.mp4")))
+        choices.append(("3D Video · Side by Side", "video-sbs", .spatialVideoFile("environment-stereo-sbs.mp4", layout: .sideBySide)))
+        choices.append(("3D Video · Top + Bottom", "video-tb", .spatialVideoFile("environment-stereo-tb.mp4", layout: .topBottom)))
+        choices.append(("Apple MV-HEVC Video", "video-spatial", .spatialVideoVideo(Self.spatialVideoDemoKey)))
+        choices.append(("File 360 Mono", "file-mono", .image360File("environment-venice-360.jpg")))
+        choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
+        choices.append(("Internet 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
+        choices.append(("Image 360 Kiara", "image-stereo", .image360Image(EnvironmentImageKey.embeddedMono)))
+        choices.append(("Panorama Auto", "panorama-auto", .panoramaFile("environment-hahneberg-panorama.jpg")))
+        choices.append(("Panorama Override", "panorama-override", .panoramaFile("environment-campus-panorama.jpg", horizontalDegrees: 180)))
+        choices.append(("Apple Spatial Photo", "spatial-photo", .spatialPhotoImage(EnvironmentImageKey.spatial)))
+        choices.append(("Yosemite Files", "gallery-files", .photo2DFiles(["environment-half-dome.jpg", "environment-el-capitan.jpg"], material: .color(.black))))
+        choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.yosemite-01", "showcase.gallery.yosemite-02"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
+        choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((3...10).map { String(format: "environment-yosemite-%02d.jpg", $0) }, material: .color(.black))))
         var objects: [AetherBasicObject] = []
         for (index, choice) in choices.enumerated() {
             let button = AetherButtonObject(
@@ -752,14 +772,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 action: AetherAction(action: {
                     if choice.1 == "image-mono",
                        self.world.assetEngine.registeredImage(for: EnvironmentImageKey.mono) == nil { return }
-                    if choice.1 == "floor-material" {
-                        let floor = floorPatterns.randomElement()?.1 ?? floorPatterns[0].1
-                        let sky = [Material.red, Material.green, Material.blue, Material.yellow,
-                                   Material.orange, Material.purple, Material.cyan, Material.pink].randomElement() ?? Material.blue
-                        self.world.environmentEngine.mode = .floorMaterial(floor: floor, sky: sky)
-                    } else {
-                        self.world.environmentEngine.mode = choice.2
-                    }
+                    self.world.environmentEngine.mode = choice.2
                 })
             )
             if ["video-sbs", "video-tb"].contains(choice.1) {
@@ -807,7 +820,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             objects.append(button)
         }
-        world.graphicEngine.changeToScene(makeSectionScene(title: isMedia ? "Media" : "Enviroments", elements: objects, width: 2.8, flavor: .default))
+        world.graphicEngine.changeToScene(makeSectionScene(title: "Media", elements: objects, width: 2.8, flavor: .default))
     }
 
     /// Two text-script tours; both return Home before the runner starts.
