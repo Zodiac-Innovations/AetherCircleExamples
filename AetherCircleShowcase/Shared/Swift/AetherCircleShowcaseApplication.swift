@@ -104,8 +104,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         ),
         AetherAction(
             key: "showcase.voice.environment-a",
-            title: "Environment A",
-            audioCommand: "environment a",
+            title: "Enviroments",
+            audioCommand: "enviroments",
             action: { [weak self] in
                 self?.showEnvironmentScene()
             }
@@ -149,8 +149,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private var scriptForEnviroments: String {
         """
         wait 1
-        message "Environment A: materials, rooms and particles"
-        tap name "Showcase Menu Environment A"
+        message "Enviroments: materials, rooms and particles"
+        tap name "Showcase Menu Enviroments"
         wait 1
         tap name "Passthrough Environment Button"
         wait 1.2
@@ -219,7 +219,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         tap name "Gallery 8 Environment Button"
         wait 1.6
         tap name "Home Button"
-        tap name "Showcase Menu Environment A"
+        tap name "Showcase Menu Enviroments"
         tap name "Passthrough Environment Button"
         tap name "Home Button"
         message "Environment tour complete"
@@ -807,7 +807,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             }
             objects.append(button)
         }
-        world.graphicEngine.changeToScene(makeSectionScene(title: isMedia ? "Media" : "Environment A", elements: objects, width: 2.8, flavor: .default))
+        world.graphicEngine.changeToScene(makeSectionScene(title: isMedia ? "Media" : "Enviroments", elements: objects, width: 2.8, flavor: .default))
     }
 
     /// Two text-script tours; both return Home before the runner starts.
