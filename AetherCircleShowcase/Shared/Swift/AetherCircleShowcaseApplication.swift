@@ -634,157 +634,503 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     /// Environment changes persist when navigating to other Showcase sections.
     private func showEnviromentsScrene() {
-        var choices: [(String, String, AetherEnvironmentMode)] = [
-            ("Passthrough", "passthrough", .passthrough),
-            ("Teal", "teal", .materialVR(.color(AetherColor(red: 0, green: 0.5, blue: 0.5)))),
-            ("Black", "black", .materialVR(.color(.black))),
-            ("White", "white", .materialVR(.color(.white))),
-        ]
-        let shuffledPatterns = environmentPatterns
-        let floorPatterns = Array(shuffledPatterns.dropFirst(3))
-        for (index, pattern) in shuffledPatterns.prefix(3).enumerated() {
-            choices.append((pattern.0, "pattern-\(index + 1)", .materialVR(pattern.1)))
-        }
-        choices.append(("Floor + Sky", "floor-material", .floorMaterial(floor: floorPatterns[0].1, sky: Material.blue)))
-        choices.append(("Cyber Floor · Cyan", "cyber-floor", .cyberFloor(
+        let floorPatterns = Array(environmentPatterns.dropFirst(3))
+        let objects: [AetherBasicObject] = [
+            AetherButtonObject(
+                name: "Passthrough Environment Button",
+                title: "Passthrough",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 1.68, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .passthrough
+                })
+            ),
+            AetherButtonObject(
+                name: "Teal Environment Button",
+                title: "Teal",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 1.68, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .materialVR(.color(AetherColor(red: 0, green: 0.5, blue: 0.5)))
+                })
+            ),
+            AetherButtonObject(
+                name: "Black Environment Button",
+                title: "Black",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 1.68, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .materialVR(.color(.black))
+                })
+            ),
+            AetherButtonObject(
+                name: "White Environment Button",
+                title: "White",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 1.45, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .materialVR(.color(.white))
+                })
+            ),
+            AetherButtonObject(
+                name: environmentPatterns[0].0 + " Environment Button",
+                title: environmentPatterns[0].0,
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 1.45, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .materialVR(environmentPatterns[0].1)
+                })
+            ),
+            AetherButtonObject(
+                name: environmentPatterns[1].0 + " Environment Button",
+                title: environmentPatterns[1].0,
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 1.45, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .materialVR(environmentPatterns[1].1)
+                })
+            ),
+            AetherButtonObject(
+                name: environmentPatterns[2].0 + " Environment Button",
+                title: environmentPatterns[2].0,
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 1.22, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .materialVR(environmentPatterns[2].1)
+                })
+            ),
+            AetherButtonObject(
+                name: "Floor + Sky Environment Button",
+                title: "Floor + Sky",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 1.22, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    let floor = floorPatterns.randomElement()?.1 ?? Material.darkWalnut
+                    let sky = [Material.red, Material.green, Material.blue, Material.yellow,
+                               Material.orange, Material.purple, Material.cyan, Material.pink].randomElement() ?? Material.blue
+                    self.world.environmentEngine.mode = .floorMaterial(floor: floor, sky: sky)
+                })
+            ),
+            AetherButtonObject(
+                name: "Cyber Floor · Cyan Environment Button",
+                title: "Cyber Floor · Cyan",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 1.22, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .cyberFloor(
             sky: .color(AetherColor(red: 0.015, green: 0.025, blue: 0.08)),
             floor: .color(AetherColor(red: 0.025, green: 0.035, blue: 0.055)),
-            lines: Material.cyan, squareWidth: 1000)))
-        choices.append(("Cyber Floor · Silver", "cyber-floor-silver", .cyberFloor(
+            lines: Material.cyan, squareWidth: 1000)
+                })
+            ),
+            AetherButtonObject(
+                name: "Cyber Floor · Silver Environment Button",
+                title: "Cyber Floor · Silver",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 0.99, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .cyberFloor(
             sky: .color(.white), floor: .color(.black),
             lines: .surface(AetherMaterialSurface(
                 baseColor: AetherColor(red: 0.75, green: 0.75, blue: 0.75),
                 roughness: 0.3, metallic: 0.8)),
-            squareWidth: 1000)))
-        // Millimeters: a 5 x 3 x 6 metre room with a matching-wall convenience call.
-        choices.append(("Room · Matching Walls", "room-matching", .room(
-            width: 5000, height: 3000, depth: 6000,
-            floor: Material.darkWalnut, walls: Material.sandstone, ceiling: .color(.white))))
-        // A second room exercises an independent material on every surface.
-        let studio = AetherRoom(width: 6000, height: 3500, depth: 7000)
-        choices.append(("Room · Six Materials", "room-six", .room(studio, materials: AetherRoomMaterials(
-            floor: Material.carraraMarble, front: Material.blueFabric, right: Material.darkWalnut,
-            back: Material.greenMoss, left: Material.blueGranite, ceiling: Material.brushedSteel))))
-        choices.append(("Cylinder Room", "room-cylinder", .cylinderRoom(
-            diameter: 7000, height: 3200, floor: Material.darkWalnut,
-            walls: Material.sandstone, ceiling: .color(.white))))
-        choices.append(("Dome Room", "room-dome", .domeRoom(
-            diameter: 8000, height: 4000, floor: Material.carraraMarble, dome: Material.blueFabric)))
-        choices.append(("Stars", "particles-stars", .particleField(.stars())))
-        choices.append(("Snow", "particles-snow", .particleField(.snow())))
-        choices.append(("Rain", "particles-rain", .particleField(.rain())))
-        choices.append(("Fireflies", "particles-fireflies", .particleField(.fireflies())))
-        choices.append(("Grass + Day Sky", "sky-grass", .skyFloor(
-            skyFile: "environment-day-sky.jpg",
-            floor: .texture(baseColorTexture: "environment-grass-floor.jpg", roughness: 0.95))))
-        choices.append(("Sand + Sunset", "sky-sand", .skyFloor(
-            skyFile: "environment-sunset-sky.jpg",
-            floor: .texture(baseColorTexture: "environment-sand-floor.jpg", roughness: 0.9))))
-        var objects: [AetherBasicObject] = []
-        for (index, choice) in choices.enumerated() {
-            let button = AetherButtonObject(
-                name: choice.0 + " Environment Button",
-                title: choice.0,
+            squareWidth: 1000)
+                })
+            ),
+            AetherButtonObject(
+                name: "Room · Matching Walls Environment Button",
+                title: "Room · Matching Walls",
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
-                material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: AetherFloat(index % 3 - 1) * 0.86, y: 1.68 - AetherFloat(index / 3) * 0.23, z: sceneDepth),
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 0.99, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: AetherAction(action: {
-                    if choice.1 == "floor-material" {
-                        let floor = floorPatterns.randomElement()?.1 ?? floorPatterns[0].1
-                        let sky = [Material.red, Material.green, Material.blue, Material.yellow,
-                                   Material.orange, Material.purple, Material.cyan, Material.pink].randomElement() ?? Material.blue
-                        self.world.environmentEngine.mode = .floorMaterial(floor: floor, sky: sky)
-                    } else {
-                        self.world.environmentEngine.mode = choice.2
-                    }
+                    self.world.environmentEngine.mode = .room(
+            width: 5000, height: 3000, depth: 6000,
+            floor: Material.darkWalnut, walls: Material.sandstone, ceiling: .color(.white))
+                })
+            ),
+            AetherButtonObject(
+                name: "Room · Six Materials Environment Button",
+                title: "Room · Six Materials",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 0.99, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .room(AetherRoom(width: 6000, height: 3500, depth: 7000), materials: AetherRoomMaterials(
+            floor: Material.carraraMarble, front: Material.blueFabric, right: Material.darkWalnut,
+            back: Material.greenMoss, left: Material.blueGranite, ceiling: Material.brushedSteel))
+                })
+            ),
+            AetherButtonObject(
+                name: "Cylinder Room Environment Button",
+                title: "Cylinder Room",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 0.76, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .cylinderRoom(
+            diameter: 7000, height: 3200, floor: Material.darkWalnut,
+            walls: Material.sandstone, ceiling: .color(.white))
+                })
+            ),
+            AetherButtonObject(
+                name: "Dome Room Environment Button",
+                title: "Dome Room",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 0.76, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .domeRoom(
+            diameter: 8000, height: 4000, floor: Material.carraraMarble, dome: Material.blueFabric)
+                })
+            ),
+            AetherButtonObject(
+                name: "Stars Environment Button",
+                title: "Stars",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 0.76, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .particleField(.stars())
+                })
+            ),
+            AetherButtonObject(
+                name: "Snow Environment Button",
+                title: "Snow",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 0.53, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .particleField(.snow())
+                })
+            ),
+            AetherButtonObject(
+                name: "Rain Environment Button",
+                title: "Rain",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 0.53, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .particleField(.rain())
+                })
+            ),
+            AetherButtonObject(
+                name: "Fireflies Environment Button",
+                title: "Fireflies",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 0.53, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .particleField(.fireflies())
+                })
+            ),
+            AetherButtonObject(
+                name: "Grass + Day Sky Environment Button",
+                title: "Grass + Day Sky",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 0.30, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .skyFloor(
+            skyFile: "environment-day-sky.jpg",
+            floor: .texture(baseColorTexture: "environment-grass-floor.jpg", roughness: 0.95))
+                })
+            ),
+            AetherButtonObject(
+                name: "Sand + Sunset Environment Button",
+                title: "Sand + Sunset",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 0.30, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .skyFloor(
+            skyFile: "environment-sunset-sky.jpg",
+            floor: .texture(baseColorTexture: "environment-sand-floor.jpg", roughness: 0.9))
                 })
             )
-            objects.append(button)
-        }
-        world.graphicEngine.changeToScene(makeSectionScene(title: "Enviroments", elements: objects, width: 2.8, flavor: .default))
+        ]
+        world.graphicEngine.changeToScene(
+            makeSectionScene(title: "Enviroments", elements: objects, width: 2.8, flavor: .default)
+        )
     }
 
     /// Show recorded media and photo galleries.
     private func showMediaScene() {
-        var choices: [(String, String, AetherEnvironmentMode)] = []
-        choices.append(("Video 360 NASA", "video-360", .video360File("environment-nasa-360.mp4")))
-        choices.append(("3D Video · Side by Side", "video-sbs", .spatialVideoFile("environment-stereo-sbs.mp4", layout: .sideBySide)))
-        choices.append(("3D Video · Top + Bottom", "video-tb", .spatialVideoFile("environment-stereo-tb.mp4", layout: .topBottom)))
-        choices.append(("Apple MV-HEVC Video", "video-spatial", .spatialVideoVideo(Self.spatialVideoDemoKey)))
-        choices.append(("File 360 Mono", "file-mono", .image360File("environment-venice-360.jpg")))
-        choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
-        choices.append(("Internet 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
-        choices.append(("Image 360 Kiara", "image-stereo", .image360Image(EnvironmentImageKey.embeddedMono)))
-        choices.append(("Panorama Auto", "panorama-auto", .panoramaFile("environment-hahneberg-panorama.jpg")))
-        choices.append(("Panorama Override", "panorama-override", .panoramaFile("environment-campus-panorama.jpg", horizontalDegrees: 180)))
-        choices.append(("Apple Spatial Photo", "spatial-photo", .spatialPhotoImage(EnvironmentImageKey.spatial)))
-        choices.append(("Yosemite Files", "gallery-files", .photo2DFiles(["environment-half-dome.jpg", "environment-el-capitan.jpg"], material: .color(.black))))
-        choices.append(("Yosemite Images", "gallery-images", .photo2DImages(["showcase.gallery.yosemite-01", "showcase.gallery.yosemite-02"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))))
-        choices.append(("Gallery 8", "gallery-eight", .photo2DFiles((3...10).map { String(format: "environment-yosemite-%02d.jpg", $0) }, material: .color(.black))))
-        var objects: [AetherBasicObject] = []
-        for (index, choice) in choices.enumerated() {
-            let button = AetherButtonObject(
-                name: choice.0 + " Environment Button",
-                title: choice.0,
+        let platform = world.platform
+        let registry = world.assetEngine.imageRegistry
+        let objects: [AetherBasicObject] = [
+            AetherButtonObject(
+                name: "Video 360 NASA Environment Button",
+                title: "Video 360 NASA",
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
-                material: Material.button, textMaterial: Material.white,
-                position: AetherPosition3D(x: AetherFloat(index % 3 - 1) * 0.86, y: 1.68 - AetherFloat(index / 3) * 0.23, z: sceneDepth),
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 1.68, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: AetherAction(action: {
-                    if choice.1 == "image-mono",
-                       self.world.assetEngine.registeredImage(for: EnvironmentImageKey.mono) == nil { return }
-                    self.world.environmentEngine.mode = choice.2
+                    self.world.environmentEngine.mode = .video360File("environment-nasa-360.mp4")
+                }, enabled: {
+                    platform.resourceExists(name: "environment-nasa-360", type: .custom("mp4"))
+                })
+            ),
+            AetherButtonObject(
+                name: "3D Video · Side by Side Environment Button",
+                title: "3D Video · Side by Side",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 1.68, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .spatialVideoFile("environment-stereo-sbs.mp4", layout: .sideBySide)
+                }, enabled: {
+                    self.world.environmentEngine.supports(.spatialVideoFile("environment-stereo-sbs.mp4", layout: .sideBySide)) && platform.resourceExists(name: "environment-stereo-sbs", type: .custom("mp4"))
+                })
+            ),
+            AetherButtonObject(
+                name: "3D Video · Top + Bottom Environment Button",
+                title: "3D Video · Top + Bottom",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 1.68, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .spatialVideoFile("environment-stereo-tb.mp4", layout: .topBottom)
+                }, enabled: {
+                    self.world.environmentEngine.supports(.spatialVideoFile("environment-stereo-tb.mp4", layout: .topBottom)) && platform.resourceExists(name: "environment-stereo-tb", type: .custom("mp4"))
+                })
+            ),
+            AetherButtonObject(
+                name: "Apple MV-HEVC Video Environment Button",
+                title: "Apple MV-HEVC Video",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 1.45, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .spatialVideoVideo(Self.spatialVideoDemoKey)
+                }, enabled: {
+                    self.world.environmentEngine.supports(.spatialVideoVideo(Self.spatialVideoDemoKey)) && (try? platform.cacheEngine.fileURL(for: Self.spatialVideoDemoKey)) != nil
+                })
+            ),
+            AetherButtonObject(
+                name: "File 360 Mono Environment Button",
+                title: "File 360 Mono",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 1.45, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .image360File("environment-venice-360.jpg")
+                })
+            ),
+            AetherButtonObject(
+                name: "File Stereo TB Environment Button",
+                title: "File Stereo TB",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 1.45, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)
+                })
+            ),
+            AetherButtonObject(
+                name: "Internet 360 Mono Environment Button",
+                title: "Internet 360 Mono",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 1.22, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .image360Image(EnvironmentImageKey.mono)
+                }, enabled: {
+                    registry.entry(for: EnvironmentImageKey.mono) != nil
+                })
+            ),
+            AetherButtonObject(
+                name: "Image 360 Kiara Environment Button",
+                title: "Image 360 Kiara",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 1.22, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .image360Image(EnvironmentImageKey.embeddedMono)
+                }, enabled: {
+                    registry.entry(for: EnvironmentImageKey.embeddedMono) != nil
+                })
+            ),
+            AetherButtonObject(
+                name: "Panorama Auto Environment Button",
+                title: "Panorama Auto",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 1.22, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .panoramaFile("environment-hahneberg-panorama.jpg")
+                })
+            ),
+            AetherButtonObject(
+                name: "Panorama Override Environment Button",
+                title: "Panorama Override",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 0.99, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .panoramaFile("environment-campus-panorama.jpg", horizontalDegrees: 180)
+                })
+            ),
+            AetherButtonObject(
+                name: "Apple Spatial Photo Environment Button",
+                title: "Apple Spatial Photo",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 0.99, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .spatialPhotoImage(EnvironmentImageKey.spatial)
+                }, enabled: {
+                    platform.canDecodeStereoHEIC && registry.entry(for: EnvironmentImageKey.spatial) != nil
+                })
+            ),
+            AetherButtonObject(
+                name: "Yosemite Files Environment Button",
+                title: "Yosemite Files",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0.86, y: 0.99, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .photo2DFiles(["environment-half-dome.jpg", "environment-el-capitan.jpg"], material: .color(.black))
+                })
+            ),
+            AetherButtonObject(
+                name: "Yosemite Images Environment Button",
+                title: "Yosemite Images",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: -0.86, y: 0.76, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .photo2DImages(["showcase.gallery.yosemite-01", "showcase.gallery.yosemite-02"], material: .color(AetherColor(red: 0, green: 0.35, blue: 0.35, alpha: 1)))
+                }, enabled: {
+                    registry.entry(for: "showcase.gallery.yosemite-01") != nil && registry.entry(for: "showcase.gallery.yosemite-02") != nil
+                })
+            ),
+            AetherButtonObject(
+                name: "Gallery 8 Environment Button",
+                title: "Gallery 8",
+                size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
+                sizing: .fitTextToButton,
+                material: Material.button,
+                textMaterial: Material.white,
+                position: AetherPosition3D(x: 0, y: 0.76, z: sceneDepth),
+                targetAppearance: .goldenGlow,
+                action: AetherAction(action: {
+                    self.world.environmentEngine.mode = .photo2DFiles((3...10).map { String(format: "environment-yosemite-%02d.jpg", $0) }, material: .color(.black))
                 })
             )
-            if ["video-sbs", "video-tb"].contains(choice.1) {
-                let platform = world.platform
-                let supported = world.environmentEngine.supports(choice.2)
-                let file = choice.1 == "video-sbs" ? "environment-stereo-sbs" : "environment-stereo-tb"
-                button.setAction(AetherAction(action: button.action?.action, enabled: { supported && platform.resourceExists(name: file, type: .custom("mp4")) }))
-                button.refreshAvailability()
-            }
-            if choice.1 == "video-spatial" {
-                let cache = world.platform.cacheEngine
-                let supported = world.environmentEngine.supports(choice.2)
-                button.setAction(AetherAction(action: button.action?.action, enabled: { supported && (try? cache.fileURL(for: Self.spatialVideoDemoKey)) != nil }))
-                button.refreshAvailability()
-            }
-            if choice.1 == "video-360" {
-                let platform = world.platform
-                button.setAction(AetherAction(action: button.action?.action, enabled: {
-                    platform.resourceExists(name: "environment-nasa-360", type: .custom("mp4"))
-                }))
-                button.refreshAvailability()
-            }
-            if choice.1 == "image-mono" {
-                let registry = world.assetEngine.imageRegistry
-                button.setAction(AetherAction(action: button.action?.action, enabled: { registry.entry(for: EnvironmentImageKey.mono) != nil }))
-                button.refreshAvailability()
-            }
-            if choice.1 == "image-stereo" {
-                let registry = world.assetEngine.imageRegistry
-                button.setAction(AetherAction(action: button.action?.action, enabled: { registry.entry(for: EnvironmentImageKey.embeddedMono) != nil }))
-                button.refreshAvailability()
-            }
-            if choice.1 == "gallery-images" {
-                let registry = world.assetEngine.imageRegistry
-                button.setAction(AetherAction(action: button.action?.action, enabled: {
-                    registry.entry(for: "showcase.gallery.yosemite-01") != nil && registry.entry(for: "showcase.gallery.yosemite-02") != nil
-                }))
-                button.refreshAvailability()
-            }
-            if choice.1 == "spatial-photo" {
-                let registry = world.assetEngine.imageRegistry
-                let supported = world.platform.canDecodeStereoHEIC
-                button.setAction(AetherAction(action: button.action?.action, enabled: { supported && registry.entry(for: EnvironmentImageKey.spatial) != nil }))
-                button.refreshAvailability()
-            }
-            objects.append(button)
-        }
-        world.graphicEngine.changeToScene(makeSectionScene(title: "Media", elements: objects, width: 2.8, flavor: .default))
+        ]
+        world.graphicEngine.changeToScene(
+            makeSectionScene(title: "Media", elements: objects, width: 2.8, flavor: .default)
+        )
     }
 
     /// Two text-script tours; both return Home before the runner starts.
