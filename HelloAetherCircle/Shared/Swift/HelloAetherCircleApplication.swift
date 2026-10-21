@@ -38,6 +38,14 @@ public final class HelloAetherCircleApplication: AetherApplication {
             z: 0.15
         )
 
+        let quitAction = AetherAction(
+            key: "hello.quit",
+            title: "Quit",
+            audioCommand: "quit",
+            action: { [weak self] in self?.quitApp() },
+            enabled: { [weak self] in self?.world.platform.canQuitApp ?? false }
+        ).register()
+
         let quit = AetherQuitButtonObject(
             position: AetherPosition3D(
                 x: 0,
@@ -45,9 +53,7 @@ public final class HelloAetherCircleApplication: AetherApplication {
                 z: -1.5
             ),
             targetAppearance: .goldenGlow,
-            quitAction: AetherAction(action: {
-                self.quitApp()
-            })
+            quitAction: quitAction
         )
 
         let scene = AetherScene(
