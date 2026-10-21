@@ -62,11 +62,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         static let button = AetherMaterial.defaultButton
     }
 
-    /// Shared navigation action used by Home buttons throughout the Showcase.
-    private(set) lazy var homeAction = AetherAction(key: "showcase.voice.home", title: "Home", audioCommand: "home", action: { [weak self] in
-        self?.showHomeScene()
-    })
-
     private lazy var navigationActions: [AetherAction] = [
         AetherAction(key: "showcase.voice.primitives", title: "Primitive Objects", audioCommand: "primitive objects", action: { [weak self] in self?.showPrimitiveObjectsScene() }),
         AetherAction(key: "showcase.voice.materials", title: "Materials", audioCommand: "materials", action: { [weak self] in self?.showMaterialsScene() }),
@@ -91,11 +86,11 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     public override func start() {
+        AetherAction.setHomeAction { [weak self] in self?.showHomeScene() }
         world.environmentEngine.mode = .passthrough
         registerMaterials()
         registerEnvironmentImages()
         showHomeScene()
-        homeAction.register()
         navigationActions.forEach { $0.register() }
         world.platform.configureVoice(AetherVoiceConfiguration(wakePhrase: "Showcase"))
     }
@@ -1054,7 +1049,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     private func makeHomeButton() -> AetherButtonObject {
         AetherButtonObject(
-            AetherAction(title: "Back", action: homeAction.action),
+            .home,
             name: "Home Button",
             autoID: "showcase.home",
             flavor: .default,
