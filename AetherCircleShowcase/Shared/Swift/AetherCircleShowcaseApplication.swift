@@ -241,7 +241,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             button.autoID = "showcase." + menuID
         }
 
-        let quit = AetherQuitButtonObject(
+        let quit = AetherButtonObject(
+            .askQuit,
             name: "Quit",
             flavor: .doubleSided,
             size: AetherSize3D(
@@ -251,20 +252,15 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             ),
             material: Material.red,
             textMaterial: Material.white,
-            panelMaterial: Material.panel,
-            panelButtonMaterial: Material.button,
             position: AetherPosition3D(
                 x: 0,
                 y: -1.12,
                 z: 0
             ),
-            targetAppearance: .goldenGlow,
-            quitAction: AetherAction(action: {
-                self.quitApp()
-            })
+            targetAppearance: .goldenGlow
         )
-        quit.button.autoID = "showcase.quit"
-        quit.button.rotationRate = AetherRotationRate3D(
+        quit.autoID = "showcase.quit"
+        quit.rotationRate = AetherRotationRate3D(
             x: 0,
             y: 0.55,
             z: 0
@@ -272,7 +268,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
         let arrangement = AetherBaseArrangement(
             title: "AetherCircle Showcase",
-            closeAction: AetherAction(action: { [weak self] in self?.quitApp() }),
             elements: [menu, quit],
             width: 2.8,
             contentHeight: 1.22,
@@ -727,7 +722,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         back.position = AetherPosition3D(x: 0, y: -1.36, z: 0)
         let arrangement = AetherBaseArrangement(
             title: "Dialogs",
-            closeAction: AetherAction(action: { [weak self] in self?.quitApp() }),
             elements: [pageOne, back],
             width: 1.08,
             contentHeight: 1.44,
@@ -1021,7 +1015,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
         let arrangement = AetherBaseArrangement(
             title: title,
-            closeAction: AetherAction(action: { [weak self] in self?.quitApp() }),
             elements: contents,
             width: width,
             contentHeight: max(0, contentY - backY + 0.08),
@@ -1098,11 +1091,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         return Bool.random() ? speed : -speed
     }
 
-    private func quitApp() {
-        if world.platform.canQuitApp {
-            world.platform.quitApp()
-        }
-    }
 }
 
 
