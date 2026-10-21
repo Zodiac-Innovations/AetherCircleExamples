@@ -63,13 +63,62 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     private lazy var navigationActions: [AetherAction] = [
-        AetherAction(key: "showcase.voice.primitives", title: "Primitive Objects", audioCommand: "primitive objects", action: { [weak self] in self?.showPrimitiveObjectsScene() }),
-        AetherAction(key: "showcase.voice.materials", title: "Materials", audioCommand: "materials", action: { [weak self] in self?.showMaterialsScene() }),
-        AetherAction(key: "showcase.voice.environment-a", title: "Environment A", audioCommand: "environment a", action: { [weak self] in self?.showEnvironmentScene() }),
-        AetherAction(key: "showcase.voice.environment-b", title: "Environment B", audioCommand: "environment b", action: { [weak self] in self?.showEnvironmentScene(isMedia: true) }),
-        AetherAction(key: "showcase.voice.dialogs", title: "Dialogs", audioCommand: "dialogs", action: { [weak self] in self?.showDialogsScene() }),
-        AetherAction(key: "showcase.voice.ui", title: "UI Elements", audioCommand: "u i elements", action: { [weak self] in self?.showUIElementsScene() }),
-        AetherAction(key: "showcase.voice.automation", title: "Automation", audioCommand: "automation", action: { [weak self] in self?.showAutomationScene() })
+        AetherAction(
+            key: "showcase.voice.primitives",
+            title: "Primitive Objects",
+            audioCommand: "primitive objects",
+            action: { [weak self] in
+                self?.showPrimitiveObjectsScene()
+            }
+        ),
+        AetherAction(
+            key: "showcase.voice.materials",
+            title: "Materials",
+            audioCommand: "materials",
+            action: { [weak self] in
+                self?.showMaterialsScene()
+            }
+        ),
+        AetherAction(
+            key: "showcase.voice.environment-a",
+            title: "Environment A",
+            audioCommand: "environment a",
+            action: { [weak self] in
+                self?.showEnvironmentScene()
+            }
+        ),
+        AetherAction(
+            key: "showcase.voice.environment-b",
+            title: "Environment B",
+            audioCommand: "environment b",
+            action: { [weak self] in
+                self?.showEnvironmentScene(isMedia: true)
+            }
+        ),
+        AetherAction(
+            key: "showcase.voice.dialogs",
+            title: "Dialogs",
+            audioCommand: "dialogs",
+            action: { [weak self] in
+                self?.showDialogsScene()
+            }
+        ),
+        AetherAction(
+            key: "showcase.voice.ui",
+            title: "UI Elements",
+            audioCommand: "u i elements",
+            action: { [weak self] in
+                self?.showUIElementsScene()
+            }
+        ),
+        AetherAction(
+            key: "showcase.voice.automation",
+            title: "Automation",
+            audioCommand: "automation",
+            action: { [weak self] in
+                self?.showAutomationScene()
+            }
+        )
     ]
 
     private let sceneDepth: AetherFloat = -1.7
