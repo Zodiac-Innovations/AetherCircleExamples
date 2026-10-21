@@ -684,7 +684,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 position: AetherPosition3D(x: 0, y: 1.45, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: AetherAction(action: {
-                    self.world.environmentEngine.mode = .materialVR(environmentPatterns[0].1)
+                    self.world.environmentEngine.mode = .materialVR(self.environmentPatterns[0].1)
                 })
             ),
             AetherButtonObject(
@@ -697,7 +697,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 position: AetherPosition3D(x: 0.86, y: 1.45, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: AetherAction(action: {
-                    self.world.environmentEngine.mode = .materialVR(environmentPatterns[1].1)
+                    self.world.environmentEngine.mode = .materialVR(self.environmentPatterns[1].1)
                 })
             ),
             AetherButtonObject(
@@ -710,7 +710,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 position: AetherPosition3D(x: -0.86, y: 1.22, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: AetherAction(action: {
-                    self.world.environmentEngine.mode = .materialVR(environmentPatterns[2].1)
+                    self.world.environmentEngine.mode = .materialVR(self.environmentPatterns[2].1)
                 })
             ),
             AetherButtonObject(
