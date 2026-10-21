@@ -74,7 +74,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     /// List of keys for various images
     private enum EnvironmentImageKey {
         static let spatial = "showcase.environment.spatial"
-        static let mono = "showcase.environment.mono"
+        static let mono = "showcase.environment.venice"
         static let embeddedMono = "showcase.environment.kiara"
     }
 
@@ -196,7 +196,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         wait 1.6
         tap name "File Stereo TB Environment Button"
         wait 1.6
-        tap name "Internet 360 Mono Environment Button"
+        tap name "Image 360 Venice Environment Button"
         wait 1.6
         tap name "Image 360 Kiara Environment Button"
         wait 1.6
@@ -258,10 +258,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     /// Depth of various arrangement in the world
     private let sceneDepth: AetherFloat = -1.7
     
-    /// Download Task for Eviroment
-    private var environmentDownloadTask: Task<Void, Never>?
-    
-    /// Download Task for Video
+    /// Local conversion task for the bundled stereo video
     private var spatialVideoDemoTask: Task<Void, Never>?
     
     /// Spatial Video key
@@ -342,8 +339,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         
         spatialVideoDemoTask?.cancel()
         spatialVideoDemoTask = nil
-        environmentDownloadTask?.cancel()
-        environmentDownloadTask = nil
     }
 
     // MARK: - Register Functions
@@ -442,7 +437,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
     }
 
-    /// One registered example is embedded; the other must arrive over HTTPS.
+    /// Register images from the app bundle; no network access is needed.
     private func registerEnvironmentImages() {
         #if os(visionOS)
         if #available(visionOS 26.0, *), world.platform.canDecodeStereoHEIC { registerSpatialDemo() }
@@ -461,19 +456,10 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         } else {
             print("Showcase: missing bundled image environment-kiara-360.jpg")
         }
-        environmentDownloadTask?.cancel()
-        let registry = world.assetEngine.imageRegistry
-        registry.remove(key: EnvironmentImageKey.mono)
-        guard let url = URL(string: "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/spruit_sunrise.jpg") else { return }
-        environmentDownloadTask = Task {
-            do {
-                try await registry.register(key: EnvironmentImageKey.mono, from: url)
-                print("Showcase: internet panorama downloaded and registered.")
-            } catch is CancellationError {
-                // The app stopped before the download completed.
-            } catch {
-                if !Task.isCancelled { print("Showcase: internet panorama download failed: \(error)") }
-            }
+        if let data = world.platform.resourceRetrieve(name: "environment-venice-360", type: .image) {
+            world.assetEngine.registerImage(key: EnvironmentImageKey.mono, data: data)
+        } else {
+            print("Showcase: missing bundled image environment-venice-360.jpg")
         }
     }
 
@@ -1016,8 +1002,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 })
             ),
             AetherButtonObject(
-                name: "Internet 360 Mono Environment Button",
-                title: "Internet 360 Mono",
+                name: "Image 360 Venice Environment Button",
+                title: "Image 360 Venice",
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button,
