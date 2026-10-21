@@ -264,7 +264,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         let quit = AetherQuitButtonObject(
-            position: AetherPosition3D(x: 0, y: -1.12, z: 0)
+            position: .zero
         )
         quit.button.autoID = "showcase.quit"
 
@@ -272,7 +272,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             title: "AetherCircle Showcase",
             elements: [menu, quit],
             width: 2.8,
-            contentHeight: 1.22,
             position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
             name: "Home Arrangement",
             autoID: "showcase.home-arrangement",
@@ -742,16 +741,15 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         let pageOne = AetherCompositeObject(
             name: "Dialogs Content",
             objects: [pageOneDescription, defaultButton, doubleSidedButton, messageButton, yesNoButton],
-            position: AetherPosition3D(x: 0, y: -0.65, z: 0.09)
+            position: AetherPosition3D(x: 0, y: 0, z: 0.09)
         )
         pageOne.size = AetherSize3D(x: 0.90, y: 1.08, z: 0.12)
         let back = makeHomeButton()
-        back.position = AetherPosition3D(x: 0, y: -1.36, z: 0)
+        back.position = .zero
         let arrangement = AetherBaseArrangement(
             title: "Dialogs",
             elements: [pageOne, back],
             width: 1.08,
-            contentHeight: 1.44,
             position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
             name: "Dialogs Arrangement",
             autoID: "showcase.dialogs-arrangement",
@@ -1020,31 +1018,24 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
     }
 
-    /// Converts each section's authored positions to a single movable arrangement.
+    /// Preserves each section's internal layout in a single movable arrangement.
     /// Back remains a normal bottom content button until bar navigation is adopted.
     private func makeSectionScene(
         title: String, elements: [AetherBasicObject], width: AetherFloat = 2.4,
         flavor: AetherArrangementBarFlavor = .default
     ) -> AetherScene {
         let titleY: AetherFloat = 2.10
-        let contentY = titleY - 0.26
-        let highest = elements.map { $0.position.y + max($0.size.y / 2, 0.08) }.max() ?? contentY
-        let lift = contentY - highest
-        for element in elements { element.position.y += lift }
-        let lowest = elements.map { $0.position.y - max($0.size.y / 2, 0.08) }.min() ?? 1
-        let backY = lowest - 0.20
+        // Keep grids and control rows intact inside one group. The arrangement
+        // measures the descendants and spaces this group and Back automatically.
+        for element in elements { element.position.z -= sceneDepth }
+        let group = AetherCompositeObject(name: title + " Elements", objects: elements)
         let back = makeHomeButton()
-        back.position = AetherPosition3D(x: 0, y: backY, z: sceneDepth)
-        let contents = elements + [back]
-        for object in contents {
-            object.position.y -= contentY
-            object.position.z -= sceneDepth
-        }
+        back.position = .zero
+        let contents: [AetherBasicObject] = [group, back]
         let arrangement = AetherBaseArrangement(
             title: title,
             elements: contents,
             width: width,
-            contentHeight: max(0, contentY - backY + 0.08),
             position: AetherPosition3D(x: 0, y: titleY, z: sceneDepth),
             name: title + " Arrangement",
             autoID: "showcase." + title.lowercased().replacingOccurrences(of: " ", with: "-") + "-arrangement",
