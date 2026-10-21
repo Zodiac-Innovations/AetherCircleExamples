@@ -264,28 +264,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
 
         let quit = AetherQuitButtonObject(
-            name: "Quit",
-            flavor: .doubleSided,
-            size: AetherSize3D(
-                x: 0.34,
-                y: 0.13,
-                z: 0.04
-            ),
-            material: Material.red,
-            textMaterial: Material.white,
-            position: AetherPosition3D(
-                x: 0,
-                y: -1.12,
-                z: 0
-            ),
-            targetAppearance: .goldenGlow
+            position: AetherPosition3D(x: 0, y: -1.12, z: 0)
         )
         quit.button.autoID = "showcase.quit"
-        quit.button.rotationRate = AetherRotationRate3D(
-            x: 0,
-            y: 0.55,
-            z: 0
-        )
 
         let arrangement = AetherBaseArrangement(
             title: "AetherCircle Showcase",

@@ -39,12 +39,7 @@ public final class HelloAetherCircleApplication: AetherApplication {
         )
 
         let quit = AetherQuitButtonObject(
-            position: AetherPosition3D(
-                x: 0,
-                y: 0.95,
-                z: -1.5
-            ),
-            targetAppearance: .goldenGlow
+            position: AetherPosition3D(x: 0, y: 0.95, z: -1.5)
         )
 
         let scene = AetherScene(
