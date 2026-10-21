@@ -1,18 +1,49 @@
 # Environment photo and video credits
 
-## Stereo video demos — environment-stereo-sbs.mp4 / environment-stereo-tb.mp4
+## Offline media policy
 
-- Source: Apple's **Rendering stereoscopic video with RealityKit** sample.
-- Page: https://developer.apple.com/documentation/realitykit/rendering-stereoscopic-video-with-realitykit
+All Showcase images and movies are bundled in Shared/Files. The app does not
+download media or convert video at startup. Each photo/media button uses a
+different scene or photograph set; changing stereo packing is not a new scene.
+
+## Side-by-side video — environment-stereo-sbs.mp4
+
+- Apple's Rendering stereoscopic video with RealityKit sample:
+  https://developer.apple.com/documentation/realitykit/rendering-stereoscopic-video-with-realitykit
 - Archive: https://docs-assets.developer.apple.com/published/4bf2d74e8473/RenderingStereoscopicVideoWithRealityKit.zip
-- Original asset: `RealityKit-Playback-AVSampleBufferVideoRenderer/Resources/sample.mov`.
-- Apple copyright and permission notice: `APPLE-STEREO-VIDEO-LICENSE.txt`, included unchanged from the sample.
-- This is genuine side-by-side stereo hummingbird footage, not a mono movie duplicated for both eyes.
-- Changes: the 3840 × 1080 source was resized to 1920 × 540, transcoded to silent H.264/yuv420p MP4 for broad hardware playback, and repacked to 960 × 1080 for top/bottom. Duration is about 4.33 seconds; eye order is preserved (left first/above).
-- On visionOS 26+, Showcase converts the SBS clip to a real two-layer MV-HEVC MOV in its session cache for the native format demo. No camera calibration metadata is invented.
-- Reproduction: `ffmpeg -i sample.mov -map 0:v:0 -vf scale=1920:540 -an -c:v libx264 -crf 23 -pix_fmt yuv420p -movflags +faststart environment-stereo-sbs.mp4`; split the SBS frame into equal left/right halves and vertically stack left above right for the TB export.
+- Original: RealityKit-Playback-AVSampleBufferVideoRenderer/Resources/sample.mov.
+- Genuine stereo hummingbird footage; resized to 1920 × 540 and transcoded to silent H.264.
+- Permission notice retained in APPLE-STEREO-VIDEO-LICENSE.txt.
+- The top/bottom button now uses the distinct dragon animation below, not this footage.
 
-The bundled files ship with Showcase and work offline; the Internet 360 Mono button downloads Spruit Sunrise at startup. They are separate assets with the licenses below; the project source-code license does not replace their licenses.
+## Top/bottom video — environment-dragons-tb.mp4
+
+- Source: A Perceptual Model for Disparity, SIGGRAPH 2011, Piotr Didyk,
+  Tobias Ritschel, Elmar Eisemann, Karol Myszkowski and Hans-Peter Seidel.
+- Publisher: Max-Planck-Institut Informatik.
+- Source page: https://perception.mpi-inf.mpg.de/DisparityModel/backward-compatible.html
+- Download: https://perception.mpi-inf.mpg.de/DisparityModel/backward-compatible/dragons/standard.avi
+- This is the publisher's standard-stereo dragon animation, not the
+  backward-compatible/disparity-altered comparison.
+- Source packs the right eye first. Export swaps to left-above-right:
+  ffmpeg -ss 8 -t 8 -i standard.avi -vf "stereo3d=sbsr:abl,scale=768:1536"
+  -an -c:v libx264 -crf 23 -pix_fmt yuv420p -movflags +faststart environment-dragons-tb.mp4
+- Eight seconds; 768 × 1536; silent H.264. Credit retained here.
+- The source page does not specify a Creative Commons license; no CC or
+  Apache license is asserted for this third-party media.
+
+## Native MV-HEVC sample — environment-spatial-test.mov
+
+- Creator/publisher: Mike Swanson.
+- Source: https://blog.mikeswanson.com/spatial/
+- Archive: https://www.mikeswanson.com/spatial/releases/spatial_0.6.2.zip
+- Original: spatial_0.6.2/spatial_test.mov, bundled unchanged (82,344 bytes).
+- The author provides this sample for experimentation. No separate
+  Creative Commons or Apache license is asserted for the sample.
+- Two-second native MV-HEVC stereo test card, 1920 × 1080 per eye,
+  with distinct LEFT and RIGHT views. This is a format test, not scenic footage.
+- Verified HEVC layers 0 and 1 and hvcC/lhvC/vexu/eyes/hfov metadata.
+- Played directly through spatialVideoFile; no runtime encoding or cache registration.
 
 ## environment-venice-360.jpg
 
@@ -88,7 +119,7 @@ Each photo environment button uses a separate photograph or photograph set. Repa
 |---|---|---|
 | File 360 Mono | Venice Sunset | Bundled file |
 | File Stereo TB | SphericalStereo 01 | Bundled stereo top/bottom file |
-| Internet 360 Mono | Spruit Sunrise | HTTPS download at startup; no bundled fallback |
+| Image 360 Spruit Sunrise | Spruit Sunrise | Bundled JPEG registered at startup |
 | Image 360 Kiara | Kiara 1 Dawn | Bundled data registered at startup; mono |
 | Panorama Auto | Hahneberg | Bundled panorama with demonstration GPano metadata |
 | Panorama Override | TUT campus | Bundled cylindrical panorama, explicit 180 degrees |
@@ -111,14 +142,14 @@ Material buttons select three distinct texture images. Floor + Sky selects its f
 - Changes: proportionally resized the 8192 × 4096 tonemapped JPEG to 2048 × 1024; recompressed as RGB JPEG without cropping.
 - Format: mono 360 × 180-degree equirectangular; registered at startup for Image 360 Kiara.
 
-## Internet-only Spruit Sunrise
+## environment-spruit-sunrise-360.jpg — Image 360 Spruit Sunrise
 
 - Title: Spruit Sunrise
 - Creator: Greg Zaal / Poly Haven
 - Source: https://polyhaven.com/a/spruit_sunrise
 - Download: https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/spruit_sunrise.jpg
 - License: CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/
-- The app downloads the original tonemapped mono equirectangular JPEG at startup and registers its encoded data. The Internet 360 Mono button remains disabled until registration succeeds; there is no bundled fallback. It does not reuse Venice Sunset.
+- Downloaded during development, resized from 8192 × 4096 to 2048 × 1024 and recompressed as RGB JPEG (quality 90). Bundled in Shared/Files and registered at startup. No app download or Venice fallback.
 
 ## environment-campus-panorama.jpg
 

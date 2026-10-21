@@ -74,7 +74,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     /// List of keys for various images
     private enum EnvironmentImageKey {
         static let spatial = "showcase.environment.spatial"
-        static let mono = "showcase.environment.venice"
+        static let mono = "showcase.environment.spruit-sunrise"
         static let embeddedMono = "showcase.environment.kiara"
     }
 
@@ -190,13 +190,13 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         wait 1.6
         tap name "3D Video · Top + Bottom Environment Button"
         wait 1.6
-        tap name "Apple MV-HEVC Video Environment Button"
+        tap name "MV-HEVC Stereo Test Environment Button"
         wait 1.6
         tap name "File 360 Mono Environment Button"
         wait 1.6
         tap name "File Stereo TB Environment Button"
         wait 1.6
-        tap name "Image 360 Venice Environment Button"
+        tap name "Image 360 Spruit Sunrise Environment Button"
         wait 1.6
         tap name "Image 360 Kiara Environment Button"
         wait 1.6
@@ -258,11 +258,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     /// Depth of various arrangement in the world
     private let sceneDepth: AetherFloat = -1.7
     
-    /// Local conversion task for the bundled stereo video
-    private var spatialVideoDemoTask: Task<Void, Never>?
-    
-    /// Spatial Video key
-    private static let spatialVideoDemoKey = "showcase.environment.spatial-video"
 
     // Keep radom list of materials.
     private lazy var environmentPatterns: [(String, AetherMaterial)] = [
@@ -337,8 +332,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     public override func stop() {
         world.platform.configureVoice(nil)
         
-        spatialVideoDemoTask?.cancel()
-        spatialVideoDemoTask = nil
     }
 
     // MARK: - Register Functions
@@ -443,7 +436,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         if #available(visionOS 26.0, *), world.platform.canDecodeStereoHEIC { registerSpatialDemo() }
         #endif
         
-        if world.platform.canPrepareSpatialVideo { registerSpatialVideoDemo() }
         for name in ["yosemite-01", "yosemite-02"] {
             if let data = world.platform.resourceRetrieve(name: "environment-" + name, type: .image) {
                 world.assetEngine.registerImage(key: "showcase.gallery." + name, data: data)
@@ -456,30 +448,13 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         } else {
             print("Showcase: missing bundled image environment-kiara-360.jpg")
         }
-        if let data = world.platform.resourceRetrieve(name: "environment-venice-360", type: .image) {
+        if let data = world.platform.resourceRetrieve(name: "environment-spruit-sunrise-360", type: .image) {
             world.assetEngine.registerImage(key: EnvironmentImageKey.mono, data: data)
         } else {
-            print("Showcase: missing bundled image environment-venice-360.jpg")
+            print("Showcase: missing bundled image environment-spruit-sunrise-360.jpg")
         }
     }
 
-    /// Selects sample content; the platform handles encoding and cache publication.
-    private func registerSpatialVideoDemo() {
-        spatialVideoDemoTask?.cancel()
-        let platform = world.platform
-        let key = Self.spatialVideoDemoKey
-        spatialVideoDemoTask = Task<Void, Never>.detached(priority: .utility) { @Sendable [platform, key] in
-            do {
-                try await platform.registerSpatialVideo(
-                    key: key, resourceName: "environment-stereo-sbs",
-                    layout: .sideBySide, storage: .session
-                )
-            } catch is CancellationError {
-                // Stopping the app cancels preparation.
-            } catch { print("Showcase: MV-HEVC demo could not be prepared: \(error)") }
-        }
-    }
-    
     // MARK: - Make Functions
     
     /// Preserves each section's internal layout in a single movable arrangement.
@@ -955,14 +930,14 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 position: AetherPosition3D(x: 0.86, y: 1.68, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: AetherAction(action: {
-                    self.world.environmentEngine.mode = .spatialVideoFile("environment-stereo-tb.mp4", layout: .topBottom)
+                    self.world.environmentEngine.mode = .spatialVideoFile("environment-dragons-tb.mp4", layout: .topBottom)
                 }, enabled: {
-                    self.world.environmentEngine.supports(.spatialVideoFile("environment-stereo-tb.mp4", layout: .topBottom)) && platform.resourceExists(name: "environment-stereo-tb", type: .custom("mp4"))
+                    self.world.environmentEngine.supports(.spatialVideoFile("environment-dragons-tb.mp4", layout: .topBottom)) && platform.resourceExists(name: "environment-dragons-tb", type: .custom("mp4"))
                 })
             ),
             AetherButtonObject(
-                name: "Apple MV-HEVC Video Environment Button",
-                title: "Apple MV-HEVC Video",
+                name: "MV-HEVC Stereo Test Environment Button",
+                title: "MV-HEVC Stereo Test",
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button,
@@ -970,9 +945,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 position: AetherPosition3D(x: -0.86, y: 1.45, z: sceneDepth),
                 targetAppearance: .goldenGlow,
                 action: AetherAction(action: {
-                    self.world.environmentEngine.mode = .spatialVideoVideo(Self.spatialVideoDemoKey)
+                    self.world.environmentEngine.mode = .spatialVideoFile("environment-spatial-test.mov")
                 }, enabled: {
-                    self.world.environmentEngine.supports(.spatialVideoVideo(Self.spatialVideoDemoKey)) && (try? platform.cacheEngine.fileURL(for: Self.spatialVideoDemoKey)) != nil
+                    self.world.environmentEngine.supports(.spatialVideoFile("environment-spatial-test.mov")) && platform.resourceExists(name: "environment-spatial-test", type: .custom("mov"))
                 })
             ),
             AetherButtonObject(
@@ -1002,8 +977,8 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                 })
             ),
             AetherButtonObject(
-                name: "Image 360 Venice Environment Button",
-                title: "Image 360 Venice",
+                name: "Image 360 Spruit Sunrise Environment Button",
+                title: "Image 360 Spruit Sunrise",
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
                 material: Material.button,
