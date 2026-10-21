@@ -7,3 +7,4 @@ build=1
 copyright=© 2026 Zodiac Innovations. All rights reserved.
 repo=https://github.com/Zodiac-Innovations/AetherCircleDevelopment.git
 branch=main
+voiceControl=true

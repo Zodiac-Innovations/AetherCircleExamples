@@ -1,5 +1,8 @@
 # Showcase voice control
 
+This project opts in with `voiceControl=true` in `AetherCircle.info`; other new
+projects default to off unless initialized with `-voice` (or `--voice`).
+
 Allow microphone access (and speech recognition on Apple Vision Pro), then say:
 
 | Phrase | Destination |

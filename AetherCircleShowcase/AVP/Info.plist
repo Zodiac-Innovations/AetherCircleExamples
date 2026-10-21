@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>AetherVoiceControlEnabled</key>
+    <true/>
     <key>NSMicrophoneUsageDescription</key>
     <string>Say Showcase followed by a navigation command to control the app.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
@@ -26,6 +28,8 @@
 	<string>© 2026 Zodiac Innovations. All rights reserved.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
+    <key>AetherVoiceControlEnabled</key>
+    <true/>
     <key>NSMicrophoneUsageDescription</key>
     <string>Say Showcase followed by a navigation command to control the app.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
