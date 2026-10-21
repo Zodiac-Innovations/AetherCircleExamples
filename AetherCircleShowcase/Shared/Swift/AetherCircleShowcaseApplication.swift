@@ -69,8 +69,12 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     private let sceneDepth: AetherFloat = -1.7
     private var environmentDownloadTask: Task<Void, Never>?
+    private var spatialVideoDemoTask: Task<Void, Never>?
+    private static let spatialVideoDemoKey = "showcase.environment.spatial-video"
 
     public override func stop() {
+        spatialVideoDemoTask?.cancel()
+        spatialVideoDemoTask = nil
         environmentDownloadTask?.cancel()
         environmentDownloadTask = nil
     }
@@ -92,6 +96,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private func registerEnvironmentImages() {
         #if os(visionOS)
         if #available(visionOS 26.0, *), world.platform.canDecodeStereoHEIC { registerSpatialDemo() }
+        if #available(visionOS 26.0, *) { registerSpatialVideoDemo() }
         #endif
         for name in ["yosemite-01", "yosemite-02"] {
             if let data = world.platform.resourceRetrieve(name: "environment-" + name, type: .image) {
@@ -314,6 +319,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             choices.append((pattern.0, "pattern-\(index + 1)", .materialVR(pattern.1)))
         }
         choices.append(("Video 360 NASA", "video-360", .video360File("environment-nasa-360.mp4")))
+        choices.append(("3D Video · Side by Side", "video-sbs", .spatialVideoFile("environment-stereo-sbs.mp4", layout: .sideBySide)))
+        choices.append(("3D Video · Top + Bottom", "video-tb", .spatialVideoFile("environment-stereo-tb.mp4", layout: .topBottom)))
+        choices.append(("Apple MV-HEVC Video", "video-spatial", .spatialVideoVideo(Self.spatialVideoDemoKey)))
         choices.append(("File 360 Mono", "file-mono", .image360File("environment-venice-360.jpg")))
         choices.append(("File Stereo TB", "file-stereo", .image360File("environment-stereo-360-tb.jpg", layout: .stereoTopBottom)))
         choices.append(("Internet 360 Mono", "image-mono", .image360Image(EnvironmentImageKey.mono)))
@@ -392,6 +400,21 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
                     }
                 }
             )
+            if ["video-sbs", "video-tb"].contains(choice.1) {
+                let platform = world.platform
+                let mode = choice.2
+                let engine = world.environmentEngine
+                let file = choice.1 == "video-sbs" ? "environment-stereo-sbs" : "environment-stereo-tb"
+                button.availabilityCheck = { engine.supports(mode) && platform.resourceExists(name: file, type: .custom("mp4")) }
+                button.refreshAvailability()
+            }
+            if choice.1 == "video-spatial" {
+                let cache = world.platform.cacheEngine
+                let engine = world.environmentEngine
+                let mode = choice.2
+                button.availabilityCheck = { engine.supports(mode) && (try? cache.fileURL(for: Self.spatialVideoDemoKey)) != nil }
+                button.refreshAvailability()
+            }
             if choice.1 == "video-360" {
                 let platform = world.platform
                 button.availabilityCheck = {
@@ -474,7 +497,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
     }
 
-    /// At most 50 seconds of waits, leaving headroom for frame-driven commands.
+    /// At most 51 seconds of waits, leaving headroom for frame-driven commands.
     /// Unavailable media entries are omitted, including Apple spatial photos on Quest.
     private var environmentTour: AetherAutomationScript {
         var commands: [AetherAutomationCommand] = [
@@ -499,6 +522,15 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         if world.platform.resourceExists(name: "environment-nasa-360", type: .custom("mp4")) {
             environmentsB.append("video-360")
         }
+        for (id, file, layout) in [("video-sbs", "environment-stereo-sbs", AetherStereoVideoLayout.sideBySide),
+                                   ("video-tb", "environment-stereo-tb", AetherStereoVideoLayout.topBottom)] {
+            if world.environmentEngine.supports(.spatialVideoFile(file + ".mp4", layout: layout)),
+               world.platform.resourceExists(name: file, type: .custom("mp4")) { environmentsB.append(id) }
+        }
+        if world.environmentEngine.supports(.spatialVideoVideo(Self.spatialVideoDemoKey)),
+           (try? world.platform.cacheEngine.fileURL(for: Self.spatialVideoDemoKey)) != nil {
+            environmentsB.append("video-spatial")
+        }
         environmentsB += ["file-mono", "file-stereo"]
         if registry.entry(for: EnvironmentImageKey.mono) != nil { environmentsB.append("image-mono") }
         if registry.entry(for: EnvironmentImageKey.embeddedMono) != nil { environmentsB.append("image-stereo") }
@@ -513,7 +545,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         }
         environmentsB.append("gallery-eight")
         for target in environmentsB {
-            commands += [.activate(.autoID("showcase.environment." + target)), .wait(2)]
+            commands += [.activate(.autoID("showcase.environment." + target)), .wait(1.6)]
         }
         commands += [
             .activate(.autoID("showcase.home")), .activate(.autoID("showcase.environment")),
@@ -1109,6 +1141,28 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
 #if os(visionOS)
 extension AetherCircleShowcaseApplication {
+    /// Encodes the bundled genuine stereo footage into a native MV-HEVC cache entry.
+    @available(visionOS 26.0, *)
+    private func registerSpatialVideoDemo() {
+        spatialVideoDemoTask?.cancel()
+        guard let source = world.platform.resourceURL(name: "environment-stereo-sbs", type: .custom("mp4")) else { return }
+        let cache = world.platform.cacheEngine
+        spatialVideoDemoTask = Task {
+            let output = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mov")
+            defer { try? FileManager.default.removeItem(at: output) }
+            let encoder = Task.detached(priority: .utility) {
+                try await ShowcaseSpatialVideoDemo.convert(input: source, output: output)
+            }
+            do {
+                try await withTaskCancellationHandler(operation: { try await encoder.value }, onCancel: { encoder.cancel() })
+                try Task.checkCancellation()
+                try cache.register(key: Self.spatialVideoDemoKey, fileURL: output, storage: .session)
+            } catch is CancellationError {
+                // Stop cancels both registration and the local encoder.
+            } catch { print("Showcase: MV-HEVC demo could not be prepared: \(error)") }
+        }
+    }
+
     /// Adapted from Apple's Writing Spatial Photos sample (license in Shared/Files).
     /// Creates a genuine stereo HEIC at startup, then exercises registered-image loading.
     @available(visionOS 26.0, *)
@@ -1156,3 +1210,4 @@ extension AetherCircleShowcaseApplication {
     }
 }
 #endif
+
