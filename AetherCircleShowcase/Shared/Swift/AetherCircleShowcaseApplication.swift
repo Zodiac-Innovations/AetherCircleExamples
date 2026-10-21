@@ -63,9 +63,19 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     }
 
     /// Shared navigation action used by Home buttons throughout the Showcase.
-    private(set) lazy var homeAction = AetherAction(title: "Home", action: { [weak self] in
+    private(set) lazy var homeAction = AetherAction(key: "showcase.voice.home", title: "Home", audioCommand: "home", action: { [weak self] in
         self?.showHomeScene()
     })
+
+    private lazy var navigationActions: [AetherAction] = [
+        AetherAction(key: "showcase.voice.primitives", title: "Primitive Objects", audioCommand: "primitive objects", action: { [weak self] in self?.showPrimitiveObjectsScene() }),
+        AetherAction(key: "showcase.voice.materials", title: "Materials", audioCommand: "materials", action: { [weak self] in self?.showMaterialsScene() }),
+        AetherAction(key: "showcase.voice.environment-a", title: "Environment A", audioCommand: "environment a", action: { [weak self] in self?.showEnvironmentScene() }),
+        AetherAction(key: "showcase.voice.environment-b", title: "Environment B", audioCommand: "environment b", action: { [weak self] in self?.showEnvironmentScene(isMedia: true) }),
+        AetherAction(key: "showcase.voice.dialogs", title: "Dialogs", audioCommand: "dialogs", action: { [weak self] in self?.showDialogsScene() }),
+        AetherAction(key: "showcase.voice.ui", title: "UI Elements", audioCommand: "u i elements", action: { [weak self] in self?.showUIElementsScene() }),
+        AetherAction(key: "showcase.voice.automation", title: "Automation", audioCommand: "automation", action: { [weak self] in self?.showAutomationScene() })
+    ]
 
     private let sceneDepth: AetherFloat = -1.7
     private var environmentDownloadTask: Task<Void, Never>?
@@ -73,6 +83,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     private static let spatialVideoDemoKey = "showcase.environment.spatial-video"
 
     public override func stop() {
+        world.platform.configureVoice(nil)
         spatialVideoDemoTask?.cancel()
         spatialVideoDemoTask = nil
         environmentDownloadTask?.cancel()
@@ -84,6 +95,9 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         registerMaterials()
         registerEnvironmentImages()
         showHomeScene()
+        homeAction.register()
+        navigationActions.forEach { $0.register() }
+        world.platform.configureVoice(AetherVoiceConfiguration(wakePhrase: "Showcase"))
     }
 
     private enum EnvironmentImageKey {
@@ -238,15 +252,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     private func showHomeScene() {
         let menu = AetherListButton(
-            AetherListActions([
-                AetherAction(title: "Primitive Objects", action: { [weak self] in self?.showPrimitiveObjectsScene() }),
-                AetherAction(title: "Materials", action: { [weak self] in self?.showMaterialsScene() }),
-                AetherAction(title: "Environment A", action: { [weak self] in self?.showEnvironmentScene() }),
-                AetherAction(title: "Environment B", action: { [weak self] in self?.showEnvironmentScene(isMedia: true) }),
-                AetherAction(title: "Dialogs", action: { [weak self] in self?.showDialogsScene() }),
-                AetherAction(title: "UI Elements", action: { [weak self] in self?.showUIElementsScene() }),
-                AetherAction(title: "Automation", action: { [weak self] in self?.showAutomationScene() }),
-            ]),
+            AetherListActions(navigationActions),
             name: "Showcase Menu",
             autoID: "showcase.menu",
             numberItemPerColumn: 4,
@@ -1162,3 +1168,4 @@ extension AetherCircleShowcaseApplication {
     }
 }
 #endif
+

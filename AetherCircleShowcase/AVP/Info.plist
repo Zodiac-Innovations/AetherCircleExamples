@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Say Showcase followed by a navigation command to control the app.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Recognize spoken Showcase navigation commands.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
@@ -22,8 +26,13 @@
 	<string>© 2026 Zodiac Innovations. All rights reserved.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Say Showcase followed by a navigation command to control the app.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Recognize spoken Showcase navigation commands.</string>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<true/>
 	</dict>
 </dict>
 </plist>
+
