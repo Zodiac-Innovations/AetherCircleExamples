@@ -332,11 +332,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             rowSpacing: 0.06
         )
         
-        // Keep navigation identifiers stable when changing the menu order.
-        let menuIDs = ["primitives", "materials", "environment", "environment-b", "dialogs", "ui-elements", "automation"]
-        for (button, menuID) in zip(menu.buttons, menuIDs) {
-            button.autoID = "showcase." + menuID
-        }
 
         let quit = AetherQuitButtonObject( position: .zero)
         
@@ -346,7 +341,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             width: 2.8,
             position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
             name: "Home Arrangement",
-            autoID: "showcase.home-arrangement",
             barFlavor: .floatingTitle
         )
 
@@ -360,6 +354,16 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
     }
 
+    // Keep the random material selection stable while a text tour navigates scenes.
+    private lazy var environmentPatterns: [(String, AetherMaterial)] = [
+        ("Dark Walnut", Material.darkWalnut),
+        ("Blue Granite", Material.blueGranite),
+        ("Carbon Fiber", Material.carbonFiber),
+        ("Blue Fabric", Material.blueFabric),
+        ("Carrara Marble", Material.carraraMarble),
+        ("Sci-Fi Panel", Material.scifiPanel),
+    ].shuffled()
+
     /// Environment changes persist when navigating to other Showcase sections.
     private func showEnvironmentScene(isMedia: Bool = false) {
         var choices: [(String, String, AetherEnvironmentMode)] = [
@@ -368,15 +372,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             ("Black", "black", .materialVR(.color(.black))),
             ("White", "white", .materialVR(.color(.white))),
         ]
-        let patterns: [(String, AetherMaterial)] = [
-            ("Dark Walnut", Material.darkWalnut),
-            ("Blue Granite", Material.blueGranite),
-            ("Carbon Fiber", Material.carbonFiber),
-            ("Blue Fabric", Material.blueFabric),
-            ("Carrara Marble", Material.carraraMarble),
-            ("Sci-Fi Panel", Material.scifiPanel),
-        ]
-        let shuffledPatterns = patterns.shuffled()
+        let shuffledPatterns = environmentPatterns
         let floorPatterns = Array(shuffledPatterns.dropFirst(3))
         for (index, pattern) in shuffledPatterns.prefix(3).enumerated() {
             choices.append((pattern.0, "pattern-\(index + 1)", .materialVR(pattern.1)))
@@ -443,7 +439,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         for (index, choice) in choices.enumerated() {
             let button = AetherButtonObject(
                 name: choice.0 + " Environment Button",
-                autoID: "showcase.environment." + choice.1,
                 title: choice.0,
                 size: AetherSize3D(x: 0.78, y: 0.15, z: 0.04),
                 sizing: .fitTextToButton,
@@ -516,7 +511,7 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         case sections
     }
 
-    /// Two typed-script tours; both return Home before the runner starts.
+    /// Two text-script tours; both return Home before the runner starts.
     private func showAutomationScene() {
         world.graphicEngine.changeToScene(makeSectionScene(
             title: "Automation",
@@ -532,7 +527,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
     ) -> AetherButtonObject {
         AetherButtonObject(
             name: title + " Button",
-            autoID: "showcase.run-" + mode.rawValue,
             title: title,
             size: AetherSize3D(x: 1.55, y: 0.16, z: 0.04),
             sizing: .fitTextToButton,
@@ -543,11 +537,11 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             action: AetherAction(action: {
                 let script = mode == .environments ? self.environmentTour : Self.sectionTour
                 let platform = self.world.platform
-                // Navigate first, before runScript can disable input or execute commands.
+                // Navigate first, before runTextScript can disable input or execute commands.
                 AetherAction.home.invoke()
                 Task {
                     do {
-                        try await platform.runScript(script)
+                        try await platform.runTextScript(script, turnsOffInteraction: true)
                     } catch AetherAutomationError.alreadyRunning {
                         // The runner owns interaction until its current tour completes.
                     } catch {
@@ -560,103 +554,125 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
 
     /// At most 51 seconds of waits, leaving headroom for frame-driven commands.
     /// Unavailable media entries are omitted, including Apple spatial photos on Quest.
-    private var environmentTour: AetherAutomationScript {
-        var commands: [AetherAutomationCommand] = [
-            .wait(1), .message("Environment A: materials, rooms and particles"),
-            .activate(.autoID("showcase.environment")), .wait(1),
-        ]
+    private var environmentTour: String {
+        var script = """
+        wait 1
+        message "Environment A: materials, rooms and particles"
+        tap name "Showcase Menu Environment A"
+        wait 1
+        """
         let environmentsA = [
-            "passthrough", "teal", "black", "white", "pattern-1", "pattern-2", "pattern-3",
-            "floor-material", "cyber-floor", "cyber-floor-silver", "room-matching", "room-six",
-            "room-cylinder", "room-dome", "particles-stars", "particles-snow", "particles-rain",
-            "particles-fireflies", "sky-grass", "sky-sand",
+            "Passthrough", "Teal", "Black", "White",
+        ] + environmentPatterns.prefix(3).map { $0.0 } + [
+            "Floor + Sky", "Cyber Floor · Cyan", "Cyber Floor · Silver",
+            "Room · Matching Walls", "Room · Six Materials", "Cylinder Room", "Dome Room",
+            "Stars", "Snow", "Rain", "Fireflies", "Grass + Day Sky", "Sand + Sunset",
         ]
-        for target in environmentsA {
-            commands += [.activate(.autoID("showcase.environment." + target)), .wait(1.2)]
+        for name in environmentsA {
+            script += "\n" + "tap name \"" + name + " Environment Button\"\nwait 1.2"
         }
-        commands += [
-            .activate(.autoID("showcase.home")), .activate(.autoID("showcase.environment-b")),
-            .message("Media: photographs, panoramas and video"), .wait(1),
-        ]
+        script += """
+
+        
+        tap name "Home Button"
+        tap name "Showcase Menu Media"
+        message "Media: photographs, panoramas and video"
+        wait 1
+        """
         let registry = world.assetEngine.imageRegistry
         var environmentsB: [String] = []
         if world.platform.resourceExists(name: "environment-nasa-360", type: .custom("mp4")) {
-            environmentsB.append("video-360")
+            environmentsB.append("Video 360 NASA")
         }
-        for (id, file, layout) in [("video-sbs", "environment-stereo-sbs", AetherStereoVideoLayout.sideBySide),
-                                   ("video-tb", "environment-stereo-tb", AetherStereoVideoLayout.topBottom)] {
+        for (name, file, layout) in [("3D Video · Side by Side", "environment-stereo-sbs", AetherStereoVideoLayout.sideBySide),
+                                   ("3D Video · Top + Bottom", "environment-stereo-tb", AetherStereoVideoLayout.topBottom)] {
             if world.environmentEngine.supports(.spatialVideoFile(file + ".mp4", layout: layout)),
-               world.platform.resourceExists(name: file, type: .custom("mp4")) { environmentsB.append(id) }
+               world.platform.resourceExists(name: file, type: .custom("mp4")) { environmentsB.append(name) }
         }
         if world.environmentEngine.supports(.spatialVideoVideo(Self.spatialVideoDemoKey)),
            (try? world.platform.cacheEngine.fileURL(for: Self.spatialVideoDemoKey)) != nil {
-            environmentsB.append("video-spatial")
+            environmentsB.append("Apple MV-HEVC Video")
         }
-        environmentsB += ["file-mono", "file-stereo"]
-        if registry.entry(for: EnvironmentImageKey.mono) != nil { environmentsB.append("image-mono") }
-        if registry.entry(for: EnvironmentImageKey.embeddedMono) != nil { environmentsB.append("image-stereo") }
-        environmentsB += ["panorama-auto", "panorama-override"]
+        environmentsB += ["File 360 Mono", "File Stereo TB"]
+        if registry.entry(for: EnvironmentImageKey.mono) != nil { environmentsB.append("Internet 360 Mono") }
+        if registry.entry(for: EnvironmentImageKey.embeddedMono) != nil { environmentsB.append("Image 360 Kiara") }
+        environmentsB += ["Panorama Auto", "Panorama Override"]
         if world.platform.canDecodeStereoHEIC, registry.entry(for: EnvironmentImageKey.spatial) != nil {
-            environmentsB.append("spatial-photo")
+            environmentsB.append("Apple Spatial Photo")
         }
-        environmentsB.append("gallery-files")
+        environmentsB.append("Yosemite Files")
         if registry.entry(for: "showcase.gallery.yosemite-01") != nil,
            registry.entry(for: "showcase.gallery.yosemite-02") != nil {
-            environmentsB.append("gallery-images")
+            environmentsB.append("Yosemite Images")
         }
-        environmentsB.append("gallery-eight")
-        for target in environmentsB {
-            commands += [.activate(.autoID("showcase.environment." + target)), .wait(1.6)]
+        environmentsB.append("Gallery 8")
+        for name in environmentsB {
+            script += "\n" + "tap name \"" + name + " Environment Button\"\nwait 1.6"
         }
-        commands += [
-            .activate(.autoID("showcase.home")), .activate(.autoID("showcase.environment")),
-            .activate(.autoID("showcase.environment.passthrough")),
-            .activate(.autoID("showcase.home")), .message("Environment tour complete"), .wait(1),
-        ]
-        return AetherAutomationScript(commands: commands, turnsOffInteraction: true)
+        script += """
+
+        
+        tap name "Home Button"
+        tap name "Showcase Menu Environment A"
+        tap name "Passthrough Environment Button"
+        tap name "Home Button"
+        message "Environment tour complete"
+        wait 1
+        """
+        return script
     }
 
     /// 42 seconds of waits. Demonstrates all four other sections and checks controls.
-    private static var sectionTour: AetherAutomationScript {
-        AetherAutomationScript(commands: [
-            .wait(1),
-            .activate(.autoID("showcase.primitives")), .message("Primitive"), .wait(12),
-            .activate(.autoID("showcase.home")),
-            .activate(.autoID("showcase.materials")), .message("Materials"), .wait(12),
-            .activate(.autoID("showcase.home")),
-            .activate(.autoID("showcase.dialogs")), .message("Dialogs"), .wait(8),
-            .activate(.autoID("showcase.home")),
-            .activate(.autoID("showcase.ui-elements")), .message("UI Elements"),
-            .check(.autoID("showcase.toggle.checkbox"), "true"),
-            .activate(.autoID("showcase.toggle.checkbox")),
-            .check(.autoID("showcase.toggle.checkbox"), "false"),
-            .activate(.autoID("showcase.toggle.checkbox")),
-            .check(.autoID("showcase.toggle.checkbox"), "true"),
-            .check(.autoID("showcase.integer"), "4"),
-            .activate(.autoID("showcase.integer")),
-            .check(.autoID("showcase.integer"), "5"),
-            .message("UI element checks passed"), .wait(8),
-            .activate(.autoID("showcase.home")), .message("Section tour complete"), .wait(1),
-        ], turnsOffInteraction: true)
+    private static var sectionTour: String {
+        """
+        wait 1
+        tap name "Showcase Menu Primitives"
+        message "Primitives"
+        wait 12
+        tap name "Home Button"
+        tap name "Showcase Menu Materials"
+        message "Materials"
+        wait 12
+        tap name "Home Button"
+        tap name "Showcase Menu Dialogs"
+        message "Dialogs"
+        wait 8
+        tap name "Home Button"
+        tap name "Showcase Menu UI Elements"
+        message "UI Elements"
+        check name "Checkbox Toggle" true
+        tap name "Checkbox Toggle"
+        check name "Checkbox Toggle" false
+        tap name "Checkbox Toggle"
+        check name "Checkbox Toggle" true
+        check name "Integer Slider" 4
+        tap name "Integer Slider"
+        check name "Integer Slider" 5
+        message "UI element checks passed"
+        wait 8
+        tap name "Home Button"
+        message "Section tour complete"
+        wait 1
+        """
     }
 
     private func showMaterialsScene() {
         let availableMaterials: [(String, AetherMaterial)] = [
             ("Aged Brass", Material.agedBrass),
-            ("Dark Walnut", Material.darkWalnut),
-            ("Blue Granite", Material.blueGranite),
-            ("Carrara Marble", Material.carraraMarble),
+        ("Dark Walnut", Material.darkWalnut),
+        ("Blue Granite", Material.blueGranite),
+        ("Carrara Marble", Material.carraraMarble),
             ("Brushed Steel", Material.brushedSteel),
             ("Verdigris Copper", Material.verdigrisCopper),
-            ("Carbon Fiber", Material.carbonFiber),
+        ("Carbon Fiber", Material.carbonFiber),
             ("Sandstone", Material.sandstone),
             ("Red Leather", Material.redLeather),
-            ("Blue Fabric", Material.blueFabric),
+        ("Blue Fabric", Material.blueFabric),
             ("Glacier Ice", Material.glacierIce),
             ("Lava Rock", Material.lavaRock),
             ("Green Moss", Material.greenMoss),
             ("Cobalt Ceramic", Material.cobaltCeramic),
-            ("Sci-Fi Panel", Material.scifiPanel),
+        ("Sci-Fi Panel", Material.scifiPanel),
         ]
         let selectedMaterials = Array(
             availableMaterials.shuffled().prefix(3)
@@ -824,7 +840,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             width: 1.08,
             position: AetherPosition3D(x: 0, y: 2.10, z: sceneDepth),
             name: "Dialogs Arrangement",
-            autoID: "showcase.dialogs-arrangement",
             barFlavor: .lightPanel
         )
         arrangement.move(to: arrangement.position)
@@ -932,7 +947,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
         let intToggle = AetherIntToggleObject(
             name: "Integer Slider",
-            autoID: "showcase.integer",
             value: 4,
             range: 0...10,
             step: 1,
@@ -1003,7 +1017,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         )
         let toggle = AetherBoolToggleObject(
             name: name + " Toggle",
-            autoID: "showcase.toggle." + name.lowercased(),
             value: value,
             flavor: flavor,
             offMaterial: Material.button,
@@ -1110,7 +1123,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
             width: width,
             position: AetherPosition3D(x: 0, y: titleY, z: sceneDepth),
             name: title + " Arrangement",
-            autoID: "showcase." + title.lowercased().replacingOccurrences(of: " ", with: "-") + "-arrangement",
             barFlavor: flavor
         )
         // Initial placement follows the same floor clearance as later dragging.
@@ -1122,7 +1134,6 @@ public final class AetherCircleShowcaseApplication: AetherApplication {
         AetherButtonObject(
             .home,
             name: "Home Button",
-            autoID: "showcase.home",
             flavor: .default,
             size: AetherSize3D(
                 x: 0.34,
